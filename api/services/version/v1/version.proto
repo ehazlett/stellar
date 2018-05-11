@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package element.services.version.v1;
+
+import "google/protobuf/empty.proto";
+import weak "gogoproto/gogo.proto";
+
+option go_package = "github.com/ehazlett/element/api/services/version/v1;version";
+
+service Version {
+	rpc Version(google.protobuf.Empty) returns (VersionResponse);
+}
+
+message VersionResponse {
+	string version = 1;
+	string revision = 2;
+        string containerd_version = 3;
+        string containerd_revision = 4;
+}
