@@ -1,9 +1,11 @@
 package agent
 
-import "time"
-
 func (a *Agent) Shutdown() error {
-	if err := a.members.Leave(time.Second * 1); err != nil {
+	if err := a.members.Leave(nodeUpdateTimeout); err != nil {
+		return err
+	}
+
+	if err := a.members.Shutdown(); err != nil {
 		return err
 	}
 

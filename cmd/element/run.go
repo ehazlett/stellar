@@ -24,6 +24,16 @@ var runCommand = cli.Command{
 			Value: "127.0.0.1:9000",
 		},
 		cli.StringFlag{
+			Name:  "containerd-addr, c",
+			Usage: "containerd socket address",
+			Value: "/run/containerd/containerd.sock",
+		},
+		cli.StringFlag{
+			Name:  "namespace",
+			Usage: "containerd namespace to manage",
+			Value: "",
+		},
+		cli.StringFlag{
 			Name:  "connection-type, t",
 			Usage: "connection type (lan, wan, local)",
 			Value: "local",
@@ -69,23 +79,19 @@ func runAction(c *cli.Context) error {
 	cfg := &agent.Config{
 		NodeName:       c.String("node-name"),
 		AgentAddr:      c.String("agent-addr"),
+		ContainerdAddr: c.String("containerd-addr"),
+		Namespace:      c.String("namespace"),
 		ConnectionType: c.String("connection-type"),
 		BindAddr:       c.String("bind-addr"),
 		BindPort:       c.Int("bind-port"),
 		AdvertiseAddr:  c.String("advertise-addr"),
 		AdvertisePort:  c.Int("advertise-port"),
+		Peers:          c.StringSlice("peer"),
 	}
 
 	a, err := agent.NewAgent(cfg)
 	if err != nil {
 		return err
-	}
-
-	peers := c.StringSlice("peer")
-	if len(peers) > 0 {
-		if err := a.Join(peers); err != nil {
-			return err
-		}
 	}
 
 	signals := make(chan os.Signal, 32)

@@ -2,22 +2,21 @@ package agent
 
 import (
 	"fmt"
-	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 func (a *Agent) heartbeat() {
-	peers := []string{}
 	self := a.members.LocalNode()
-	for _, node := range a.members.Members() {
-		// ignore self
-		if node.Name == self.Name {
-			continue
-		}
-		peers = append(peers, fmt.Sprintf("%s (%s)", node.Name, node.Addr))
-	}
-	if len(peers) > 0 {
-		logrus.Debugf("peers: %s", strings.Join(peers, ", "))
-	}
+	fmt.Printf("meta: %s\n", string(self.Meta))
+	//for _, peer := range a.peers {
+	//	ac, err := NewAgentClient(remoteAgent.Addr)
+	//	if err != nil {
+	//		logrus.Errorf("error communicating with peer: %s", err)
+	//		return
+	//	}
+
+	//	v, err := ac.VersionService.Version(context.Background(), nil)
+	//	if err != nil {
+	//		logrus.Error(err)
+	//	}
+	//}
 }
