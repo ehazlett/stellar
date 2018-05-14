@@ -28,17 +28,16 @@ func (a *Agent) heartbeat() {
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"peer":       peer.Name,
-			"os_name":    health.OsName,
-			"os_version": health.OsVersion,
-			"uptime":     health.Uptime,
-			"containers": health.Containers,
-			"images":     health.Images,
+			"peer":         peer.Name,
+			"os_name":      health.OsName,
+			"os_version":   health.OsVersion,
+			"uptime":       health.Uptime,
+			"cpus":         health.Cpus,
+			"memory_total": health.MemoryTotal,
+			"memory_free":  health.MemoryFree,
+			"memory_used":  health.MemoryUsed,
+			"containers":   health.Containers,
+			"images":       health.Images,
 		}).Debug("peer health")
-
-		//v, err := ac.VersionService.Version(context.Background(), nil)
-		//if err != nil {
-		//	logrus.Error(err)
-		//}
 	}
 }

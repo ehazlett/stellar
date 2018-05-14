@@ -2,8 +2,10 @@ package health
 
 import (
 	"context"
+	"runtime"
 	"time"
 
+	"github.com/cloudfoundry/gosigar"
 	"github.com/containerd/containerd"
 	api "github.com/ehazlett/element/api/services/health/v1"
 	"github.com/gogo/protobuf/types"
@@ -37,12 +39,15 @@ func (s *service) Health(ctx context.Context, _ *types.Empty) (*api.HealthRespon
 	}
 	defer c.Close()
 
-	containers, err := c.Containers(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	containers, err := c.Containers(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	images, err := c.ListImages(context.Background())
+	images, err := c.ListImages(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +57,20 @@ func (s *service) Health(ctx context.Context, _ *types.Empty) (*api.HealthRespon
 		return nil, err
 	}
 
+	memory := sigar.Mem{}
+	if err := memory.Get(); err != nil {
+		return nil, err
+	}
+
 	return &api.HealthResponse{
-		OsName:     osInfo.OSName,
-		OsVersion:  osInfo.OSVersion,
-		Uptime:     types.DurationProto(time.Now().Sub(s.started)),
-		Containers: int64(len(containers)),
-		Images:     int64(len(images)),
+		OsName:      osInfo.OSName,
+		OsVersion:   osInfo.OSVersion,
+		Uptime:      types.DurationProto(time.Now().Sub(s.started)),
+		Cpus:        int64(runtime.NumCPU()),
+		MemoryTotal: int64(memory.Total),
+		MemoryFree:  int64(memory.Free),
+		MemoryUsed:  int64(memory.Used),
+		Containers:  int64(len(containers)),
+		Images:      int64(len(images)),
 	}, nil
 }

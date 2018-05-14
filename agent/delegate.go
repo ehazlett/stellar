@@ -42,20 +42,6 @@ func NewAgentDelegate(name, addr string, updateCh chan bool, nodeEventCh chan *N
 	return agent
 }
 
-//func (d *agentDelegate) reconcile() {
-//	changed := false
-//	for name, peer := range d.Peers {
-//		if time.Now().After(peer.Updated.Add(nodeReconcileTimeout)) {
-//			logrus.Debugf("peer timeout; removing %s", name)
-//			delete(d.Peers, name)
-//			changed = true
-//		}
-//	}
-//	if changed {
-//		d.updateChan <- true
-//	}
-//}
-
 func (d *agentDelegate) NodeMeta(limit int) []byte {
 	data, err := json.Marshal(d.Peers)
 	if err != nil {
