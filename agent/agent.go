@@ -9,7 +9,7 @@ import (
 
 const (
 	nodeHeartbeatInterval = time.Second * 10
-	nodeReconcileTimeout  = nodeHeartbeatInterval * 2
+	nodeReconcileTimeout  = nodeHeartbeatInterval * 3
 	nodeUpdateTimeout     = nodeHeartbeatInterval / 2
 )
 
@@ -17,21 +17,17 @@ var (
 	ErrUnknownConnectionType = errors.New("unknown connection type")
 )
 
-type PeerAgent struct {
-	Name    string
-	Addr    string
-	Updated time.Time
-}
-
 type Agent struct {
 	config         *Config
 	members        *memberlist.Memberlist
 	peerUpdateChan chan bool
+	nodeEventChan  chan *NodeEvent
 }
 
 func NewAgent(cfg *Config) (*Agent, error) {
 	updateCh := make(chan bool)
-	mc, err := setupMemberlistConfig(cfg, updateCh)
+	nodeEventCh := make(chan *NodeEvent)
+	mc, err := setupMemberlistConfig(cfg, updateCh, nodeEventCh)
 	if err != nil {
 		return nil, err
 	}
@@ -45,5 +41,6 @@ func NewAgent(cfg *Config) (*Agent, error) {
 		config:         cfg,
 		members:        ml,
 		peerUpdateChan: updateCh,
+		nodeEventChan:  nodeEventCh,
 	}, nil
 }

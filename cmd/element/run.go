@@ -31,7 +31,7 @@ var runCommand = cli.Command{
 		cli.StringFlag{
 			Name:  "namespace",
 			Usage: "containerd namespace to manage",
-			Value: "",
+			Value: "default",
 		},
 		cli.StringFlag{
 			Name:  "connection-type, t",

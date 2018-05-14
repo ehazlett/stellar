@@ -28,7 +28,7 @@ type Config struct {
 	Peers          []string
 }
 
-func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool) (*memberlist.Config, error) {
+func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool, nodeEventChan chan *NodeEvent) (*memberlist.Config, error) {
 	var mc *memberlist.Config
 	switch cfg.ConnectionType {
 	case string(Local):
@@ -42,9 +42,11 @@ func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool) (*memberlist.C
 	}
 
 	mc.Name = cfg.NodeName
-	mc.Delegate = NewAgentDelegate(cfg.NodeName, cfg.AgentAddr, peerUpdateChan)
+	mc.Delegate = NewAgentDelegate(cfg.NodeName, cfg.AgentAddr, peerUpdateChan, nodeEventChan)
+	mc.Events = NewEventHandler(nodeEventChan)
 
 	// disable logging for memberlist
+	// TODO: enable if debug
 	mc.Logger = log.New(ioutil.Discard, "", 0)
 
 	// ml overrides for connection

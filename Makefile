@@ -16,7 +16,7 @@ CWD=$(PWD)
 all: binary
 
 deps:
-	@vndr -whitelist github.com/gogo/protobuf/gogoproto
+	@vndr -whitelist github.com/gogo/protobuf
 
 generate:
 	@echo ${PACKAGES} | xargs protobuild

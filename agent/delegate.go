@@ -8,44 +8,53 @@ import (
 )
 
 type agentDelegate struct {
-	Name       string
-	Addr       string
-	Peers      map[string]*PeerAgent
-	updateChan chan bool
+	Name          string
+	Addr          string
+	Peers         map[string]*PeerAgent
+	updateChan    chan bool
+	nodeEventChan chan *NodeEvent
 }
 
-func NewAgentDelegate(name, addr string, ch chan bool) *agentDelegate {
+func NewAgentDelegate(name, addr string, updateCh chan bool, nodeEventCh chan *NodeEvent) *agentDelegate {
 	agent := &agentDelegate{
-		Name:       name,
-		Addr:       addr,
-		Peers:      make(map[string]*PeerAgent),
-		updateChan: ch,
+		Name:          name,
+		Addr:          addr,
+		Peers:         make(map[string]*PeerAgent),
+		updateChan:    updateCh,
+		nodeEventChan: nodeEventCh,
 	}
 
-	t := time.NewTicker(nodeHeartbeatInterval)
+	// event handler
 	go func() {
-		for range t.C {
-			// reconcile
-			agent.reconcile()
+		for {
+			select {
+			case evt := <-nodeEventCh:
+				switch evt.EventType {
+				case NodeJoin:
+				case NodeUpdate:
+				case NodeLeave:
+					agent.removeNode(evt.Node.Name)
+				}
+			}
 		}
 	}()
 
 	return agent
 }
 
-func (d *agentDelegate) reconcile() {
-	changed := false
-	for name, peer := range d.Peers {
-		if time.Now().After(peer.Updated.Add(nodeReconcileTimeout)) {
-			logrus.Debugf("peer timeout; removing %s", name)
-			delete(d.Peers, name)
-			changed = true
-		}
-	}
-	if changed {
-		d.updateChan <- true
-	}
-}
+//func (d *agentDelegate) reconcile() {
+//	changed := false
+//	for name, peer := range d.Peers {
+//		if time.Now().After(peer.Updated.Add(nodeReconcileTimeout)) {
+//			logrus.Debugf("peer timeout; removing %s", name)
+//			delete(d.Peers, name)
+//			changed = true
+//		}
+//	}
+//	if changed {
+//		d.updateChan <- true
+//	}
+//}
 
 func (d *agentDelegate) NodeMeta(limit int) []byte {
 	data, err := json.Marshal(d.Peers)
@@ -85,4 +94,12 @@ func (d *agentDelegate) MergeRemoteState(buf []byte, join bool) {
 	}
 	// notify update
 	d.updateChan <- true
+}
+
+func (d *agentDelegate) removeNode(name string) {
+	if _, exists := d.Peers[name]; exists {
+		delete(d.Peers, name)
+		// notify update
+		d.updateChan <- true
+	}
 }

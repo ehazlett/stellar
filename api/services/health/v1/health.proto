@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package element.services.health.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/ehazlett/element/api/services/health/v1;health";
+
+service Health {
+	rpc Health(google.protobuf.Empty) returns (HealthResponse);
+}
+
+message HealthResponse {
+	string os_name = 1 [(gogoproto.customname) = "OSName"];
+	string os_version = 2 [(gogoproto.customname) = "OSVersion"];
+        google.protobuf.Duration uptime = 3;
+        int64 containers = 4;
+        int64 images = 5;
+        int64 snapshots = 6;
+        int64 tasks = 7;
+}

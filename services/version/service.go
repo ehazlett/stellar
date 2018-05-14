@@ -33,6 +33,7 @@ func (s *service) containerdVersion(ctx context.Context) (containerd.Version, er
 	if err != nil {
 		return containerd.Version{}, err
 	}
+	defer c.Close()
 
 	return c.Version(ctx)
 }
