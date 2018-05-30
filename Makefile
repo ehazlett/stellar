@@ -52,7 +52,10 @@ check: vet lint
 test:
 	@go test -short -v -cover $(TEST_ARGS) ${PACKAGES}
 
+install:
+	@install -D -m 755 cmd/$(APP)/$(APP) /usr/local/bin/
+
 clean:
 	@rm cmd/$(APP)/$(APP)
 
-.PHONY: binary generate clean check test
+.PHONY: binary generate clean check test install

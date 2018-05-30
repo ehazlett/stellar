@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package element.services.node.v1;
+
+import "google/protobuf/empty.proto";
+import "gogoproto/gogo.proto";
+import "github.com/containerd/containerd/api/services/containers/v1/containers.proto";
+
+option go_package = "github.com/ehazlett/element/api/services/node/v1;node";
+
+service Node {
+	rpc Containers(google.protobuf.Empty) returns (ContainersResponse);
+}
+
+message Container {
+        string id = 1 [(gogoproto.customname) = "ID"];
+}
+
+message ContainersResponse {
+        repeated Container containers = 1;
+}

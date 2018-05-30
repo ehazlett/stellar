@@ -13,13 +13,11 @@ service Health {
 }
 
 message HealthResponse {
-	string os_name = 1;
-	string os_version = 2;
+	string os_name = 1 [(gogoproto.customname) = "OSName"];
+	string os_version = 2 [(gogoproto.customname) = "OSVersion"];
         google.protobuf.Duration uptime = 3;
         int64 cpus = 4;
         int64 memory_total = 5;
         int64 memory_free = 6;
         int64 memory_used = 7;
-        int64 containers = 8;
-        int64 images = 9;
 }

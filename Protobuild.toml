@@ -1,5 +1,7 @@
 version = "unstable"
 
+generator = "gogo"
+
 # Plugins allows one to specify one or more plugins for use in generation.
 #
 # The common example grpc is provided below.

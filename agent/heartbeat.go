@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -29,15 +31,32 @@ func (a *Agent) heartbeat() {
 
 		logrus.WithFields(logrus.Fields{
 			"peer":         peer.Name,
-			"os_name":      health.OsName,
-			"os_version":   health.OsVersion,
+			"os_name":      health.OSName,
+			"os_version":   health.OSVersion,
 			"uptime":       health.Uptime,
 			"cpus":         health.Cpus,
 			"memory_total": health.MemoryTotal,
 			"memory_free":  health.MemoryFree,
 			"memory_used":  health.MemoryUsed,
-			"containers":   health.Containers,
-			"images":       health.Images,
 		}).Debug("peer health")
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+
+		resp, err := ac.NodeService.Containers(ctx, nil)
+		if err != nil {
+			logrus.Errorf("error getting containers: %s", err)
+			return
+		}
+
+		ids := []string{}
+		for _, c := range resp.Containers {
+			ids = append(ids, c.ID)
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"peer":       peer.Name,
+			"containers": strings.Join(ids, ", "),
+		}).Debug("containers")
 	}
 }
