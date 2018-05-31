@@ -3,8 +3,8 @@ package agent
 import (
 	"context"
 	"strings"
-	"time"
 
+	"github.com/ehazlett/element"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,7 +16,7 @@ func (a *Agent) heartbeat() {
 	}
 
 	for _, peer := range peers {
-		ac, err := NewAgentClient(peer.Addr)
+		ac, err := element.NewClient(peer.Addr)
 		if err != nil {
 			logrus.Errorf("error communicating with peer: %s", err)
 			return
@@ -40,17 +40,14 @@ func (a *Agent) heartbeat() {
 			"memory_used":  health.MemoryUsed,
 		}).Debug("peer health")
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-
-		resp, err := ac.NodeService.Containers(ctx, nil)
+		containers, err := ac.Containers()
 		if err != nil {
 			logrus.Errorf("error getting containers: %s", err)
 			return
 		}
 
 		ids := []string{}
-		for _, c := range resp.Containers {
+		for _, c := range containers {
 			ids = append(ids, c.ID)
 		}
 

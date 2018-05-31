@@ -2,20 +2,33 @@ syntax = "proto3";
 
 package element.services.node.v1;
 
-import "google/protobuf/empty.proto";
 import "gogoproto/gogo.proto";
-import "github.com/containerd/containerd/api/services/containers/v1/containers.proto";
 
 option go_package = "github.com/ehazlett/element/api/services/node/v1;node";
 
 service Node {
-	rpc Containers(google.protobuf.Empty) returns (ContainersResponse);
+	rpc Containers(ContainersRequest) returns (ContainersResponse);
+        rpc Images(ImagesRequest) returns (ImagesResponse);
 }
+
+message ContainersRequest {}
 
 message Container {
         string id = 1 [(gogoproto.customname) = "ID"];
+        string image = 2;
+        map<string,string> labels = 3;
 }
 
 message ContainersResponse {
         repeated Container containers = 1;
+}
+
+message ImagesRequest {}
+
+message Image {
+        string id = 1 [(gogoproto.customname) = "ID"];
+}
+
+message ImagesResponse {
+        repeated Image images = 1;
 }

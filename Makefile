@@ -4,6 +4,7 @@ COMMIT=`git rev-parse --short HEAD`
 NAMESPACE?=ehazlett
 IMAGE_NAMESPACE?=$(NAMESPACE)
 APP=element
+CLI=elctl
 REPO?=$(NAMESPACE)/$(APP)
 TAG?=dev
 BUILD?=-dev
@@ -13,7 +14,7 @@ EXTENSIONS=$(wildcard extensions/*)
 CYCLO_PACKAGES=$(shell go list ./... | grep -v /vendor/ | sed "s/github.com\/$(NAMESPACE)\/$(APP)\///g" | tail -n +2)
 CWD=$(PWD)
 
-all: binary
+all: binaries
 
 deps:
 	@vndr -whitelist github.com/gogo/protobuf
@@ -26,10 +27,15 @@ docker-generate:
 	@docker build -t $(APP)-dev -f Dockerfile.build.$(GOOS).$(GOARCH) .
 	@docker run -ti --rm -v $(PWD):/go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev ash -c "echo ${PACKAGES} | xargs /go/bin/protobuild"
 
-binary:
-	@echo " -> Building $(TAG)"
-	@cd cmd/$(APP) && go build -v -a -tags "netgo static_build" -installsuffix netgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
-	@echo "Built ${APP} version ${COMMIT} (${GOOS}/${GOARCH})"
+binaries: daemon cli
+
+cli:
+	@echo " -> Building cli $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
+	@cd cmd/$(CLI) && go build -a -tags "netgo static_build" -installsuffix netgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
+
+daemon:
+	@echo " -> Building daemon $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
+	@cd cmd/$(APP) && go build -a -tags "netgo static_build" -installsuffix netgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
 
 image:
 	@docker build $(BUILD_ARGS) --build-arg GOOS=$(GOOS) --build-arg GOARCH=$(GOARCH) --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(IMAGE_NAMESPACE)/$(APP):$(TAG) -f Dockerfile.$(GOOS).$(GOARCH) .

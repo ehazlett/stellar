@@ -1,4 +1,4 @@
-package agent
+package element
 
 import (
 	healthapi "github.com/ehazlett/element/api/services/health/v1"
@@ -7,20 +7,20 @@ import (
 	"google.golang.org/grpc"
 )
 
-type AgentClient struct {
+type Client struct {
 	conn           *grpc.ClientConn
 	VersionService versionapi.VersionClient
 	HealthService  healthapi.HealthClient
 	NodeService    nodeapi.NodeClient
 }
 
-func NewAgentClient(addr string) (*AgentClient, error) {
+func NewClient(addr string) (*Client, error) {
 	c, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}
 
-	client := &AgentClient{
+	client := &Client{
 		conn: c,
 	}
 	client.VersionService = versionapi.NewVersionClient(c)
@@ -30,6 +30,6 @@ func NewAgentClient(addr string) (*AgentClient, error) {
 	return client, nil
 }
 
-func (a *AgentClient) Close() error {
-	return a.conn.Close()
+func (c *Client) Close() error {
+	return c.conn.Close()
 }
