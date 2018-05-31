@@ -61,7 +61,10 @@ test:
 install:
 	@install -D -m 755 cmd/$(APP)/$(APP) /usr/local/bin/
 
+vendor:
+	@vndr
+
 clean:
 	@rm cmd/$(APP)/$(APP)
 
-.PHONY: binary generate clean check test install
+.PHONY: generate clean check test install vendor daemon cli binaries

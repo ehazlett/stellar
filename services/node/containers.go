@@ -6,6 +6,7 @@ import (
 
 	"github.com/containerd/containerd"
 	api "github.com/ehazlett/element/api/services/node/v1"
+	"github.com/golang/protobuf/ptypes/any"
 )
 
 func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*api.ContainersResponse, error) {
@@ -44,6 +45,11 @@ func (s *service) containersToProto(containers []containerd.Container) ([]*api.C
 			ID:     container.ID(),
 			Image:  info.Image,
 			Labels: info.Labels,
+			Spec: &any.Any{
+				TypeUrl: info.Spec.TypeUrl,
+				Value:   info.Spec.Value,
+			},
+			Snapshotter: info.Snapshotter,
 		})
 	}
 
