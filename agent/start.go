@@ -4,7 +4,6 @@ import (
 	"net"
 	"os"
 	"syscall"
-	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -42,11 +41,8 @@ func (a *Agent) Start(signals chan os.Signal) error {
 		logrus.Infof("joined %d peer(s)", n)
 	}
 
-	ticker := time.NewTicker(nodeHeartbeatInterval)
 	for {
 		select {
-		case <-ticker.C:
-			a.heartbeat()
 		case s := <-signals:
 			switch s {
 			case syscall.SIGTERM, syscall.SIGINT:

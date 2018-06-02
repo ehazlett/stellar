@@ -1,4 +1,4 @@
-package agent
+package server
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (a *Agent) heartbeat() {
-	peers, err := a.Peers()
+func (s *Server) heartbeat() {
+	peers, err := s.agent.Peers()
 	if err != nil {
 		logrus.Errorf("error getting peers: %s", err)
 		return

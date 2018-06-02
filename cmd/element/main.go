@@ -2,14 +2,10 @@ package main
 
 import (
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/codegangsta/cli"
 	"github.com/ehazlett/element/agent"
-	healthservice "github.com/ehazlett/element/services/health"
-	nodeservice "github.com/ehazlett/element/services/node"
-	versionservice "github.com/ehazlett/element/services/version"
+	"github.com/ehazlett/element/server"
 	"github.com/ehazlett/element/version"
 	log "github.com/sirupsen/logrus"
 )
@@ -100,7 +96,7 @@ func getHostname() string {
 }
 
 func action(c *cli.Context) error {
-	cfg := &agent.Config{
+	agentConfig := &agent.Config{
 		NodeName:       c.String("node-name"),
 		AgentAddr:      c.String("agent-addr"),
 		ConnectionType: c.String("connection-type"),
@@ -113,28 +109,15 @@ func action(c *cli.Context) error {
 
 	containerdAddr := c.String("containerd-addr")
 	namespace := c.String("namespace")
-	vs, err := versionservice.New(containerdAddr, namespace)
+
+	srv, err := server.NewServer(&server.Config{
+		AgentConfig:    agentConfig,
+		ContainerdAddr: containerdAddr,
+		Namespace:      namespace,
+	})
 	if err != nil {
 		return err
 	}
 
-	ns, err := nodeservice.New(containerdAddr, namespace)
-	if err != nil {
-		return err
-	}
-
-	hs, err := healthservice.New()
-	if err != nil {
-		return err
-	}
-
-	a, err := agent.NewAgent(cfg, vs, ns, hs)
-	if err != nil {
-		return err
-	}
-
-	signals := make(chan os.Signal, 32)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-
-	return a.Start(signals)
+	return srv.Run()
 }
