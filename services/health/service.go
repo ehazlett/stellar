@@ -27,7 +27,7 @@ func (s *service) Register(server *grpc.Server) error {
 }
 
 func (s *service) ID() string {
-	return "health"
+	return "element.services.health"
 }
 
 func (s *service) Health(ctx context.Context, _ *types.Empty) (*api.HealthResponse, error) {

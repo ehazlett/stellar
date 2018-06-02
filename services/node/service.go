@@ -24,7 +24,7 @@ func (s *service) Register(server *grpc.Server) error {
 }
 
 func (s *service) ID() string {
-	return "node"
+	return "element.services.node"
 }
 
 func (s *service) containerd() (*containerd.Client, error) {

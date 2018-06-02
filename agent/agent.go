@@ -2,10 +2,12 @@ package agent
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ehazlett/element/services"
 	"github.com/hashicorp/memberlist"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -40,8 +42,17 @@ func NewAgent(cfg *Config, svcs ...services.Service) (*Agent, error) {
 		return nil, err
 	}
 	grpcServer := grpc.NewServer()
+	registered := make(map[string]struct{}, len(svcs))
 	for _, svc := range svcs {
+		id := svc.ID()
+		if _, exists := registered[id]; exists {
+			return nil, fmt.Errorf("service %s already registered", id)
+		}
 		svc.Register(grpcServer)
+		logrus.WithFields(logrus.Fields{
+			"id": id,
+		}).Info("registered service")
+		registered[id] = struct{}{}
 	}
 
 	return &Agent{
