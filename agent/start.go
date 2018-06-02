@@ -6,11 +6,7 @@ import (
 	"syscall"
 	"time"
 
-	healthservice "github.com/ehazlett/element/services/health"
-	nodeservice "github.com/ehazlett/element/services/node"
-	versionservice "github.com/ehazlett/element/services/version"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 )
 
 func (a *Agent) Start(signals chan os.Signal) error {
@@ -20,17 +16,11 @@ func (a *Agent) Start(signals chan os.Signal) error {
 		a.config.AdvertiseAddr,
 		a.config.AdvertisePort,
 	)
-	grpcServer := grpc.NewServer()
-	// TODO: make services into plugins that register
-	versionservice.Register(grpcServer, a.config.ContainerdAddr, a.config.Namespace)
-	nodeservice.Register(grpcServer, a.config.ContainerdAddr, a.config.Namespace)
-	healthservice.Register(grpcServer)
-
 	l, err := net.Listen("tcp", a.config.AgentAddr)
 	if err != nil {
 		return err
 	}
-	go grpcServer.Serve(l)
+	go a.grpcServer.Serve(l)
 
 	// start node metadata updater
 	go func() {

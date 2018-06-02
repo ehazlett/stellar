@@ -17,9 +17,7 @@ const (
 
 type Config struct {
 	NodeName       string
-	Namespace      string
 	AgentAddr      string
-	ContainerdAddr string
 	ConnectionType string
 	BindAddr       string
 	BindPort       int

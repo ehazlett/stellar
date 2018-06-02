@@ -15,12 +15,19 @@ type service struct {
 	started time.Time
 }
 
-func Register(server *grpc.Server) error {
-	s := &service{
+func New() (*service, error) {
+	return &service{
 		started: time.Now(),
-	}
+	}, nil
+}
+
+func (s *service) Register(server *grpc.Server) error {
 	api.RegisterHealthServer(server, s)
 	return nil
+}
+
+func (s *service) ID() string {
+	return "health"
 }
 
 func (s *service) Health(ctx context.Context, _ *types.Empty) (*api.HealthResponse, error) {

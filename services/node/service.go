@@ -11,13 +11,20 @@ type service struct {
 	namespace      string
 }
 
-func Register(server *grpc.Server, containerdAddr, namespace string) error {
-	s := &service{
+func New(containerdAddr, namespace string) (*service, error) {
+	return &service{
 		containerdAddr: containerdAddr,
 		namespace:      namespace,
-	}
+	}, nil
+}
+
+func (s *service) Register(server *grpc.Server) error {
 	api.RegisterNodeServer(server, s)
 	return nil
+}
+
+func (s *service) ID() string {
+	return "node"
 }
 
 func (s *service) containerd() (*containerd.Client, error) {

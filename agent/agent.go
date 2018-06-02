@@ -4,7 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ehazlett/element/services"
 	"github.com/hashicorp/memberlist"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -22,9 +24,10 @@ type Agent struct {
 	members        *memberlist.Memberlist
 	peerUpdateChan chan bool
 	nodeEventChan  chan *NodeEvent
+	grpcServer     *grpc.Server
 }
 
-func NewAgent(cfg *Config) (*Agent, error) {
+func NewAgent(cfg *Config, svcs ...services.Service) (*Agent, error) {
 	updateCh := make(chan bool)
 	nodeEventCh := make(chan *NodeEvent)
 	mc, err := setupMemberlistConfig(cfg, updateCh, nodeEventCh)
@@ -36,11 +39,16 @@ func NewAgent(cfg *Config) (*Agent, error) {
 	if err != nil {
 		return nil, err
 	}
+	grpcServer := grpc.NewServer()
+	for _, svc := range svcs {
+		svc.Register(grpcServer)
+	}
 
 	return &Agent{
 		config:         cfg,
 		members:        ml,
 		peerUpdateChan: updateCh,
 		nodeEventChan:  nodeEventCh,
+		grpcServer:     grpcServer,
 	}, nil
 }

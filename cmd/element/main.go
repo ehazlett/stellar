@@ -7,6 +7,9 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/ehazlett/element/agent"
+	healthservice "github.com/ehazlett/element/services/health"
+	nodeservice "github.com/ehazlett/element/services/node"
+	versionservice "github.com/ehazlett/element/services/version"
 	"github.com/ehazlett/element/version"
 	log "github.com/sirupsen/logrus"
 )
@@ -100,8 +103,6 @@ func action(c *cli.Context) error {
 	cfg := &agent.Config{
 		NodeName:       c.String("node-name"),
 		AgentAddr:      c.String("agent-addr"),
-		ContainerdAddr: c.String("containerd-addr"),
-		Namespace:      c.String("namespace"),
 		ConnectionType: c.String("connection-type"),
 		BindAddr:       c.String("bind-addr"),
 		BindPort:       c.Int("bind-port"),
@@ -110,7 +111,24 @@ func action(c *cli.Context) error {
 		Peers:          c.StringSlice("peer"),
 	}
 
-	a, err := agent.NewAgent(cfg)
+	containerdAddr := c.String("containerd-addr")
+	namespace := c.String("namespace")
+	vs, err := versionservice.New(containerdAddr, namespace)
+	if err != nil {
+		return err
+	}
+
+	ns, err := nodeservice.New(containerdAddr, namespace)
+	if err != nil {
+		return err
+	}
+
+	hs, err := healthservice.New()
+	if err != nil {
+		return err
+	}
+
+	a, err := agent.NewAgent(cfg, vs, ns, hs)
 	if err != nil {
 		return err
 	}
