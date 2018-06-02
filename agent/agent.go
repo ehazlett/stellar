@@ -2,32 +2,34 @@ package agent
 
 import (
 	"errors"
-	"fmt"
+	"time"
 
-	"github.com/ehazlett/element/services"
 	"github.com/hashicorp/memberlist"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 const (
-	nodeReconcileTimeout = nodeHeartbeatInterval * 3
-	nodeUpdateTimeout    = nodeHeartbeatInterval / 2
+	defaultInterval      = time.Second * 10
+	nodeReconcileTimeout = defaultInterval * 3
+	nodeUpdateTimeout    = defaultInterval / 2
 )
 
 var (
 	ErrUnknownConnectionType = errors.New("unknown connection type")
 )
 
+// Agent represents the node agent
 type Agent struct {
-	config         *Config
-	members        *memberlist.Memberlist
-	peerUpdateChan chan bool
-	nodeEventChan  chan *NodeEvent
-	grpcServer     *grpc.Server
+	config             *Config
+	members            *memberlist.Memberlist
+	peerUpdateChan     chan bool
+	nodeEventChan      chan *NodeEvent
+	grpcServer         *grpc.Server
+	registeredServices map[string]struct{}
 }
 
-func NewAgent(cfg *Config, svcs ...services.Service) (*Agent, error) {
+// NewAgent returns a new node agent
+func NewAgent(cfg *Config) (*Agent, error) {
 	updateCh := make(chan bool)
 	nodeEventCh := make(chan *NodeEvent)
 	mc, err := setupMemberlistConfig(cfg, updateCh, nodeEventCh)
@@ -40,19 +42,6 @@ func NewAgent(cfg *Config, svcs ...services.Service) (*Agent, error) {
 		return nil, err
 	}
 	grpcServer := grpc.NewServer()
-	registered := make(map[string]struct{}, len(svcs))
-	for _, svc := range svcs {
-		id := svc.ID()
-		if _, exists := registered[id]; exists {
-			return nil, fmt.Errorf("service %s already registered", id)
-		}
-		svc.Register(grpcServer)
-		logrus.WithFields(logrus.Fields{
-			"id": id,
-		}).Info("registered service")
-		registered[id] = struct{}{}
-	}
-
 	return &Agent{
 		config:         cfg,
 		members:        ml,

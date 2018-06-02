@@ -7,23 +7,36 @@ import (
 	"github.com/hashicorp/memberlist"
 )
 
+// ConnectionType defines the type of connection for the agent to use (wan, lan, local)
 type ConnectionType string
 
 const (
-	LAN   ConnectionType = "lan"
-	WAN   ConnectionType = "wan"
+	// LAN is a local area network connection intended for high speed, low latency networks
+	LAN ConnectionType = "lan"
+	// WAN is a wide area connection intended for long distance remote links
+	WAN ConnectionType = "wan"
+	// Local is a local connection intended for high speed local development links
 	Local ConnectionType = "local"
 )
 
+// Config is the agent config
 type Config struct {
-	NodeName       string
-	AgentAddr      string
+	// NodeName is the name of the node.  Each node must have a unique name in the cluster.
+	NodeName string
+	// AgentAddr is the address on which the agent will serve the GRPC services
+	AgentAddr string
+	// ConnectionType is the connection type the agent will use
 	ConnectionType string
-	BindAddr       string
-	BindPort       int
-	AdvertiseAddr  string
-	AdvertisePort  int
-	Peers          []string
+	// BindAddr is the cluster bind address
+	BindAddr string
+	// BindPort is the cluster bind port
+	BindPort int
+	// AdvertiseAddr is the cluster address that will be used for membership communication
+	AdvertiseAddr string
+	// AdvertisePort is the cluster port that will be used for membership communication
+	AdvertisePort int
+	// Peers is a local cache of peer members
+	Peers []string
 }
 
 func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool, nodeEventChan chan *NodeEvent) (*memberlist.Config, error) {

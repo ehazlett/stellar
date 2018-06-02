@@ -6,6 +6,10 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	serviceID = "element.services.node.v1"
+)
+
 type service struct {
 	containerdAddr string
 	namespace      string
@@ -24,7 +28,7 @@ func (s *service) Register(server *grpc.Server) error {
 }
 
 func (s *service) ID() string {
-	return "element.services.node"
+	return serviceID
 }
 
 func (s *service) containerd() (*containerd.Client, error) {

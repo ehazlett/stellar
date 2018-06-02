@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Start activates the GRPC listener as well as joins the cluster if specified and blocks until a SIGTERM or SIGINT is received
 func (a *Agent) Start(signals chan os.Signal) error {
 	logrus.Infof("starting agent: bind=%s:%d advertise=%s:%d",
 		a.config.BindAddr,

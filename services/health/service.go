@@ -11,6 +11,10 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	serviceID = "element.services.health.v1"
+)
+
 type service struct {
 	started time.Time
 }
@@ -27,7 +31,7 @@ func (s *service) Register(server *grpc.Server) error {
 }
 
 func (s *service) ID() string {
-	return "element.services.health"
+	return serviceID
 }
 
 func (s *service) Health(ctx context.Context, _ *types.Empty) (*api.HealthResponse, error) {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ehazlett/element/agent"
+	"github.com/ehazlett/element/services"
 	healthservice "github.com/ehazlett/element/services/health"
 	nodeservice "github.com/ehazlett/element/services/node"
 	versionservice "github.com/ehazlett/element/services/version"
@@ -28,6 +29,12 @@ type Config struct {
 }
 
 func NewServer(cfg *Config) (*Server, error) {
+	a, err := agent.NewAgent(cfg.AgentConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// services
 	vs, err := versionservice.New(cfg.ContainerdAddr, cfg.Namespace)
 	if err != nil {
 		return nil, err
@@ -43,9 +50,14 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	a, err := agent.NewAgent(cfg.AgentConfig, vs, ns, hs)
-	if err != nil {
-		return nil, err
+	// register with agent
+	for _, svc := range []services.Service{vs, ns, hs} {
+		if err := a.Register(svc); err != nil {
+			return nil, err
+		}
+		logrus.WithFields(logrus.Fields{
+			"id": svc.ID(),
+		}).Info("registered service")
 	}
 
 	return &Server{

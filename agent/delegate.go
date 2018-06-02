@@ -15,6 +15,7 @@ type agentDelegate struct {
 	nodeEventChan chan *NodeEvent
 }
 
+// NewAgentDelegate is the agent delegate used to handle cluster events
 func NewAgentDelegate(name, addr string, updateCh chan bool, nodeEventCh chan *NodeEvent) *agentDelegate {
 	agent := &agentDelegate{
 		Name:          name,
@@ -42,6 +43,7 @@ func NewAgentDelegate(name, addr string, updateCh chan bool, nodeEventCh chan *N
 	return agent
 }
 
+// NodeMeta returns local node meta information
 func (d *agentDelegate) NodeMeta(limit int) []byte {
 	data, err := json.Marshal(d.Peers)
 	if err != nil {
@@ -50,6 +52,7 @@ func (d *agentDelegate) NodeMeta(limit int) []byte {
 	return data
 }
 
+// NotifyMsg is used for handling cluster messages
 func (d *agentDelegate) NotifyMsg(buf []byte) {
 	// this can be used to receive messages sent (i.e. SendReliable)
 }
@@ -59,6 +62,7 @@ func (d *agentDelegate) GetBroadcasts(overhead, limit int) [][]byte {
 	return nil
 }
 
+// LocalState is the local cluster agent state
 func (d *agentDelegate) LocalState(join bool) []byte {
 	data, err := json.Marshal(d)
 	if err != nil {
@@ -67,6 +71,7 @@ func (d *agentDelegate) LocalState(join bool) []byte {
 	return []byte(data)
 }
 
+// MergeRemoteState is used to store remote peer information
 func (d *agentDelegate) MergeRemoteState(buf []byte, join bool) {
 	var remoteAgent *agentDelegate
 	if err := json.Unmarshal(buf, &remoteAgent); err != nil {
