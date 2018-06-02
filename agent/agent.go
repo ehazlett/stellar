@@ -3,7 +3,6 @@ package agent
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/ehazlett/element/services"
 	"github.com/hashicorp/memberlist"
@@ -12,9 +11,8 @@ import (
 )
 
 const (
-	nodeHeartbeatInterval = time.Second * 10
-	nodeReconcileTimeout  = nodeHeartbeatInterval * 3
-	nodeUpdateTimeout     = nodeHeartbeatInterval / 2
+	nodeReconcileTimeout = nodeHeartbeatInterval * 3
+	nodeUpdateTimeout    = nodeHeartbeatInterval / 2
 )
 
 var (
