@@ -7,7 +7,10 @@ import (
 	"text/tabwriter"
 
 	"github.com/codegangsta/cli"
+	humanize "github.com/dustin/go-humanize"
+	"github.com/ehazlett/element"
 	clusterapi "github.com/ehazlett/element/api/services/cluster/v1"
+	healthapi "github.com/ehazlett/element/api/services/health/v1"
 )
 
 var clusterCommand = cli.Command{
@@ -61,10 +64,32 @@ var clusterNodesCommand = cli.Command{
 			return err
 		}
 
+		info := map[*clusterapi.Node]*healthapi.HealthResponse{}
+		for _, node := range nodes {
+			nc, err := element.NewClient(node.Addr)
+			if err != nil {
+				return err
+			}
+
+			resp, err := nc.HealthService.Health(context.Background(), nil)
+			if err != nil {
+				return err
+			}
+			info[node] = resp
+			nc.Close()
+		}
+
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
-		fmt.Fprintf(w, "NAME\tADDR\n")
-		for _, n := range nodes {
-			fmt.Fprintf(w, "%s\t%s\n", n.Name, n.Addr)
+		fmt.Fprintf(w, "NAME\tADDR\tOS\tUPTIME\tCPUS\tMEMORY (USED)\n")
+		for node, health := range info {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n",
+				node.Name,
+				node.Addr,
+				health.OSName+" ("+health.OSVersion+")",
+				health.Uptime,
+				health.Cpus,
+				fmt.Sprintf("%s / %s", humanize.Bytes(uint64(health.MemoryUsed)), humanize.Bytes(uint64(health.MemoryTotal))),
+			)
 		}
 		w.Flush()
 
