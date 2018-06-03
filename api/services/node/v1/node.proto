@@ -19,7 +19,7 @@ message Container {
         string image = 2;
         map<string,string> labels = 3;
         google.protobuf.Any spec = 4;
-        string snapshotter = 5 ;
+        string snapshotter = 5;
 }
 
 message ContainersResponse {

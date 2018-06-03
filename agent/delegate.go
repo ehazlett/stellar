@@ -10,6 +10,7 @@ import (
 type agentDelegate struct {
 	Name          string
 	Addr          string
+	Updated       time.Time
 	Peers         map[string]*PeerAgent
 	updateChan    chan bool
 	nodeEventChan chan *NodeEvent
@@ -78,6 +79,7 @@ func (d *agentDelegate) MergeRemoteState(buf []byte, join bool) {
 		logrus.Errorf("error parsing remote agent state: %s", err)
 		return
 	}
+	d.Updated = time.Now()
 	d.Peers[remoteAgent.Name] = &PeerAgent{
 		Name:    remoteAgent.Name,
 		Addr:    remoteAgent.Addr,

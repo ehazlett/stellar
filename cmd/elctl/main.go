@@ -36,6 +36,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		nodeCommand,
+		clusterCommand,
 	}
 
 	if err := app.Run(os.Args); err != nil {

@@ -30,7 +30,11 @@ func main() {
 		cli.StringFlag{
 			Name:  "agent-addr, a",
 			Usage: "agent grpc addr",
-			Value: "127.0.0.1:9000",
+		},
+		cli.IntFlag{
+			Name:  "agent-port, p",
+			Usage: "agent grpc port",
+			Value: 9000,
 		},
 		cli.StringFlag{
 			Name:  "containerd-addr, c",
@@ -68,7 +72,7 @@ func main() {
 			Value: 7946,
 		},
 		cli.StringSliceFlag{
-			Name:  "peer,p",
+			Name:  "peer",
 			Usage: "one or more peers for agent to join",
 			Value: &cli.StringSlice{},
 		},
@@ -96,11 +100,17 @@ func getHostname() string {
 }
 
 func action(c *cli.Context) error {
+	agentAddr := c.String("agent-addr")
+	bindAddr := c.String("bind-addr")
+	if agentAddr == "" {
+		agentAddr = bindAddr
+	}
 	agentConfig := &agent.Config{
 		NodeName:       c.String("node-name"),
-		AgentAddr:      c.String("agent-addr"),
+		AgentAddr:      agentAddr,
+		AgentPort:      c.Int("agent-port"),
 		ConnectionType: c.String("connection-type"),
-		BindAddr:       c.String("bind-addr"),
+		BindAddr:       bindAddr,
 		BindPort:       c.Int("bind-port"),
 		AdvertiseAddr:  c.String("advertise-addr"),
 		AdvertisePort:  c.Int("advertise-port"),

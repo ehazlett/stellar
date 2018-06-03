@@ -8,6 +8,7 @@ import (
 
 	"github.com/ehazlett/element/agent"
 	"github.com/ehazlett/element/services"
+	clusterservice "github.com/ehazlett/element/services/cluster"
 	healthservice "github.com/ehazlett/element/services/health"
 	nodeservice "github.com/ehazlett/element/services/node"
 	versionservice "github.com/ehazlett/element/services/version"
@@ -50,8 +51,13 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
+	cs, err := clusterservice.New(a, cfg.ContainerdAddr, cfg.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	// register with agent
-	for _, svc := range []services.Service{vs, ns, hs} {
+	for _, svc := range []services.Service{vs, ns, hs, cs} {
 		if err := a.Register(svc); err != nil {
 			return nil, err
 		}

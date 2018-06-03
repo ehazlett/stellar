@@ -30,7 +30,8 @@ func (s *Server) heartbeat() {
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"peer":         peer.Name,
+			"peer_name":    peer.Name,
+			"peer_addr":    peer.Addr,
 			"os_name":      health.OSName,
 			"os_version":   health.OSVersion,
 			"uptime":       health.Uptime,
@@ -52,7 +53,7 @@ func (s *Server) heartbeat() {
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"peer":       peer.Name,
+			"peer_name":  peer.Name,
 			"containers": strings.Join(ids, ", "),
 		}).Debug("containers")
 	}

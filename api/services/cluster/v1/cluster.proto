@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package element.services.cluster.v1;
+
+import "api/services/node/v1/node.proto";
+
+option go_package = "github.com/ehazlett/element/api/services/cluster/v1;cluster";
+
+service Cluster {
+	rpc Containers(ContainersRequest) returns (ContainersResponse);
+        rpc Images(ImagesRequest) returns (ImagesResponse);
+        rpc Nodes(NodesRequest) returns (NodesResponse);
+}
+
+message ContainersRequest {}
+
+message ImagesRequest {}
+
+message NodesRequest {}
+
+message ContainersResponse {
+  repeated element.services.node.v1.Container containers = 1;
+}
+
+message ImagesResponse {
+  repeated element.services.node.v1.Image images = 1;
+}
+
+message Node {
+    string name = 1;
+    string addr = 2;
+}
+
+message NodesResponse {
+    repeated Node nodes = 1;
+}

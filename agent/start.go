@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"syscall"
@@ -10,13 +11,15 @@ import (
 
 // Start activates the GRPC listener as well as joins the cluster if specified and blocks until a SIGTERM or SIGINT is received
 func (a *Agent) Start(signals chan os.Signal) error {
-	logrus.Infof("starting agent: bind=%s:%d advertise=%s:%d",
+	logrus.Infof("starting agent: grpc=%s:%d bind=%s:%d advertise=%s:%d",
+		a.config.AgentAddr,
+		a.config.AgentPort,
 		a.config.BindAddr,
 		a.config.BindPort,
 		a.config.AdvertiseAddr,
 		a.config.AdvertisePort,
 	)
-	l, err := net.Listen("tcp", a.config.AgentAddr)
+	l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", a.config.AgentAddr, a.config.AgentPort))
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -28,4 +29,13 @@ func (a *Agent) Peers() ([]*PeerAgent, error) {
 	}
 
 	return peers, nil
+}
+
+// LocalNode returns local node peer info
+func (a *Agent) LocalNode() (*PeerAgent, error) {
+	return &PeerAgent{
+		Name:    a.config.NodeName,
+		Addr:    fmt.Sprintf("%s:%d", a.config.AgentAddr, a.config.AgentPort),
+		Updated: time.Now(),
+	}, nil
 }

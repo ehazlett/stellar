@@ -1,6 +1,7 @@
 package element
 
 import (
+	clusterapi "github.com/ehazlett/element/api/services/cluster/v1"
 	healthapi "github.com/ehazlett/element/api/services/health/v1"
 	nodeapi "github.com/ehazlett/element/api/services/node/v1"
 	versionapi "github.com/ehazlett/element/api/services/version/v1"
@@ -12,6 +13,7 @@ type Client struct {
 	VersionService versionapi.VersionClient
 	HealthService  healthapi.HealthClient
 	NodeService    nodeapi.NodeClient
+	ClusterService clusterapi.ClusterClient
 }
 
 func NewClient(addr string) (*Client, error) {
@@ -26,6 +28,7 @@ func NewClient(addr string) (*Client, error) {
 	client.VersionService = versionapi.NewVersionClient(c)
 	client.HealthService = healthapi.NewHealthClient(c)
 	client.NodeService = nodeapi.NewNodeClient(c)
+	client.ClusterService = clusterapi.NewClusterClient(c)
 
 	return client, nil
 }

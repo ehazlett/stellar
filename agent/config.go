@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 
@@ -25,6 +26,8 @@ type Config struct {
 	NodeName string
 	// AgentAddr is the address on which the agent will serve the GRPC services
 	AgentAddr string
+	// AgentPort is the port on which the agent will serve the GRPC services
+	AgentPort int
 	// ConnectionType is the connection type the agent will use
 	ConnectionType string
 	// BindAddr is the cluster bind address
@@ -53,7 +56,7 @@ func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool, nodeEventChan 
 	}
 
 	mc.Name = cfg.NodeName
-	mc.Delegate = NewAgentDelegate(cfg.NodeName, cfg.AgentAddr, peerUpdateChan, nodeEventChan)
+	mc.Delegate = NewAgentDelegate(cfg.NodeName, fmt.Sprintf("%s:%d", cfg.AgentAddr, cfg.AgentPort), peerUpdateChan, nodeEventChan)
 	mc.Events = NewEventHandler(nodeEventChan)
 
 	// disable logging for memberlist
