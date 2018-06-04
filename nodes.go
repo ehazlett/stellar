@@ -1,9 +1,9 @@
-package element
+package stellar
 
 import (
 	"context"
 
-	clusterapi "github.com/ehazlett/element/api/services/cluster/v1"
+	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 )
 
 func (c *Client) Nodes() ([]*clusterapi.Node, error) {

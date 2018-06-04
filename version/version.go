@@ -4,13 +4,13 @@ import "runtime"
 
 var (
 	// Name is the name of the application
-	Name = "element"
+	Name = "stellar"
 
 	// Version defines the application version
 	Version = "0.1.0"
 
 	// Description is the application description
-	Description = "container runtime management"
+	Description = "container runtime cluster"
 
 	// Build will be overwritten automatically by the build system
 	Build = "-dev"

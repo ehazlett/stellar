@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package element.services.version.v1;
+package stellar.services.version.v1;
 
 import "google/protobuf/empty.proto";
 import weak "gogoproto/gogo.proto";
 
-option go_package = "github.com/ehazlett/element/api/services/version/v1;version";
+option go_package = "github.com/ehazlett/stellar/api/services/version/v1;version";
 
 service Version {
 	rpc Version(google.protobuf.Empty) returns (VersionResponse);

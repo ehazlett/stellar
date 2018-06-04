@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,7 +16,7 @@ func (s *Server) heartbeat() {
 	}
 
 	for _, peer := range peers {
-		ac, err := element.NewClient(peer.Addr)
+		ac, err := stellar.NewClient(peer.Addr)
 		if err != nil {
 			logrus.Errorf("error communicating with peer: %s", err)
 			return

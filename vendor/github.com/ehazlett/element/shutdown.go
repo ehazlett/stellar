@@ -1,4 +1,4 @@
-package agent
+package element
 
 // Shutdown causes the local node to leave the cluster and perform a clean shutdown
 func (a *Agent) Shutdown() error {

@@ -6,12 +6,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ehazlett/element/agent"
-	"github.com/ehazlett/element/services"
-	clusterservice "github.com/ehazlett/element/services/cluster"
-	healthservice "github.com/ehazlett/element/services/health"
-	nodeservice "github.com/ehazlett/element/services/node"
-	versionservice "github.com/ehazlett/element/services/version"
+	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar/services"
+	clusterservice "github.com/ehazlett/stellar/services/cluster"
+	healthservice "github.com/ehazlett/stellar/services/health"
+	nodeservice "github.com/ehazlett/stellar/services/node"
+	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,17 +20,17 @@ var (
 )
 
 type Server struct {
-	agent *agent.Agent
+	agent *element.Agent
 }
 
 type Config struct {
-	AgentConfig    *agent.Config
+	AgentConfig    *element.Config
 	ContainerdAddr string
 	Namespace      string
 }
 
 func NewServer(cfg *Config) (*Server, error) {
-	a, err := agent.NewAgent(cfg.AgentConfig)
+	a, err := element.NewAgent(cfg.AgentConfig)
 	if err != nil {
 		return nil, err
 	}

@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/ehazlett/element/agent"
-	"github.com/ehazlett/element/server"
-	"github.com/ehazlett/element/version"
+	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar/server"
+	"github.com/ehazlett/stellar/version"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -105,7 +105,7 @@ func action(c *cli.Context) error {
 	if agentAddr == "" {
 		agentAddr = bindAddr
 	}
-	agentConfig := &agent.Config{
+	agentConfig := &element.Config{
 		NodeName:       c.String("node-name"),
 		AgentAddr:      agentAddr,
 		AgentPort:      c.Int("agent-port"),

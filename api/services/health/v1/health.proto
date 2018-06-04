@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package element.services.health.v1;
+package stellar.services.health.v1;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/duration.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ehazlett/element/api/services/health/v1;health";
+option go_package = "github.com/ehazlett/stellar/api/services/health/v1;health";
 
 service Health {
 	rpc Health(google.protobuf.Empty) returns (HealthResponse);

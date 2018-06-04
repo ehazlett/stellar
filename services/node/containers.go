@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
-	api "github.com/ehazlett/element/api/services/node/v1"
+	api "github.com/ehazlett/stellar/api/services/node/v1"
 	"github.com/golang/protobuf/ptypes/any"
 )
 

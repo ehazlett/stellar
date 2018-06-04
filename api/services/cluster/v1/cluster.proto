@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package element.services.cluster.v1;
+package stellar.services.cluster.v1;
 
 import "api/services/node/v1/node.proto";
 
-option go_package = "github.com/ehazlett/element/api/services/cluster/v1;cluster";
+option go_package = "github.com/ehazlett/stellar/api/services/cluster/v1;cluster";
 
 service Cluster {
 	rpc Containers(ContainersRequest) returns (ContainersResponse);
@@ -19,11 +19,11 @@ message ImagesRequest {}
 message NodesRequest {}
 
 message ContainersResponse {
-  repeated element.services.node.v1.Container containers = 1;
+  repeated stellar.services.node.v1.Container containers = 1;
 }
 
 message ImagesResponse {
-  repeated element.services.node.v1.Image images = 1;
+  repeated stellar.services.node.v1.Image images = 1;
 }
 
 message Node {

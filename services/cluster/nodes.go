@@ -3,7 +3,7 @@ package cluster
 import (
 	"context"
 
-	api "github.com/ehazlett/element/api/services/cluster/v1"
+	api "github.com/ehazlett/stellar/api/services/cluster/v1"
 )
 
 func (s *service) Nodes(ctx context.Context, req *api.NodesRequest) (*api.NodesResponse, error) {

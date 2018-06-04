@@ -2,12 +2,12 @@ package node
 
 import (
 	"github.com/containerd/containerd"
-	api "github.com/ehazlett/element/api/services/node/v1"
+	api "github.com/ehazlett/stellar/api/services/node/v1"
 	"google.golang.org/grpc"
 )
 
 const (
-	serviceID = "element.services.node.v1"
+	serviceID = "stellar.services.node.v1"
 )
 
 type service struct {

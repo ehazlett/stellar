@@ -1,10 +1,10 @@
-package element
+package stellar
 
 import (
-	clusterapi "github.com/ehazlett/element/api/services/cluster/v1"
-	healthapi "github.com/ehazlett/element/api/services/health/v1"
-	nodeapi "github.com/ehazlett/element/api/services/node/v1"
-	versionapi "github.com/ehazlett/element/api/services/version/v1"
+	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
+	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
+	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	versionapi "github.com/ehazlett/stellar/api/services/version/v1"
 	"google.golang.org/grpc"
 )
 

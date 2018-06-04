@@ -1,9 +1,9 @@
-package element
+package stellar
 
 import (
 	"context"
 
-	nodeapi "github.com/ehazlett/element/api/services/node/v1"
+	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 )
 
 func (c *Client) Containers() ([]*nodeapi.Container, error) {

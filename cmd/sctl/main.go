@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/ehazlett/element"
-	"github.com/ehazlett/element/version"
+	"github.com/ehazlett/stellar"
+	"github.com/ehazlett/stellar/version"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,7 +23,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "addr",
-			Usage: "element daemon address",
+			Usage: "stellar daemon address",
 			Value: "127.0.0.1:9000",
 		},
 	}
@@ -44,6 +44,6 @@ func main() {
 	}
 }
 
-func getClient(c *cli.Context) (*element.Client, error) {
-	return element.NewClient(c.GlobalString("addr"))
+func getClient(c *cli.Context) (*stellar.Client, error) {
+	return stellar.NewClient(c.GlobalString("addr"))
 }

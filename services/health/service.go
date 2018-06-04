@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/gosigar"
-	api "github.com/ehazlett/element/api/services/health/v1"
+	api "github.com/ehazlett/stellar/api/services/health/v1"
 	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 )
 
 const (
-	serviceID = "element.services.health.v1"
+	serviceID = "stellar.services.health.v1"
 )
 
 type service struct {

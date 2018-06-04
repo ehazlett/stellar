@@ -1,4 +1,4 @@
-package agent
+package element
 
 import (
 	"github.com/hashicorp/memberlist"

@@ -2,22 +2,22 @@ package cluster
 
 import (
 	"github.com/containerd/containerd"
-	"github.com/ehazlett/element/agent"
-	api "github.com/ehazlett/element/api/services/cluster/v1"
+	"github.com/ehazlett/element"
+	api "github.com/ehazlett/stellar/api/services/cluster/v1"
 	"google.golang.org/grpc"
 )
 
 const (
-	serviceID = "element.services.cluster.v1"
+	serviceID = "stellar.services.cluster.v1"
 )
 
 type service struct {
 	containerdAddr string
 	namespace      string
-	agent          *agent.Agent
+	agent          *element.Agent
 }
 
-func New(a *agent.Agent, containerdAddr, namespace string) (*service, error) {
+func New(a *element.Agent, containerdAddr, namespace string) (*service, error) {
 	return &service{
 		containerdAddr: containerdAddr,
 		namespace:      namespace,

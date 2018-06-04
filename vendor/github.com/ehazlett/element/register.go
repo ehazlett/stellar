@@ -1,13 +1,9 @@
-package agent
+package element
 
-import (
-	"fmt"
-
-	"github.com/ehazlett/element/services"
-)
+import "fmt"
 
 // Register registers a GRPC service with the agent
-func (a *Agent) Register(svc services.Service) error {
+func (a *Agent) Register(svc Service) error {
 	id := svc.ID()
 	if _, exists := a.registeredServices[id]; exists {
 		return fmt.Errorf("service %s already registered", id)

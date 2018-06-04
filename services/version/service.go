@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	api "github.com/ehazlett/element/api/services/version/v1"
-	"github.com/ehazlett/element/version"
+	api "github.com/ehazlett/stellar/api/services/version/v1"
+	"github.com/ehazlett/stellar/version"
 	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 )
 
 const (
-	serviceID = "element.services.version.v1"
+	serviceID = "stellar.services.version.v1"
 )
 
 type service struct {

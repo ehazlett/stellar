@@ -8,14 +8,14 @@ import (
 
 	"github.com/codegangsta/cli"
 	humanize "github.com/dustin/go-humanize"
-	"github.com/ehazlett/element"
-	clusterapi "github.com/ehazlett/element/api/services/cluster/v1"
-	healthapi "github.com/ehazlett/element/api/services/health/v1"
+	"github.com/ehazlett/stellar"
+	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
+	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
 )
 
 var clusterCommand = cli.Command{
 	Name:    "cluster",
-	Aliases: []string{"n"},
+	Aliases: []string{"c"},
 	Usage:   "interact with cluster",
 	Subcommands: []cli.Command{
 		clusterContainersCommand,
@@ -66,7 +66,7 @@ var clusterNodesCommand = cli.Command{
 
 		info := map[*clusterapi.Node]*healthapi.HealthResponse{}
 		for _, node := range nodes {
-			nc, err := element.NewClient(node.Addr)
+			nc, err := stellar.NewClient(node.Addr)
 			if err != nil {
 				return err
 			}

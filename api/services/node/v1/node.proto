@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package element.services.node.v1;
+package stellar.services.node.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/ehazlett/element/api/services/node/v1;node";
+option go_package = "github.com/ehazlett/stellar/api/services/node/v1;node";
 
 service Node {
 	rpc Containers(ContainersRequest) returns (ContainersResponse);
