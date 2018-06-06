@@ -2,13 +2,37 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ehazlett/stellar"
+	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	"github.com/sirupsen/logrus"
 )
 
 func (s *Server) heartbeat() {
+	// TODO: temp; remove
+	localNode, err := s.agent.LocalNode()
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	c, err := stellar.NewClient(localNode.Addr)
+	if err != nil {
+		logrus.Error(err)
+	}
+	defer c.Close()
+
+	if _, err := c.DatastoreService().Set(context.Background(), &datastoreapi.SetRequest{
+		Bucket: datastoreBucketName,
+		Key:    fmt.Sprintf("service.%s.updated", localNode.Name),
+		Value:  []byte(time.Now().String()),
+		Sync:   true,
+	}); err != nil {
+		logrus.Error(err)
+	}
+
 	peers, err := s.agent.Peers()
 	if err != nil {
 		logrus.Errorf("error getting peers: %s", err)
@@ -23,7 +47,7 @@ func (s *Server) heartbeat() {
 		}
 		defer ac.Close()
 
-		health, err := ac.HealthService.Health(context.Background(), nil)
+		health, err := ac.HealthService().Health(context.Background(), nil)
 		if err != nil {
 			logrus.Errorf("error communicating with peer: %s", err)
 			return

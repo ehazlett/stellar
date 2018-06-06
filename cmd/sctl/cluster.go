@@ -33,7 +33,7 @@ var clusterContainersCommand = cli.Command{
 			return err
 		}
 
-		resp, err := client.ClusterService.Containers(context.Background(), &clusterapi.ContainersRequest{})
+		resp, err := client.ClusterService().Containers(context.Background(), &clusterapi.ContainersRequest{})
 		if err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ var clusterNodesCommand = cli.Command{
 				return err
 			}
 
-			resp, err := nc.HealthService.Health(context.Background(), nil)
+			resp, err := nc.HealthService().Health(context.Background(), nil)
 			if err != nil {
 				return err
 			}

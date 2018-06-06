@@ -50,3 +50,15 @@ func NewAgent(cfg *Config) (*Agent, error) {
 		grpcServer:     grpcServer,
 	}, nil
 }
+
+// Subscribe subscribes to the node event channel
+func (a *Agent) Subscribe(ch chan *NodeEvent) {
+	go func() {
+		for {
+			select {
+			case evt := <-a.nodeEventChan:
+				ch <- evt
+			}
+		}
+	}()
+}

@@ -3,14 +3,12 @@ package element
 import (
 	"fmt"
 	"net"
-	"os"
-	"syscall"
 
 	"github.com/sirupsen/logrus"
 )
 
 // Start activates the GRPC listener as well as joins the cluster if specified and blocks until a SIGTERM or SIGINT is received
-func (a *Agent) Start(signals chan os.Signal) error {
+func (a *Agent) Start() error {
 	logrus.Infof("starting agent: grpc=%s:%d bind=%s:%d advertise=%s:%d",
 		a.config.AgentAddr,
 		a.config.AgentPort,
@@ -45,18 +43,5 @@ func (a *Agent) Start(signals chan os.Signal) error {
 		logrus.Infof("joined %d peer(s)", n)
 	}
 
-	for {
-		select {
-		case s := <-signals:
-			switch s {
-			case syscall.SIGTERM, syscall.SIGINT:
-				logrus.Debug("shutting down")
-				if err := a.Shutdown(); err != nil {
-					return err
-				}
-
-				return nil
-			}
-		}
-	}
+	return nil
 }
