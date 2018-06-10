@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"time"
 
 	"github.com/codegangsta/cli"
 	humanize "github.com/dustin/go-humanize"
 	"github.com/ehazlett/stellar"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
+	"github.com/sirupsen/logrus"
 )
 
 var clusterCommand = cli.Command{
@@ -82,11 +84,16 @@ var clusterNodesCommand = cli.Command{
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 		fmt.Fprintf(w, "NAME\tADDR\tOS\tUPTIME\tCPUS\tMEMORY (USED)\n")
 		for node, health := range info {
+			started, err := health.Started()
+			if err != nil {
+				logrus.Error(err)
+				continue
+			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n",
 				node.Name,
 				node.Addr,
 				health.OSName+" ("+health.OSVersion+")",
-				health.Uptime,
+				humanize.RelTime(started, time.Now(), "", ""),
 				health.Cpus,
 				fmt.Sprintf("%s / %s", humanize.Bytes(uint64(health.MemoryUsed)), humanize.Bytes(uint64(health.MemoryTotal))),
 			)

@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package stellar.services.health.v1;
 
+import weak "gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
-import "google/protobuf/duration.proto";
-import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/health/v1;health";
 
@@ -15,7 +15,8 @@ service Health {
 message HealthResponse {
 	string os_name = 1 [(gogoproto.customname) = "OSName"];
 	string os_version = 2 [(gogoproto.customname) = "OSVersion"];
-        google.protobuf.Duration uptime = 3;
+        // TODO: use gogoproto.stdtime (returning panic: message/group field time.Time:bytes without pointer when trying to use)
+        google.protobuf.Timestamp started_at = 3;
         int64 cpus = 4;
         int64 memory_total = 5;
         int64 memory_free = 6;

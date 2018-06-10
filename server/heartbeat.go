@@ -53,12 +53,18 @@ func (s *Server) heartbeat() {
 			return
 		}
 
+		started, err := health.Started()
+		if err != nil {
+			logrus.Errorf("error getting peer time: %s", err)
+			continue
+		}
+
 		logrus.WithFields(logrus.Fields{
 			"peer_name":    peer.Name,
 			"peer_addr":    peer.Addr,
 			"os_name":      health.OSName,
 			"os_version":   health.OSVersion,
-			"uptime":       health.Uptime,
+			"uptime":       time.Now().Sub(started),
 			"cpus":         health.Cpus,
 			"memory_total": health.MemoryTotal,
 			"memory_free":  health.MemoryFree,
