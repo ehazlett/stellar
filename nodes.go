@@ -8,7 +8,7 @@ import (
 
 func (c *Client) Nodes() ([]*clusterapi.Node, error) {
 	ctx := context.Background()
-	resp, err := c.ClusterService.Nodes(ctx, &clusterapi.NodesRequest{})
+	resp, err := c.ClusterService().Nodes(ctx, &clusterapi.NodesRequest{})
 	if err != nil {
 		return nil, err
 	}

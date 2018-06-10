@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package stellar.services.datastore.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/ehazlett/stellar/api/services/datastore/v1;datastore";
+
+service Datastore {
+        rpc Set(SetRequest) returns (google.protobuf.Empty);
+        rpc Get(GetRequest) returns (GetResponse);
+        rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+        rpc Backup(BackupRequest) returns (BackupResponse);
+        rpc Restore(RestoreRequest) returns (google.protobuf.Empty);
+}
+
+message SetRequest {
+  string bucket = 1;
+  string key = 2;
+  bytes value = 3;
+  bool sync = 4;
+}
+
+message GetRequest {
+  string bucket = 1;
+  string key = 2;
+}
+
+message GetResponse {
+  string bucket = 1;
+  string key = 2;
+  bytes value = 3;
+}
+
+message DeleteRequest {
+  string bucket = 1;
+  string key = 2;
+  bool sync = 3;
+}
+
+message BackupRequest {}
+
+message BackupResponse {
+  bytes data = 1;
+}
+
+message RestoreRequest {
+  bytes data = 1;
+}

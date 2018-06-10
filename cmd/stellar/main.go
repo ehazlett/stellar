@@ -28,6 +28,11 @@ func main() {
 			Value: getHostname(),
 		},
 		cli.StringFlag{
+			Name:  "data-dir, d",
+			Usage: "stellar agent data dir",
+			Value: "/var/lib/stellar",
+		},
+		cli.StringFlag{
 			Name:  "agent-addr, a",
 			Usage: "agent grpc addr",
 		},
@@ -124,6 +129,7 @@ func action(c *cli.Context) error {
 		AgentConfig:    agentConfig,
 		ContainerdAddr: containerdAddr,
 		Namespace:      namespace,
+		DataDir:        c.String("data-dir"),
 	})
 	if err != nil {
 		return err

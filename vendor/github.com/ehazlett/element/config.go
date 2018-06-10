@@ -42,6 +42,10 @@ type Config struct {
 	Peers []string
 }
 
+func (a *Agent) Config() *Config {
+	return a.config
+}
+
 func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool, nodeEventChan chan *NodeEvent) (*memberlist.Config, error) {
 	var mc *memberlist.Config
 	switch cfg.ConnectionType {
