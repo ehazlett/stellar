@@ -30,7 +30,8 @@ var (
 	dsNetworkBucketName = "stellar." + apiVersion + ".services.network"
 	dsServerBucketName  = "stellar.server"
 	dsSubnetsKey        = "subnets.%s"
-	heartbeatInterval   = time.Second * 10
+	dsRoutesKey         = "routes.%s"
+	reconcileInterval   = time.Second * 10
 )
 
 type Server struct {
@@ -187,12 +188,12 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	ticker := time.NewTicker(heartbeatInterval)
+	ticker := time.NewTicker(reconcileInterval)
 
 	for {
 		select {
 		case <-ticker.C:
-			s.heartbeat()
+			s.reconcile()
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGTERM, syscall.SIGINT:
