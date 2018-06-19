@@ -5,7 +5,9 @@ import (
 
 	bolt "github.com/coreos/bbolt"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
+	"github.com/ehazlett/stellar/errdefs"
 	ptypes "github.com/gogo/protobuf/types"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,7 +16,7 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 	err := s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Bucket))
 		if b == nil {
-			return ErrBucketDoesNotExist
+			return errdefs.ToGRPC(errors.Wrapf(errdefs.ErrNotFound, "bucket %s", req.Bucket))
 		}
 		if err := b.Delete([]byte(req.Key)); err != nil {
 			return err

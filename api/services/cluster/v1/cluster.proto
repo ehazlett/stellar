@@ -7,9 +7,9 @@ import "api/services/node/v1/node.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/cluster/v1;cluster";
 
 service Cluster {
-	rpc Containers(ContainersRequest) returns (ContainersResponse);
-        rpc Images(ImagesRequest) returns (ImagesResponse);
-        rpc Nodes(NodesRequest) returns (NodesResponse);
+  rpc Containers(ContainersRequest) returns (ContainersResponse);
+  rpc Images(ImagesRequest) returns (ImagesResponse);
+  rpc Nodes(NodesRequest) returns (NodesResponse);
 }
 
 message ContainersRequest {}

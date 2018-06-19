@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ehazlett/stellar"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
+	"github.com/ehazlett/stellar/client"
 )
 
 type syncAction string
@@ -42,7 +42,7 @@ func (s *service) peerSet(ctx context.Context, bucket, key string, value []byte)
 		return err
 	}
 	for _, peer := range peers {
-		ac, err := stellar.NewClient(peer.Addr)
+		ac, err := client.NewClient(peer.Addr)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func (s *service) peerDelete(ctx context.Context, bucket, key string) error {
 		return err
 	}
 	for _, peer := range peers {
-		ac, err := stellar.NewClient(peer.Addr)
+		ac, err := client.NewClient(peer.Addr)
 		if err != nil {
 			return err
 		}

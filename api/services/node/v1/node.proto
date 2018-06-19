@@ -8,30 +8,30 @@ import "google/protobuf/any.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/node/v1;node";
 
 service Node {
-	rpc Containers(ContainersRequest) returns (ContainersResponse);
-        rpc Images(ImagesRequest) returns (ImagesResponse);
+  rpc Containers(ContainersRequest) returns (ContainersResponse);
+  rpc Images(ImagesRequest) returns (ImagesResponse);
 }
 
 message ContainersRequest {}
 
 message Container {
-        string id = 1 [(gogoproto.customname) = "ID"];
-        string image = 2;
-        map<string,string> labels = 3;
-        google.protobuf.Any spec = 4;
-        string snapshotter = 5;
+  string id = 1 [(gogoproto.customname) = "ID"];
+  string image = 2;
+  map<string,string> labels = 3;
+  google.protobuf.Any spec = 4;
+  string snapshotter = 5;
 }
 
 message ContainersResponse {
-        repeated Container containers = 1;
+  repeated Container containers = 1;
 }
 
 message ImagesRequest {}
 
 message Image {
-        string id = 1 [(gogoproto.customname) = "ID"];
+  string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message ImagesResponse {
-        repeated Image images = 1;
+  repeated Image images = 1;
 }

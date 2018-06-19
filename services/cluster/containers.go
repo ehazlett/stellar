@@ -3,9 +3,9 @@ package cluster
 import (
 	"context"
 
-	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/cluster/v1"
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	"github.com/ehazlett/stellar/client"
 )
 
 func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*api.ContainersResponse, error) {
@@ -17,11 +17,11 @@ func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*
 	}
 
 	for _, node := range resp.Nodes {
-		c, err := stellar.NewClient(node.Addr)
+		c, err := client.NewClient(node.Addr)
 		if err != nil {
 			return nil, err
 		}
-		cont, err := c.Containers()
+		cont, err := c.Node().Containers()
 		if err != nil {
 			return nil, err
 		}

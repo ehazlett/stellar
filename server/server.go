@@ -3,29 +3,34 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/ehazlett/element"
-	"github.com/ehazlett/stellar"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
+	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
 	clusterservice "github.com/ehazlett/stellar/services/cluster"
 	datastoreservice "github.com/ehazlett/stellar/services/datastore"
 	healthservice "github.com/ehazlett/stellar/services/health"
+	networkservice "github.com/ehazlett/stellar/services/network"
 	nodeservice "github.com/ehazlett/stellar/services/node"
 	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	datastoreBucketName = "stellar.server"
+	apiVersion = "v1"
 )
 
 var (
-	heartbeatInterval = time.Second * 10
+	dsNetworkBucketName = "stellar." + apiVersion + ".services.network"
+	dsServerBucketName  = "stellar.server"
+	dsSubnetsKey        = "subnets.%s"
+	heartbeatInterval   = time.Second * 10
 )
 
 type Server struct {
@@ -38,6 +43,7 @@ type Config struct {
 	AgentConfig    *element.Config
 	ContainerdAddr string
 	Namespace      string
+	Subnet         *net.IPNet
 	DataDir        string
 }
 
@@ -73,8 +79,13 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
+	netSvc, err := networkservice.New(a, cfg.Subnet)
+	if err != nil {
+		return nil, err
+	}
+
 	// register with agent
-	for _, svc := range []services.Service{vs, ns, hs, cs, ds} {
+	for _, svc := range []services.Service{vs, ns, hs, cs, ds, netSvc} {
 		if err := a.Register(svc); err != nil {
 			return nil, err
 		}
@@ -87,6 +98,10 @@ func NewServer(cfg *Config) (*Server, error) {
 		agent:  a,
 		config: cfg,
 	}, nil
+}
+
+func (s *Server) NodeName() string {
+	return s.config.AgentConfig.NodeName
 }
 
 func (s *Server) waitForPeers(timeout time.Duration) error {
@@ -122,7 +137,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 	peer := peers[0]
-	c, err := stellar.NewClient(peer.Addr)
+	c, err := client.NewClient(peer.Addr)
 	if err != nil {
 		return err
 	}
@@ -133,7 +148,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 
-	lc, err := stellar.NewClient(fmt.Sprintf("%s:%d", s.config.AgentConfig.AgentAddr, s.config.AgentConfig.AgentPort))
+	lc, err := client.NewClient(fmt.Sprintf("%s:%d", s.config.AgentConfig.AgentAddr, s.config.AgentConfig.AgentPort))
 	if err != nil {
 		return err
 	}
@@ -141,6 +156,15 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 	logrus.Debugf("restored %d bytes", len(bResp.Data))
+
+	return nil
+}
+
+func (s *Server) init() error {
+	// initialize networking
+	if err := s.initNetworking(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -157,6 +181,10 @@ func (s *Server) Run() error {
 		if err := s.syncDatastore(); err != nil {
 			return err
 		}
+	}
+
+	if err := s.init(); err != nil {
+		return err
 	}
 
 	ticker := time.NewTicker(heartbeatInterval)
@@ -178,4 +206,13 @@ func (s *Server) Run() error {
 	}
 
 	return nil
+}
+
+func (s *Server) client() (*client.Client, error) {
+	localNode, err := s.agent.LocalNode()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.NewClient(localNode.Addr)
 }

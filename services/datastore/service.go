@@ -1,7 +1,6 @@
 package datastore
 
 import (
-	"errors"
 	"os"
 	"sync"
 	"time"
@@ -13,26 +12,28 @@ import (
 )
 
 const (
-	serviceID = "stellar.services.datastore.v1"
+	serviceID   = "stellar.services.datastore.v1"
+	lockTimeout = time.Second * 30
 )
 
 var (
-	ErrBucketDoesNotExist = errors.New("bucket does not exist")
-	dbFilename            = serviceID + ".db"
+	dbFilename = serviceID + ".db"
 )
 
 type service struct {
-	agent *element.Agent
-	dir   string
-	lock  *sync.Mutex
-	db    *bolt.DB
+	agent    *element.Agent
+	dir      string
+	lock     *sync.Mutex
+	lockChan chan bool
+	db       *bolt.DB
 }
 
 func New(a *element.Agent, dir string) (*service, error) {
 	svc := &service{
-		agent: a,
-		dir:   dir,
-		lock:  &sync.Mutex{},
+		agent:    a,
+		dir:      dir,
+		lock:     &sync.Mutex{},
+		lockChan: make(chan bool),
 	}
 
 	db, err := svc.openDB()

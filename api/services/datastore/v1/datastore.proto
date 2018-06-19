@@ -7,12 +7,18 @@ import "google/protobuf/empty.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/datastore/v1;datastore";
 
 service Datastore {
-        rpc Set(SetRequest) returns (google.protobuf.Empty);
-        rpc Get(GetRequest) returns (GetResponse);
-        rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
-        rpc Backup(BackupRequest) returns (BackupResponse);
-        rpc Restore(RestoreRequest) returns (google.protobuf.Empty);
+  rpc AcquireLock(AcquireLockRequest) returns (google.protobuf.Empty);
+  rpc ReleaseLock(ReleaseLockRequest) returns (google.protobuf.Empty);
+  rpc Set(SetRequest) returns (google.protobuf.Empty);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  rpc Backup(BackupRequest) returns (BackupResponse);
+  rpc Restore(RestoreRequest) returns (google.protobuf.Empty);
 }
+
+message AcquireLockRequest {}
+message ReleaseLockRequest {}
 
 message SetRequest {
   string bucket = 1;
@@ -21,15 +27,29 @@ message SetRequest {
   bool sync = 4;
 }
 
+message KeyValue {
+  string key = 1;
+  bytes value = 2;
+}
+
 message GetRequest {
   string bucket = 1;
   string key = 2;
 }
 
+message SearchRequest {
+  string bucket = 1;
+  string prefix = 2;
+}
+
+message SearchResponse {
+  string bucket = 1;
+  repeated KeyValue data = 2;
+}
+
 message GetResponse {
   string bucket = 1;
-  string key = 2;
-  bytes value = 3;
+  KeyValue data = 2;
 }
 
 message DeleteRequest {

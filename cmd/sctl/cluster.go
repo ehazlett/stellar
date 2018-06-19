@@ -9,9 +9,9 @@ import (
 
 	"github.com/codegangsta/cli"
 	humanize "github.com/dustin/go-humanize"
-	"github.com/ehazlett/stellar"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
+	"github.com/ehazlett/stellar/client"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,19 +56,19 @@ var clusterNodesCommand = cli.Command{
 	Aliases: []string{"n"},
 	Usage:   "cluster node management",
 	Action: func(c *cli.Context) error {
-		client, err := getClient(c)
+		cl, err := getClient(c)
 		if err != nil {
 			return err
 		}
 
-		nodes, err := client.Nodes()
+		nodes, err := cl.Cluster().Nodes()
 		if err != nil {
 			return err
 		}
 
 		info := map[*clusterapi.Node]*healthapi.HealthResponse{}
 		for _, node := range nodes {
-			nc, err := stellar.NewClient(node.Addr)
+			nc, err := client.NewClient(node.Addr)
 			if err != nil {
 				return err
 			}

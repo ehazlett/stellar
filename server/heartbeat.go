@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ehazlett/stellar"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
+	"github.com/ehazlett/stellar/client"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,14 +18,14 @@ func (s *Server) heartbeat() {
 		logrus.Error(err)
 	}
 
-	c, err := stellar.NewClient(localNode.Addr)
+	c, err := client.NewClient(localNode.Addr)
 	if err != nil {
 		logrus.Error(err)
 	}
 	defer c.Close()
 
 	if _, err := c.DatastoreService().Set(context.Background(), &datastoreapi.SetRequest{
-		Bucket: datastoreBucketName,
+		Bucket: dsServerBucketName,
 		Key:    fmt.Sprintf("service.%s.updated", localNode.Name),
 		Value:  []byte(time.Now().String()),
 		Sync:   true,
@@ -40,7 +40,7 @@ func (s *Server) heartbeat() {
 	}
 
 	for _, peer := range peers {
-		ac, err := stellar.NewClient(peer.Addr)
+		ac, err := client.NewClient(peer.Addr)
 		if err != nil {
 			logrus.Errorf("error communicating with peer: %s", err)
 			return
@@ -71,7 +71,7 @@ func (s *Server) heartbeat() {
 			"memory_used":  health.MemoryUsed,
 		}).Debug("peer health")
 
-		containers, err := ac.Containers()
+		containers, err := ac.Node().Containers()
 		if err != nil {
 			logrus.Errorf("error getting containers: %s", err)
 			return

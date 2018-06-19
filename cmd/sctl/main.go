@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/ehazlett/stellar"
+	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/version"
 	log "github.com/sirupsen/logrus"
 )
@@ -44,6 +44,6 @@ func main() {
 	}
 }
 
-func getClient(c *cli.Context) (*stellar.Client, error) {
-	return stellar.NewClient(c.GlobalString("addr"))
+func getClient(c *cli.Context) (*client.Client, error) {
+	return client.NewClient(c.GlobalString("addr"))
 }
