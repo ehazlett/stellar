@@ -11,6 +11,10 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+const (
+	bridgeName = "stellar0"
+)
+
 func (s *Server) initNetworking() error {
 	c, err := s.client()
 	if err != nil {
@@ -125,20 +129,35 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 	}
 
 	logrus.Debugf("bind interface: %s", bindInterface)
-	dev, err := netlink.LinkByName(bindInterface)
-	if err != nil {
-		return err
-	}
 
 	target := fmt.Sprintf("%s/%d", ip.String(), mask)
-	aliasAddr, err := netlink.ParseAddr(target)
+	brAddr, err := netlink.ParseAddr(target)
 	if err != nil {
 		return err
 	}
-	aliasAddr.Label = dev.Attrs().Name + ".stellar-gw"
 
-	logrus.Debugf("adding address %s to device %s", aliasAddr, dev.Attrs().Name)
-	if err := netlink.AddrReplace(dev, aliasAddr); err != nil {
+	brLink, err := netlink.LinkByName(bridgeName)
+	if err != nil {
+		if _, ok := err.(netlink.LinkNotFoundError); !ok {
+			return err
+		}
+
+		// setup
+		brLink = &netlink.Bridge{
+			LinkAttrs: netlink.LinkAttrs{
+				Name: bridgeName,
+			},
+		}
+		if err := netlink.LinkAdd(brLink); err != nil {
+			return err
+		}
+
+		if err := netlink.LinkSetUp(brLink); err != nil {
+			return err
+		}
+	}
+
+	if err := netlink.AddrReplace(brLink, brAddr); err != nil {
 		return err
 	}
 
