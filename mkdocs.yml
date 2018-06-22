@@ -1,0 +1,11 @@
+site_name: Stellar
+pages:
+    - Home: index.md
+    - Introduction:
+        - What is Stellar: intro/about.md
+        - Architecture: intro/architecture.md
+    - Deployment:
+        - Getting Started: install/index.md
+theme: readthedocs
+markdown_extensions:
+      - admonition

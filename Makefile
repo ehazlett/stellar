@@ -42,6 +42,18 @@ daemon:
 	@echo " -> Building daemon $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 	@cd cmd/$(APP) && go build -a -tags "netgo static_build" -installsuffix netgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
 
+docs:
+	@docker build -t $(APP)-docs -f Dockerfile.docs .
+	@mkdir -p _site
+	@docker run --rm --entrypoint tar $(APP)-docs -C /usr/share/nginx/html -cf - . | tar -C _site -xf -
+
+docs-netlify:
+	@mkdocs build -d _site --clean
+
+docs-serve: docs
+	@echo "serving docs on http://localhost:9000"
+	@docker run -ti -p 9000:80 --rm $(APP)-docs nginx -g "daemon off;" -c /etc/nginx/nginx.conf
+
 image:
 	@docker build $(BUILD_ARGS) --build-arg GOOS=$(GOOS) --build-arg GOARCH=$(GOARCH) --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(IMAGE_NAMESPACE)/$(APP):$(TAG) -f Dockerfile.$(GOOS).$(GOARCH) .
 	@echo "Image created: $(REPO):$(TAG)"
@@ -72,4 +84,4 @@ vendor:
 clean:
 	@rm cmd/$(APP)/$(APP)
 
-.PHONY: generate clean check test install vendor daemon cli binaries
+.PHONY: generate clean docs docker-build docker-generate check test install vendor daemon cli binaries
