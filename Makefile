@@ -25,12 +25,12 @@ generate:
 docker-generate:
 	@echo "** This uses a separate Dockerfile (Dockerfile.build) **"
 	@docker build -t $(APP)-dev -f Dockerfile.build .
-	@docker run -ti --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) -v $(PWD):/go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev ash -c "echo ${PACKAGES} | xargs /go/bin/protobuild"
+	@docker run -ti --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) -v $(PWD):/go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "echo ${PACKAGES} | xargs /go/bin/protobuild"
 
 docker-build:
 	@echo "** This uses a separate Dockerfile (Dockerfile.build) **"
 	@docker build -t $(APP)-dev -f Dockerfile.build .
-	@docker run -ti --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) -v $(PWD):/go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev ash -c "make binaries"
+	@docker run -ti --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) -v $(PWD):/go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make binaries"
 
 binaries: daemon cli
 
