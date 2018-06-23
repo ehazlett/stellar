@@ -36,11 +36,11 @@ binaries: daemon cli
 
 cli:
 	@echo " -> Building cli $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
-	@cd cmd/$(CLI) && go build -a -tags "netgo static_build" -installsuffix netgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
+	@cd cmd/$(CLI) && CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
 
 daemon:
 	@echo " -> Building daemon $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
-	@cd cmd/$(APP) && go build -a -tags "netgo static_build" -installsuffix netgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
+	@cd cmd/$(APP) && CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
 
 docs:
 	@docker build -t $(APP)-docs -f Dockerfile.docs .
@@ -55,7 +55,7 @@ docs-serve: docs
 	@docker run -ti -p 9000:80 --rm $(APP)-docs nginx -g "daemon off;" -c /etc/nginx/nginx.conf
 
 image:
-	@docker build $(BUILD_ARGS) --build-arg GOOS=$(GOOS) --build-arg GOARCH=$(GOARCH) --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(IMAGE_NAMESPACE)/$(APP):$(TAG) -f Dockerfile.$(GOOS).$(GOARCH) .
+	@docker build $(BUILD_ARGS) --build-arg GOOS=$(GOOS) --build-arg GOARCH=$(GOARCH) --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(IMAGE_NAMESPACE)/$(APP):$(TAG) -f Dockerfile .
 	@echo "Image created: $(REPO):$(TAG)"
 
 vet:
