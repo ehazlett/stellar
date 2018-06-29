@@ -4,6 +4,8 @@ import (
 	"net"
 
 	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
+	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
 	"google.golang.org/grpc"
 )
@@ -12,18 +14,21 @@ const (
 	serviceID = "stellar.services.network.v1"
 	// TODO: make configurable
 	// default max subnets (max nodes)
-	maxSubnets = 1024
+	maxSubnets          = 1024
+	dsNetworkBucketName = "stellar." + stellar.APIVersion + ".services.network"
 )
 
 type service struct {
 	network *net.IPNet
 	agent   *element.Agent
+	ds      datastoreapi.DatastoreServer
 }
 
-func New(agent *element.Agent, network *net.IPNet) (*service, error) {
+func New(ds datastoreapi.DatastoreServer, agent *element.Agent, network *net.IPNet) (*service, error) {
 	return &service{
 		network: network,
 		agent:   agent,
+		ds:      ds,
 	}, nil
 }
 

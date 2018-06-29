@@ -1,17 +1,15 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"net"
-	"strings"
 
-	"github.com/containerd/containerd/errdefs"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
 const (
+	// TODO: make configurable
 	bridgeName = "stellar0"
 )
 
@@ -22,50 +20,7 @@ func (s *Server) initNetworking() error {
 	}
 	defer c.Close()
 
-	// check for existing assigned subnet; if not, allocate
-	localSubnetKey := fmt.Sprintf(dsSubnetsKey, s.NodeName())
-
-	subnets, err := c.Network().Subnets()
-	if err != nil {
-		return err
-	}
-
-	if len(subnets) == 0 {
-		return fmt.Errorf("no available subnets in network configuration")
-	}
-
-	bSubnetCIDR, err := c.Datastore().Get(dsNetworkBucketName, localSubnetKey)
-	if err != nil {
-		err = errdefs.FromGRPC(err)
-		if !errdefs.IsNotFound(err) {
-			return err
-		}
-	}
-
-	if bytes.Equal(bSubnetCIDR, []byte("")) {
-		logrus.Debug("local subnet key not found; assigning new subnet")
-
-		searchKey := fmt.Sprintf(dsSubnetsKey, "")
-		existingSubnets, err := c.Datastore().Search(dsNetworkBucketName, searchKey)
-		if err != nil {
-			err = errdefs.FromGRPC(err)
-			if !errdefs.IsNotFound(err) {
-				return err
-			}
-		}
-
-		assigned := len(existingSubnets)
-		if len(subnets) < assigned {
-			return fmt.Errorf("no available subnet for current node; need %d subnets", assigned)
-		}
-
-		bSubnetCIDR = []byte(subnets[assigned].CIDR)
-		if err := c.Datastore().Set(dsNetworkBucketName, localSubnetKey, bSubnetCIDR, true); err != nil {
-			return err
-		}
-	}
-
-	subnetCIDR := string(bSubnetCIDR)
+	subnetCIDR, err := c.Network().AllocateSubnet(s.NodeName())
 	logrus.Infof("setting up subnet %s", subnetCIDR)
 	ip, ipnet, err := net.ParseCIDR(subnetCIDR)
 	if err != nil {
@@ -121,8 +76,6 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 	}
 	defer c.Close()
 
-	bindIP := s.getBindIP()
-
 	bindInterface, err := s.getBindDeviceName()
 	if err != nil {
 		return err
@@ -156,10 +109,11 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 			return err
 		}
 	}
-
 	if err := netlink.AddrReplace(brLink, brAddr); err != nil {
 		return err
 	}
+
+	bindIP := s.getBindIP()
 
 	// add route
 	_, ipnet, err := net.ParseCIDR(target)
@@ -167,9 +121,7 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 		return err
 	}
 	networkCIDR := fmt.Sprintf("%s/%d", ipnet.IP.String(), mask)
-	localRouteKey := fmt.Sprintf(dsRoutesKey, s.NodeName())
-	routeData := []byte(networkCIDR + ":" + bindIP.String())
-	if err := c.Datastore().Set(dsNetworkBucketName, localRouteKey, routeData, true); err != nil {
+	if err := c.Network().AddRoute(networkCIDR, bindIP.String()); err != nil {
 		return err
 	}
 
@@ -190,17 +142,6 @@ func (s *Server) setupRoutes() error {
 	}
 	defer c.Close()
 
-	bindIP := s.getBindIP()
-
-	searchKey := fmt.Sprintf(dsRoutesKey, "")
-	routes, err := c.Datastore().Search(dsNetworkBucketName, searchKey)
-	if err != nil {
-		err = errdefs.FromGRPC(err)
-		if !errdefs.IsNotFound(err) {
-			return err
-		}
-	}
-
 	deviceName, err := s.getBindDeviceName()
 	if err != nil {
 		return err
@@ -211,31 +152,28 @@ func (s *Server) setupRoutes() error {
 		return err
 	}
 
-	for _, routeSpec := range routes {
-		v := string(routeSpec.Value)
-		rt := strings.Split(v, ":")
-		if len(rt) != 2 {
-			logrus.Errorf("invalid route format: %s", v)
-			continue
-		}
+	bindIP := s.getBindIP()
 
-		network := rt[0]
-		gw := rt[1]
-
-		_, ipnet, err := net.ParseCIDR(network)
+	routes, err := c.Network().Routes()
+	for _, r := range routes {
+		_, ipnet, err := net.ParseCIDR(r.CIDR)
 		if err != nil {
-			logrus.Warnf("error setting up route %s", network)
+			logrus.Warnf("error setting up route %s", r.CIDR)
 			continue
 		}
 
-		ip := net.ParseIP(gw)
-
-		if ip.Equal(bindIP) {
-			logrus.Debugf("skipping local route %s", network)
+		ip := net.ParseIP(r.Target)
+		if err != nil {
+			logrus.Errorf("error parsing target CIDR: %s", err)
 			continue
 		}
 
-		logrus.Debugf("configuring route %s via %s", network, gw)
+		if bindIP.Equal(ip) {
+			logrus.Debugf("skipping local route %s", r.CIDR)
+			continue
+		}
+
+		logrus.Debugf("configuring route %s via %s", r.CIDR, r.Target)
 		route := &netlink.Route{
 			LinkIndex: dev.Attrs().Index,
 			Dst:       ipnet,

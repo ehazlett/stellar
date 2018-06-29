@@ -8,32 +8,44 @@ import weak "gogoproto/gogo.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/network/v1;network";
 
 service Network {
-  rpc AllocateSubnet(AllocateSubnetRequest) returns (google.protobuf.Empty);
+  rpc AllocateSubnet(AllocateSubnetRequest) returns (AllocateSubnetResponse);
   rpc DeallocateSubnet(DeallocateSubnetRequest) returns (google.protobuf.Empty);
   rpc Subnets(google.protobuf.Empty) returns (SubnetsResponse);
   rpc AllocateIP(AllocateIPRequest) returns (AllocateIPResponse);
   rpc ReleaseIP(ReleaseIPRequest) returns (google.protobuf.Empty);
   rpc Configure(ConfigureRequest) returns (google.protobuf.Empty);
+  rpc AddRoute(AddRouteRequest) returns (google.protobuf.Empty);
+  rpc DeleteRoute(DeleteRouteRequest) returns (google.protobuf.Empty);
+  rpc Routes(google.protobuf.Empty) returns (RoutesResponse);
 }
 
 message AllocateSubnetRequest {
+  string node = 1;
+}
+
+message AllocateSubnetResponse {
   string subnet_cidr = 1 [(gogoproto.customname) = "SubnetCIDR"];
+  string node = 2;
 }
 
 message DeallocateSubnetRequest {
   string subnet_cidr = 1 [(gogoproto.customname) = "SubnetCIDR"];
+  string node = 2;
 }
 
 message AllocateIPRequest {
   string subnet_cidr = 1 [(gogoproto.customname) = "SubnetCIDR"];
+  string node = 2;
 }
 
 message AllocateIPResponse {
   string ip = 1 [(gogoproto.customname) = "IP"];
+  string node = 2;
 }
 
 message ReleaseIPRequest {
   string ip = 1 [(gogoproto.customname) = "IP"];
+  string node = 2;
 }
 
 message SubnetsResponse {
@@ -47,4 +59,23 @@ message Subnet {
 
 message ConfigureRequest {
   Subnet subnet = 1;
+}
+
+message AddRouteRequest {
+  string cidr = 1 [(gogoproto.customname) = "CIDR"];
+  string target = 2;
+}
+
+message DeleteRouteRequest {
+  string cidr = 1 [(gogoproto.customname) = "CIDR"];
+  string target = 2;
+}
+
+message Route {
+  string cidr = 1 [(gogoproto.customname) = "CIDR"];
+  string target = 2;
+}
+
+message RoutesResponse {
+  repeated Route routes = 1;
 }

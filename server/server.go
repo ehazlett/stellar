@@ -22,16 +22,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	apiVersion = "v1"
-)
-
 var (
-	dsNetworkBucketName = "stellar." + apiVersion + ".services.network"
-	dsServerBucketName  = "stellar.server"
-	dsSubnetsKey        = "subnets.%s"
-	dsRoutesKey         = "routes.%s"
-	reconcileInterval   = time.Second * 10
+	dsServerBucketName = "stellar.server"
+	reconcileInterval  = time.Second * 10
 )
 
 type Server struct {
@@ -80,7 +73,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	netSvc, err := networkservice.New(a, cfg.Subnet)
+	netSvc, err := networkservice.New(ds, a, cfg.Subnet)
 	if err != nil {
 		return nil, err
 	}
