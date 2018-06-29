@@ -20,27 +20,30 @@ deps:
 	@vndr -whitelist github.com/gogo/protobuf
 
 generate:
-	@echo ${PACKAGES} | xargs protobuild
+	@echo ${PACKAGES} | xargs protobuild -quiet
 
 docker-generate:
 	@echo "** This uses a separate Dockerfile (Dockerfile.build) **"
 	@docker build -t $(APP)-dev -f Dockerfile.build .
-	@docker run -ti --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) -v $(PWD):/go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make generate"
+	@docker run --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make generate; find api -name \"*.pb.go\" | tar -T - -cf -" | tar -xvf -
 
-docker-build:
+docker-build: bindir
 	@echo "** This uses a separate Dockerfile (Dockerfile.build) **"
 	@docker build -t $(APP)-dev -f Dockerfile.build .
-	@docker run -ti --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) -v $(PWD):/go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make binaries"
+	@docker run --rm -e GOOS=${GOOS} -e GOARCH=${GOARCH} -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make daemon cli; tar -C ./bin -cf - ." | tar -C ./bin -xf -
+	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
 binaries: daemon cli
+	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
-cli:
-	@echo " -> Building cli $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
-	@cd cmd/$(CLI) && CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
+bindir:
+	@mkdir -p bin
+
+cli: bindir
+	@cd cmd/$(CLI) && CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(CLI) .
 
 daemon:
-	@echo " -> Building daemon $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
-	@cd cmd/$(APP) && CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" .
+	@cd cmd/$(APP) && CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(APP) .
 
 docs:
 	@docker build -t $(APP)-docs -f Dockerfile.docs .
@@ -82,6 +85,6 @@ vendor:
 	@vndr
 
 clean:
-	@rm cmd/$(APP)/$(APP)
+	@rm -rf bin/
 
 .PHONY: generate clean docs docker-build docker-generate check test install vendor daemon cli binaries
