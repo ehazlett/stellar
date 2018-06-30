@@ -37,6 +37,44 @@ func (s *Server) initNetworking() error {
 		return err
 	}
 
+	// configure container networking
+	if err := s.initContainerNetworking(subnetCIDR, gw); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
+	client, err := s.client()
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	containers, err := client.Node().Containers()
+	if err != nil {
+		return err
+	}
+
+	for i, container := range containers {
+		if !container.Running() {
+			logrus.Debugf("container %s not running; skipping networking", container.ID)
+			continue
+		}
+		logrus.WithFields(logrus.Fields{
+			"id":     container.ID,
+			"labels": container.Labels,
+			"pid":    container.Task.Pid,
+		}).Debug("configuring container network")
+		// TODO: allocate IP from network service
+		ip := fmt.Sprintf("172.16.0.%d", i+10)
+		if err := client.Node().SetupContainerNetwork(container.ID, ip, subnetCIDR, gw.String(), bridgeName); err != nil {
+			logrus.Errorf("error setting up networking for container %s: %s", container.ID, err)
+			continue
+		}
+	}
+
 	return nil
 }
 
@@ -162,22 +200,33 @@ func (s *Server) setupRoutes() error {
 			continue
 		}
 
-		ip := net.ParseIP(r.Target)
+		gw := net.ParseIP(r.Target)
 		if err != nil {
 			logrus.Errorf("error parsing target CIDR: %s", err)
 			continue
 		}
 
-		if bindIP.Equal(ip) {
+		// check for route
+		exists, err := routeExists(dev, ipnet, gw)
+		if err != nil {
+			logrus.Errorf("error checking route %s: %s", r, err)
+			continue
+		}
+		if exists {
+			logrus.Debugf("route %s exists", r.CIDR)
+			continue
+		}
+
+		if bindIP.Equal(gw) {
 			logrus.Debugf("skipping local route %s", r.CIDR)
 			continue
 		}
 
-		logrus.Debugf("configuring route %s via %s", r.CIDR, r.Target)
+		logrus.Debugf("configuring peer route %s via %s", r.CIDR, r.Target)
 		route := &netlink.Route{
 			LinkIndex: dev.Attrs().Index,
 			Dst:       ipnet,
-			Gw:        ip,
+			Gw:        gw,
 		}
 		if err := netlink.RouteReplace(route); err != nil {
 			return err
@@ -185,4 +234,22 @@ func (s *Server) setupRoutes() error {
 	}
 
 	return nil
+}
+
+func routeExists(link netlink.Link, network *net.IPNet, gateway net.IP) (bool, error) {
+	routes, err := netlink.RouteList(link, netlink.FAMILY_V4)
+	if err != nil {
+		return false, err
+	}
+
+	for _, route := range routes {
+		if route.Dst == nil {
+			continue
+		}
+		if route.Dst.IP.Equal(network.IP) && route.Gw.Equal(gateway) && route.LinkIndex == link.Attrs().Index {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

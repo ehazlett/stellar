@@ -48,12 +48,8 @@ func NewServer(cfg *Config) (*Server, error) {
 	}
 
 	// services
+	// TODO: implement dependencies for services to alleviate the loading order
 	vs, err := versionservice.New(cfg.ContainerdAddr, cfg.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +70,11 @@ func NewServer(cfg *Config) (*Server, error) {
 	}
 
 	netSvc, err := networkservice.New(ds, a, cfg.Subnet)
+	if err != nil {
+		return nil, err
+	}
+
+	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, netSvc)
 	if err != nil {
 		return nil, err
 	}

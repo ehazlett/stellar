@@ -4,12 +4,15 @@ package stellar.services.node.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/node/v1;node";
 
 service Node {
   rpc Containers(ContainersRequest) returns (ContainersResponse);
+  rpc Container(ContainerRequest) returns (ContainerResponse);
   rpc Images(ImagesRequest) returns (ImagesResponse);
+  rpc SetupContainerNetwork(ContainerNetworkRequest) returns (google.protobuf.Empty);
 }
 
 message ContainersRequest {}
@@ -20,10 +23,24 @@ message Container {
   map<string,string> labels = 3;
   google.protobuf.Any spec = 4;
   string snapshotter = 5;
+
+  message Task {
+    uint32 pid = 1;
+  }
+
+  Task task = 6;
 }
 
 message ContainersResponse {
   repeated Container containers = 1;
+}
+
+message ContainerRequest {
+  string id = 1 [(gogoproto.customname) = "ID"];
+}
+
+message ContainerResponse {
+  Container container = 1;
 }
 
 message ImagesRequest {}
@@ -34,4 +51,12 @@ message Image {
 
 message ImagesResponse {
   repeated Image images = 1;
+}
+
+message ContainerNetworkRequest {
+  string id = 1 [(gogoproto.customname) = "ID"];
+  string ip = 2 [(gogoproto.customname) = "IP"];
+  string bridge = 3;
+  string network = 4;
+  string gateway = 5;
 }

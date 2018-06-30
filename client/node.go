@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"time"
 
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 )
@@ -18,6 +19,35 @@ func (n *node) Containers() ([]*nodeapi.Container, error) {
 	}
 
 	return resp.Containers, nil
+}
+
+func (n *node) Container(id string) (*nodeapi.Container, error) {
+	ctx := context.Background()
+	resp, err := n.client.Container(ctx, &nodeapi.ContainerRequest{
+		ID: id,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Container, nil
+}
+
+func (n *node) SetupContainerNetwork(id, ip, network, gateway, bridge string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	if _, err := n.client.SetupContainerNetwork(ctx, &nodeapi.ContainerNetworkRequest{
+		ID:      id,
+		IP:      ip,
+		Network: network,
+		Gateway: gateway,
+		Bridge:  bridge,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (n *node) Images() ([]*nodeapi.Image, error) {
