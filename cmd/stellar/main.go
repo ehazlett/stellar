@@ -34,6 +34,11 @@ func main() {
 			Value: "/var/lib/stellar",
 		},
 		cli.StringFlag{
+			Name:  "bridge",
+			Usage: "bridge name for networking",
+			Value: "stellar0",
+		},
+		cli.StringFlag{
 			Name:  "agent-addr, a",
 			Usage: "agent grpc addr",
 		},
@@ -141,6 +146,7 @@ func action(c *cli.Context) error {
 		Namespace:      namespace,
 		Subnet:         subnet,
 		DataDir:        c.String("data-dir"),
+		Bridge:         c.String("bridge"),
 	})
 	if err != nil {
 		return err

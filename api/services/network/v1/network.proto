@@ -34,9 +34,9 @@ message DeallocateSubnetRequest {
 }
 
 message AllocateIPRequest {
-  string subnet_cidr = 1 [(gogoproto.customname) = "SubnetCIDR"];
-  string node = 2;
-  string id = 3 [(gogoproto.customname) = "ID"];
+  string id = 1 [(gogoproto.customname) = "ID"];
+  string subnet_cidr = 2 [(gogoproto.customname) = "SubnetCIDR"];
+  string node = 3;
 }
 
 message AllocateIPResponse {
@@ -45,9 +45,9 @@ message AllocateIPResponse {
 }
 
 message ReleaseIPRequest {
-  string ip = 1 [(gogoproto.customname) = "IP"];
-  string node = 2;
-  string id = 3 [(gogoproto.customname) = "ID"];
+  string id = 1 [(gogoproto.customname) = "ID"];
+  string ip = 2 [(gogoproto.customname) = "IP"];
+  string node = 3;
 }
 
 message SubnetsResponse {

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net"
 
+	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
 
 const (
-	// TODO: make configurable
-	bridgeName = "stellar0"
+	stellarNetworkLabel = "io.stellar.network"
 )
 
 func (s *Server) initNetworking() error {
@@ -21,7 +21,7 @@ func (s *Server) initNetworking() error {
 	defer c.Close()
 
 	subnetCIDR, err := c.Network().AllocateSubnet(s.NodeName())
-	logrus.Infof("setting up subnet %s", subnetCIDR)
+	logrus.Debugf("setting up subnet %s", subnetCIDR)
 	ip, ipnet, err := net.ParseCIDR(subnetCIDR)
 	if err != nil {
 		return err
@@ -42,6 +42,11 @@ func (s *Server) initNetworking() error {
 		return err
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"subnet":  subnetCIDR,
+		"gateway": gw.String(),
+	}).Info("network initialized")
+
 	return nil
 }
 
@@ -57,7 +62,11 @@ func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
 		return err
 	}
 
-	for i, container := range containers {
+	for _, container := range containers {
+		if !networkEnabled(container) {
+			logrus.Debugf("container %s does not have stellar networking enabled", container.ID)
+			continue
+		}
 		if !container.Running() {
 			logrus.Debugf("container %s not running; skipping networking", container.ID)
 			continue
@@ -68,8 +77,12 @@ func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
 			"pid":    container.Task.Pid,
 		}).Debug("configuring container network")
 		// TODO: allocate IP from network service
-		ip := fmt.Sprintf("172.16.0.%d", i+10)
-		if err := client.Node().SetupContainerNetwork(container.ID, ip, subnetCIDR, gw.String(), bridgeName); err != nil {
+		ip, err := client.Network().AllocateIP(container.ID, s.NodeName(), subnetCIDR)
+		if err != nil {
+			logrus.Errorf("error allocating IP for container %s: %s", container.ID, err)
+			continue
+		}
+		if err := client.Node().SetupContainerNetwork(container.ID, ip.String(), subnetCIDR, gw.String(), s.config.Bridge); err != nil {
 			logrus.Errorf("error setting up networking for container %s: %s", container.ID, err)
 			continue
 		}
@@ -127,7 +140,7 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 		return err
 	}
 
-	brLink, err := netlink.LinkByName(bridgeName)
+	brLink, err := netlink.LinkByName(s.config.Bridge)
 	if err != nil {
 		if _, ok := err.(netlink.LinkNotFoundError); !ok {
 			return err
@@ -136,7 +149,7 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 		// setup
 		brLink = &netlink.Bridge{
 			LinkAttrs: netlink.LinkAttrs{
-				Name: bridgeName,
+				Name: s.config.Bridge,
 			},
 		}
 		if err := netlink.LinkAdd(brLink); err != nil {
@@ -252,4 +265,9 @@ func routeExists(link netlink.Link, network *net.IPNet, gateway net.IP) (bool, e
 	}
 
 	return false, nil
+}
+
+func networkEnabled(container *nodeapi.Container) bool {
+	_, exists := container.Labels[stellarNetworkLabel]
+	return exists
 }

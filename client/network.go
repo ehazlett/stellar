@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"net"
+	"time"
 
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	ptypes "github.com/gogo/protobuf/types"
@@ -65,4 +67,21 @@ func (n *network) Routes() ([]*networkapi.Route, error) {
 	}
 
 	return resp.Routes, nil
+}
+
+func (n *network) AllocateIP(id, node, subnetCIDR string) (net.IP, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	resp, err := n.client.AllocateIP(ctx, &networkapi.AllocateIPRequest{
+		ID:         id,
+		Node:       node,
+		SubnetCIDR: subnetCIDR,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ip := net.ParseIP(resp.IP)
+	return ip, nil
 }

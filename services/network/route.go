@@ -15,7 +15,8 @@ import (
 
 var (
 	ErrRouteExists = errors.New("route exists in configuration")
-	dsRoutesKey    = "routes.%s"
+	// format: routes.<cidr>
+	dsRoutesKey = "routes.%s"
 )
 
 func (s *service) AddRoute(ctx context.Context, req *api.AddRouteRequest) (*ptypes.Empty, error) {

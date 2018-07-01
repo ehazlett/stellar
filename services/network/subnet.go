@@ -16,7 +16,8 @@ import (
 
 var (
 	ErrNoAvailableSubnets = errors.New("no available subnets in network configuration")
-	dsSubnetsKey          = "subnets.%s"
+	// format: subnets.<node>
+	dsSubnetsKey = "subnets.%s"
 )
 
 func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetRequest) (*api.AllocateSubnetResponse, error) {

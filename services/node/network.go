@@ -65,8 +65,10 @@ func (s *service) createVeth(ctx context.Context, id, bridge string, ipnet *net.
 		return nil, errors.Wrapf(err, "%s not found", bridge)
 	}
 	attrs := netlink.NewLinkAttrs()
-	vethName := fmt.Sprintf("veth-%s", id)
-	vethPeerName := fmt.Sprintf("veth-peer-%s", id)
+	// a deterministic name is generated as ethernet device names have a limitation on length
+	devName := getName(container.ID)
+	vethName := fmt.Sprintf("v%s", devName)
+	vethPeerName := fmt.Sprintf("p%s", devName)
 	// check for existing
 	v, _ := netlink.LinkByName(vethName)
 	if v != nil {

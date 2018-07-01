@@ -39,6 +39,7 @@ type Config struct {
 	Namespace      string
 	Subnet         *net.IPNet
 	DataDir        string
+	Bridge         string
 }
 
 func NewServer(cfg *Config) (*Server, error) {
@@ -156,10 +157,13 @@ func (s *Server) syncDatastore() error {
 }
 
 func (s *Server) init() error {
+	started := time.Now()
 	// initialize networking
 	if err := s.initNetworking(); err != nil {
 		return err
 	}
+
+	logrus.Debugf("initializion duration: %s", time.Since(started))
 
 	return nil
 }
