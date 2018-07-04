@@ -5,6 +5,8 @@ import (
 
 	bolt "github.com/coreos/bbolt"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
+	"github.com/ehazlett/stellar/errdefs"
+	"github.com/pkg/errors"
 )
 
 func (s *service) Get(ctx context.Context, req *api.GetRequest) (*api.GetResponse, error) {
@@ -12,13 +14,16 @@ func (s *service) Get(ctx context.Context, req *api.GetRequest) (*api.GetRespons
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Bucket))
 		if b == nil {
-			return ErrBucketDoesNotExist
+			return errdefs.ToGRPC(errors.Wrapf(errdefs.ErrNotFound, "bucket %s", req.Bucket))
 		}
 		val = b.Get([]byte(req.Key))
 		return nil
 	})
 	return &api.GetResponse{
 		Bucket: req.Bucket,
-		Value:  val,
+		Data: &api.KeyValue{
+			Key:   req.Key,
+			Value: val,
+		},
 	}, err
 }

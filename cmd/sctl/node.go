@@ -27,7 +27,7 @@ var nodeContainersCommand = cli.Command{
 			return err
 		}
 
-		containers, err := client.Containers()
+		containers, err := client.Node().Containers()
 		if err != nil {
 			return err
 		}

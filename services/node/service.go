@@ -2,6 +2,7 @@ package node
 
 import (
 	"github.com/containerd/containerd"
+	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	api "github.com/ehazlett/stellar/api/services/node/v1"
 	"google.golang.org/grpc"
 )
@@ -13,12 +14,14 @@ const (
 type service struct {
 	containerdAddr string
 	namespace      string
+	networkService networkapi.NetworkServer
 }
 
-func New(containerdAddr, namespace string) (*service, error) {
+func New(containerdAddr, namespace string, svc networkapi.NetworkServer) (*service, error) {
 	return &service{
 		containerdAddr: containerdAddr,
 		namespace:      namespace,
+		networkService: svc,
 	}, nil
 }
 

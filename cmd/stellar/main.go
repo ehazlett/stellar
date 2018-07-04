@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -33,6 +34,11 @@ func main() {
 			Value: "/var/lib/stellar",
 		},
 		cli.StringFlag{
+			Name:  "bridge",
+			Usage: "bridge name for networking",
+			Value: "stellar0",
+		},
+		cli.StringFlag{
 			Name:  "agent-addr, a",
 			Usage: "agent grpc addr",
 		},
@@ -50,6 +56,11 @@ func main() {
 			Name:  "namespace",
 			Usage: "containerd namespace to manage",
 			Value: "default",
+		},
+		cli.StringFlag{
+			Name:  "subnet",
+			Usage: "network subnet to use for containers",
+			Value: "172.16.0.0/12",
 		},
 		cli.StringFlag{
 			Name:  "connection-type, t",
@@ -125,11 +136,17 @@ func action(c *cli.Context) error {
 	containerdAddr := c.String("containerd-addr")
 	namespace := c.String("namespace")
 
+	_, subnet, err := net.ParseCIDR(c.String("subnet"))
+	if err != nil {
+		return err
+	}
 	srv, err := server.NewServer(&server.Config{
 		AgentConfig:    agentConfig,
 		ContainerdAddr: containerdAddr,
 		Namespace:      namespace,
+		Subnet:         subnet,
 		DataDir:        c.String("data-dir"),
+		Bridge:         c.String("bridge"),
 	})
 	if err != nil {
 		return err

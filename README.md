@@ -1,4 +1,12 @@
-# Stellar
+```
+   _____ __       ____
+  / ___// /____  / / /___ ______
+  \__ \/ __/ _ \/ / / __ `/ ___/
+ ___/ / /_/  __/ / / /_/ / /
+/____/\__/\___/_/_/\__,_/_/
+
+```
+
 Simplified Container Runtime Cluster
 
 Stellar is designed to provide simple container runtime clustering.  One

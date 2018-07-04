@@ -3,42 +3,44 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/ehazlett/element"
-	"github.com/ehazlett/stellar"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
+	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
 	clusterservice "github.com/ehazlett/stellar/services/cluster"
 	datastoreservice "github.com/ehazlett/stellar/services/datastore"
 	healthservice "github.com/ehazlett/stellar/services/health"
+	networkservice "github.com/ehazlett/stellar/services/network"
 	nodeservice "github.com/ehazlett/stellar/services/node"
 	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	datastoreBucketName = "stellar.server"
-)
-
 var (
-	heartbeatInterval = time.Second * 10
+	dsServerBucketName = "stellar.server"
+	reconcileInterval  = time.Second * 10
 )
 
 type Server struct {
-	agent  *element.Agent
-	config *Config
-	synced bool
+	agent       *element.Agent
+	config      *Config
+	synced      bool
+	nodeEventCh chan *element.NodeEvent
 }
 
 type Config struct {
 	AgentConfig    *element.Config
 	ContainerdAddr string
 	Namespace      string
+	Subnet         *net.IPNet
 	DataDir        string
+	Bridge         string
 }
 
 func NewServer(cfg *Config) (*Server, error) {
@@ -48,12 +50,8 @@ func NewServer(cfg *Config) (*Server, error) {
 	}
 
 	// services
+	// TODO: implement dependencies for services to alleviate the loading order
 	vs, err := versionservice.New(cfg.ContainerdAddr, cfg.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +71,18 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
+	netSvc, err := networkservice.New(ds, a, cfg.Subnet)
+	if err != nil {
+		return nil, err
+	}
+
+	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, netSvc)
+	if err != nil {
+		return nil, err
+	}
+
 	// register with agent
-	for _, svc := range []services.Service{vs, ns, hs, cs, ds} {
+	for _, svc := range []services.Service{vs, ns, hs, cs, ds, netSvc} {
 		if err := a.Register(svc); err != nil {
 			return nil, err
 		}
@@ -83,10 +91,29 @@ func NewServer(cfg *Config) (*Server, error) {
 		}).Info("registered service")
 	}
 
-	return &Server{
-		agent:  a,
-		config: cfg,
-	}, nil
+	nodeEventCh := make(chan *element.NodeEvent)
+	a.Subscribe(nodeEventCh)
+
+	srv := &Server{
+		agent:       a,
+		config:      cfg,
+		nodeEventCh: nodeEventCh,
+	}
+
+	go srv.eventHandler(nodeEventCh)
+
+	return srv, nil
+}
+
+func (s *Server) NodeName() string {
+	return s.config.AgentConfig.NodeName
+}
+
+func (s *Server) eventHandler(ch chan *element.NodeEvent) {
+	for {
+		evt := <-ch
+		logrus.Debugf("event: %+v", evt)
+	}
 }
 
 func (s *Server) waitForPeers(timeout time.Duration) error {
@@ -122,7 +149,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 	peer := peers[0]
-	c, err := stellar.NewClient(peer.Addr)
+	c, err := client.NewClient(peer.Addr)
 	if err != nil {
 		return err
 	}
@@ -133,7 +160,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 
-	lc, err := stellar.NewClient(fmt.Sprintf("%s:%d", s.config.AgentConfig.AgentAddr, s.config.AgentConfig.AgentPort))
+	lc, err := client.NewClient(fmt.Sprintf("%s:%d", s.config.AgentConfig.AgentAddr, s.config.AgentConfig.AgentPort))
 	if err != nil {
 		return err
 	}
@@ -141,6 +168,18 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 	logrus.Debugf("restored %d bytes", len(bResp.Data))
+
+	return nil
+}
+
+func (s *Server) init() error {
+	started := time.Now()
+	// initialize networking
+	if err := s.initNetworking(); err != nil {
+		return err
+	}
+
+	logrus.Debugf("initializion duration: %s", time.Since(started))
 
 	return nil
 }
@@ -159,12 +198,16 @@ func (s *Server) Run() error {
 		}
 	}
 
-	ticker := time.NewTicker(heartbeatInterval)
+	if err := s.init(); err != nil {
+		return err
+	}
+
+	ticker := time.NewTicker(reconcileInterval)
 
 	for {
 		select {
 		case <-ticker.C:
-			s.heartbeat()
+			s.reconcile()
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGTERM, syscall.SIGINT:
@@ -178,4 +221,13 @@ func (s *Server) Run() error {
 	}
 
 	return nil
+}
+
+func (s *Server) client() (*client.Client, error) {
+	localNode, err := s.agent.LocalNode()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.NewClient(localNode.Addr)
 }
