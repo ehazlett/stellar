@@ -6,11 +6,6 @@ import (
 )
 
 func (s *Server) reconcile() {
-	localNode, err := s.agent.LocalNode()
-	if err != nil {
-		logrus.Error(err)
-	}
-
 	c, err := client.NewClient(localNode.Addr)
 	if err != nil {
 		logrus.Error(err)

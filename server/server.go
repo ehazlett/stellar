@@ -28,9 +28,10 @@ var (
 )
 
 type Server struct {
-	agent  *element.Agent
-	config *Config
-	synced bool
+	agent       *element.Agent
+	config      *Config
+	synced      bool
+	nodeEventCh chan *element.NodeEvent
 }
 
 type Config struct {
@@ -90,14 +91,29 @@ func NewServer(cfg *Config) (*Server, error) {
 		}).Info("registered service")
 	}
 
-	return &Server{
-		agent:  a,
-		config: cfg,
-	}, nil
+	nodeEventCh := make(chan *element.NodeEvent)
+	a.Subscribe(nodeEventCh)
+
+	srv := &Server{
+		agent:       a,
+		config:      cfg,
+		nodeEventCh: nodeEventCh,
+	}
+
+	go srv.eventHandler(nodeEventCh)
+
+	return srv, nil
 }
 
 func (s *Server) NodeName() string {
 	return s.config.AgentConfig.NodeName
+}
+
+func (s *Server) eventHandler(ch chan *element.NodeEvent) {
+	for {
+		evt := <-ch
+		logrus.Debugf("event: %+v", evt)
+	}
 }
 
 func (s *Server) waitForPeers(timeout time.Duration) error {
