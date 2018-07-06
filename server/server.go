@@ -202,12 +202,17 @@ func (s *Server) Run() error {
 		return err
 	}
 
+	errCh := make(chan error)
 	ticker := time.NewTicker(reconcileInterval)
 
 	for {
 		select {
+		case err := <-errCh:
+			logrus.Error(err)
 		case <-ticker.C:
-			s.reconcile()
+			if err := s.reconcile(); err != nil {
+				errCh <- err
+			}
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGTERM, syscall.SIGINT:
