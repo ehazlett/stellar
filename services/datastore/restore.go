@@ -14,22 +14,22 @@ func (s *service) Restore(ctx context.Context, req *api.RestoreRequest) (*ptypes
 	defer s.lock.Unlock()
 
 	if err := os.Remove(dbFilename); err != nil {
-		return &ptypes.Empty{}, err
+		return empty, err
 	}
 
 	f, err := os.OpenFile(dbFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		return &ptypes.Empty{}, err
+		return empty, err
 	}
 	f.Write(req.Data)
 	f.Close()
 
 	db, err := s.openDB()
 	if err != nil {
-		return &ptypes.Empty{}, err
+		return empty, err
 	}
 
 	s.db = db
 
-	return &ptypes.Empty{}, err
+	return empty, err
 }

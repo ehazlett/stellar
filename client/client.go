@@ -73,6 +73,12 @@ func (c *Client) Version() *version {
 	}
 }
 
+func (c *Client) Health() *health {
+	return &health{
+		client: c.healthService,
+	}
+}
+
 func (c *Client) VersionService() versionapi.VersionClient {
 	return c.versionService
 }

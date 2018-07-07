@@ -37,9 +37,9 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 			bucket: req.Bucket,
 			key:    req.Key,
 		}); err != nil {
-			return &ptypes.Empty{}, err
+			return empty, err
 		}
 	}
 
-	return &ptypes.Empty{}, err
+	return empty, err
 }

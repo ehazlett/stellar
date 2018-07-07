@@ -26,6 +26,7 @@ type Agent struct {
 	nodeEventChan      chan *NodeEvent
 	grpcServer         *grpc.Server
 	registeredServices map[string]struct{}
+	memberConfig       *memberlist.Config
 }
 
 // NewAgent returns a new node agent
@@ -48,7 +49,13 @@ func NewAgent(cfg *Config) (*Agent, error) {
 		peerUpdateChan: updateCh,
 		nodeEventChan:  nodeEventCh,
 		grpcServer:     grpcServer,
+		memberConfig:   mc,
 	}, nil
+}
+
+// SyncInterval returns the cluster sync interval
+func (a *Agent) SyncInterval() time.Duration {
+	return a.memberConfig.PushPullInterval
 }
 
 // Subscribe subscribes to the node event channel

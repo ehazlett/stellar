@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/gosigar"
+	"github.com/ehazlett/element"
 	api "github.com/ehazlett/stellar/api/services/health/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
@@ -16,11 +17,13 @@ const (
 )
 
 type service struct {
+	agent   *element.Agent
 	started time.Time
 }
 
-func New() (*service, error) {
+func New(a *element.Agent) (*service, error) {
 	return &service{
+		agent:   a,
 		started: time.Now(),
 	}, nil
 }
@@ -53,6 +56,18 @@ func (s *service) Health(ctx context.Context, _ *ptypes.Empty) (*api.HealthRespo
 	if err != nil {
 		return nil, err
 	}
+	p, err := s.agent.Peers()
+	if err != nil {
+		return nil, err
+	}
+	peers := []*api.Peer{}
+	for _, peer := range p {
+		peers = append(peers, &api.Peer{
+			Name: peer.Name,
+			Addr: peer.Addr,
+		})
+	}
+
 	return &api.HealthResponse{
 		OSName:      osInfo.OSName,
 		OSVersion:   osInfo.OSVersion,
@@ -61,5 +76,6 @@ func (s *service) Health(ctx context.Context, _ *ptypes.Empty) (*api.HealthRespo
 		MemoryTotal: int64(memory.Total),
 		MemoryFree:  int64(memory.Free),
 		MemoryUsed:  int64(memory.Used),
+		Peers:       peers,
 	}, nil
 }

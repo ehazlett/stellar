@@ -9,23 +9,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (s *service) AcquireLock(ctx context.Context, _ *api.AcquireLockRequest) (*ptypes.Empty, error) {
+func (s *service) AcquireLock(ctx context.Context, req *api.AcquireLockRequest) (*ptypes.Empty, error) {
 	s.lock.Lock()
+
+	timeout, err := ptypes.DurationFromProto(req.Timeout)
+	if err != nil {
+		return empty, err
+	}
 
 	go func() {
 		select {
-		case <-time.After(lockTimeout):
-			logrus.Warnf("lock timeout occurred (%s)", lockTimeout)
+		case <-time.After(timeout):
+			logrus.Warnf("lock timeout occurred (%s)", timeout)
 			s.lock.Unlock()
 		case <-s.lockChan:
 			s.lock.Unlock()
 		}
 	}()
 
-	return &ptypes.Empty{}, nil
+	return empty, nil
 }
 
 func (s *service) ReleaseLock(ctx context.Context, _ *api.ReleaseLockRequest) (*ptypes.Empty, error) {
 	s.lockChan <- true
-	return &ptypes.Empty{}, nil
+	return empty, nil
 }

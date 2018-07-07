@@ -56,7 +56,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	hs, err := healthservice.New()
+	hs, err := healthservice.New(a)
 	if err != nil {
 		return nil, err
 	}
@@ -116,31 +116,78 @@ func (s *Server) eventHandler(ch chan *element.NodeEvent) {
 	}
 }
 
-func (s *Server) waitForPeers(timeout time.Duration) error {
-	logrus.Debugf("waiting on peers")
+func (s *Server) waitForPeers() error {
+	timeout := s.agent.SyncInterval() * 2
+	logrus.Infof("waiting on cluster initialization (timeout: %s)", timeout)
+
 	doneChan := make(chan bool)
+	errChan := make(chan error)
+
+	localNode, err := s.agent.LocalNode()
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		for {
-			peers, _ := s.agent.Peers()
-			if len(peers) > 0 {
-				doneChan <- true
+			peers, err := s.agent.Peers()
+			if err != nil {
+				errChan <- err
 			}
+
+			if len(peers) > 0 {
+				peer := peers[0]
+				ac, err := client.NewClient(peer.Addr)
+				if err != nil {
+					errChan <- err
+					break
+				}
+				clusterNodes, err := ac.Cluster().Nodes()
+				if err != nil {
+					errChan <- err
+					break
+				}
+				ac.Close()
+
+				lc, err := client.NewClient(localNode.Addr)
+				if err != nil {
+					errChan <- err
+					break
+				}
+
+				localClusterNodes, err := lc.Cluster().Nodes()
+				if err != nil {
+					errChan <- err
+					break
+				}
+
+				if len(localClusterNodes) == len(clusterNodes) {
+					logrus.Debugf("discovered %d cluster nodes (%s); cluster membership in sync", len(localClusterNodes), localClusterNodes)
+					doneChan <- true
+					return
+				}
+			}
+
 			time.Sleep(time.Millisecond * 500)
 		}
 	}()
 
 	select {
+	case err := <-errChan:
+		return err
 	case <-doneChan:
 		return nil
 	case <-time.After(timeout):
-		return fmt.Errorf("no peers detected")
+		logrus.Warnf("cluster not fully initialized; continuing in background")
 	}
+
+	return nil
 }
 
 func (s *Server) syncDatastore() error {
 	// check if joining; if so, clear current datastore and sync from peer
 	logrus.Debug("joining cluster; clearing current datastore")
-	if err := s.waitForPeers(time.Second * 10); err != nil {
+	if err := s.waitForPeers(); err != nil {
 		return err
 	}
 	// sync entire datastore with peer
@@ -174,6 +221,7 @@ func (s *Server) syncDatastore() error {
 
 func (s *Server) init() error {
 	started := time.Now()
+
 	// initialize networking
 	if err := s.initNetworking(); err != nil {
 		return err
