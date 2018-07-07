@@ -38,9 +38,9 @@ func (s *service) Set(ctx context.Context, req *api.SetRequest) (*ptypes.Empty, 
 			key:    req.Key,
 			value:  req.Value,
 		}); err != nil {
-			return &ptypes.Empty{}, err
+			return empty, err
 		}
 	}
 
-	return &ptypes.Empty{}, err
+	return empty, err
 }

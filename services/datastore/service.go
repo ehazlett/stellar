@@ -8,16 +8,17 @@ import (
 	bolt "github.com/coreos/bbolt"
 	"github.com/ehazlett/element"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
+	ptypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 )
 
 const (
-	serviceID   = "stellar.services.datastore.v1"
-	lockTimeout = time.Second * 30
+	serviceID = "stellar.services.datastore.v1"
 )
 
 var (
 	dbFilename = serviceID + ".db"
+	empty      = &ptypes.Empty{}
 )
 
 type service struct {

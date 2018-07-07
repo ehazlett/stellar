@@ -21,4 +21,10 @@ message HealthResponse {
   int64 memory_total = 5;
   int64 memory_free = 6;
   int64 memory_used = 7;
+  repeated Peer peers = 8;
+}
+
+message Peer {
+    string name = 1;
+    string addr = 2;
 }
