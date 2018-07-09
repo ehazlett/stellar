@@ -16,6 +16,9 @@ service Datastore {
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
   rpc Backup(BackupRequest) returns (BackupResponse);
   rpc Restore(RestoreRequest) returns (google.protobuf.Empty);
+  rpc Shutdown(ShutdownRequest) returns (google.protobuf.Empty);
+  rpc Sync(SyncRequest) returns (stream SyncOperation);
+  rpc PeerSync(PeerSyncRequest) returns (google.protobuf.Empty);
 }
 
 message AcquireLockRequest {
@@ -70,4 +73,19 @@ message BackupResponse {
 
 message RestoreRequest {
   bytes data = 1;
+}
+
+message ShutdownRequest {}
+
+message SyncRequest {}
+
+message SyncOperation {
+  string bucket = 2;
+  string key = 3;
+  bytes value = 4;
+}
+
+message PeerSyncRequest {
+  string name = 1;
+  string addr = 2;
 }
