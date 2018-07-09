@@ -22,25 +22,12 @@ func (s *service) Set(ctx context.Context, req *api.SetRequest) (*ptypes.Empty, 
 		}
 		return nil
 	})
-
 	s.lock.Unlock()
 
 	logrus.WithFields(logrus.Fields{
 		"bucket": req.Bucket,
 		"key":    req.Key,
 	}).Debug("updated datastore")
-
-	if err == nil && req.Sync {
-		// sync to peers
-		if err := s.syncWithPeers(ctx, &syncOp{
-			action: syncSet,
-			bucket: req.Bucket,
-			key:    req.Key,
-			value:  req.Value,
-		}); err != nil {
-			return empty, err
-		}
-	}
 
 	return empty, err
 }

@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -19,12 +20,16 @@ import (
 	networkservice "github.com/ehazlett/stellar/services/network"
 	nodeservice "github.com/ehazlett/stellar/services/node"
 	versionservice "github.com/ehazlett/stellar/services/version"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 var (
 	dsServerBucketName = "stellar.server"
-	reconcileInterval  = time.Second * 10
+	// TODO: make configurable
+	reconcileInterval = time.Second * 10
+	// TODO: make configurable
+	datastoreSyncInterval = time.Second * 60
 )
 
 type Server struct {
@@ -117,8 +122,7 @@ func (s *Server) eventHandler(ch chan *element.NodeEvent) {
 }
 
 func (s *Server) waitForPeers() error {
-	timeout := s.agent.SyncInterval() * 2
-	logrus.Infof("waiting on cluster initialization (timeout: %s)", timeout)
+	logrus.Infof("waiting on initial cluster sync (could take up to %s)", s.agent.SyncInterval()*2)
 
 	doneChan := make(chan bool)
 	errChan := make(chan error)
@@ -177,8 +181,6 @@ func (s *Server) waitForPeers() error {
 		return err
 	case <-doneChan:
 		return nil
-	case <-time.After(timeout):
-		logrus.Warnf("cluster not fully initialized; continuing in background")
 	}
 
 	return nil
@@ -251,26 +253,137 @@ func (s *Server) Run() error {
 	}
 
 	errCh := make(chan error)
-	ticker := time.NewTicker(reconcileInterval)
+	tickerReconcile := time.NewTicker(reconcileInterval)
+	tickerDatastoreSync := time.NewTicker(datastoreSyncInterval)
+
+	go func() {
+		for range tickerReconcile.C {
+			if err := s.reconcile(); err != nil {
+				errCh <- err
+			}
+		}
+	}()
+
+	go func() {
+		for range tickerDatastoreSync.C {
+			if err := s.syncPeerDatastores(); err != nil {
+				errCh <- err
+			}
+		}
+	}()
 
 	for {
 		select {
 		case err := <-errCh:
 			logrus.Error(err)
-		case <-ticker.C:
-			if err := s.reconcile(); err != nil {
-				errCh <- err
-			}
 		case sig := <-signals:
 			switch sig {
 			case syscall.SIGTERM, syscall.SIGINT:
-				logrus.Debug("shutting down")
+				logrus.Info("shutting down")
+
+				tickerReconcile.Stop()
+				tickerDatastoreSync.Stop()
+
+				// shutdown server
+				if err := s.shutdown(); err != nil {
+					logrus.Error(err)
+				}
+
+				// shutdown element agent
 				if err := s.agent.Shutdown(); err != nil {
 					return err
 				}
+
 				return nil
 			}
 		}
+	}
+
+	return nil
+}
+
+func (s *Server) syncPeerDatastores() error {
+	localNode, err := s.agent.LocalNode()
+	if err != nil {
+		return err
+	}
+
+	lc, err := client.NewClient(localNode.Addr)
+	if err != nil {
+		return err
+	}
+	defer lc.Close()
+
+	peers, err := s.agent.Peers()
+	if err != nil {
+		return err
+	}
+
+	for _, peer := range peers {
+		logrus.WithFields(logrus.Fields{
+			"peer": peer.Name,
+			"addr": peer.Addr,
+		}).Debug("syncing peer datastore")
+		c, err := client.NewClient(peer.Addr)
+		if err != nil {
+			return err
+		}
+		defer c.Close()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
+
+		stream, err := c.DatastoreService().Sync(ctx, &datastoreapi.SyncRequest{})
+		if err != nil {
+			return err
+		}
+
+		count := 0
+		for {
+			op, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				return errors.Wrap(err, "error syncing datastore")
+			}
+
+			// TODO: handle operation
+			if _, err := lc.DatastoreService().Set(ctx, &datastoreapi.SetRequest{
+				Bucket: op.Bucket,
+				Key:    op.Key,
+				Value:  op.Value,
+			}); err != nil {
+				return errors.Wrapf(err, "error syncing key %s", op.Key)
+			}
+			count++
+		}
+
+		logrus.Debugf("synchronized %d operations from peer %s", count, peer.Name)
+
+	}
+
+	return nil
+}
+
+func (s *Server) shutdown() error {
+	// signal datastore to shutdown
+	localNode, err := s.agent.LocalNode()
+	if err != nil {
+		return err
+	}
+	lc, err := client.NewClient(localNode.Addr)
+	if err != nil {
+		return err
+	}
+	defer lc.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	if _, err := lc.DatastoreService().Shutdown(ctx, &datastoreapi.ShutdownRequest{}); err != nil {
+		return err
 	}
 
 	return nil

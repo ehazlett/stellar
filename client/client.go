@@ -1,6 +1,9 @@
 package client
 
 import (
+	"context"
+	"time"
+
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
@@ -21,20 +24,26 @@ type Client struct {
 }
 
 func NewClient(addr string) (*Client, error) {
-	c, err := grpc.Dial(addr, grpc.WithInsecure())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	c, err := grpc.DialContext(ctx,
+		addr,
+		grpc.WithInsecure(),
+		grpc.WithWaitForHandshake(),
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
-		conn: c,
+		conn:             c,
+		versionService:   versionapi.NewVersionClient(c),
+		healthService:    healthapi.NewHealthClient(c),
+		nodeService:      nodeapi.NewNodeClient(c),
+		clusterService:   clusterapi.NewClusterClient(c),
+		datastoreService: datastoreapi.NewDatastoreClient(c),
+		networkService:   networkapi.NewNetworkClient(c),
 	}
-	client.versionService = versionapi.NewVersionClient(c)
-	client.healthService = healthapi.NewHealthClient(c)
-	client.nodeService = nodeapi.NewNodeClient(c)
-	client.clusterService = clusterapi.NewClusterClient(c)
-	client.datastoreService = datastoreapi.NewDatastoreClient(c)
-	client.networkService = networkapi.NewNetworkClient(c)
 
 	return client, nil
 }

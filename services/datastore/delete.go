@@ -30,16 +30,5 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 		"key":    req.Key,
 	}).Debug("removed key from datastore")
 
-	if err == nil && req.Sync {
-		// sync to peers
-		if err := s.syncWithPeers(ctx, &syncOp{
-			action: syncDelete,
-			bucket: req.Bucket,
-			key:    req.Key,
-		}); err != nil {
-			return empty, err
-		}
-	}
-
 	return empty, err
 }
