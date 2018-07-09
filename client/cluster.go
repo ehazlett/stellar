@@ -4,7 +4,6 @@ import (
 	"context"
 
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 )
 
 type cluster struct {
@@ -21,7 +20,7 @@ func (c *cluster) Nodes() ([]*clusterapi.Node, error) {
 	return resp.Nodes, nil
 }
 
-func (c *cluster) Containers() ([]*nodeapi.Container, error) {
+func (c *cluster) Containers() ([]*clusterapi.Container, error) {
 	ctx := context.Background()
 	resp, err := c.client.Containers(ctx, &clusterapi.ContainersRequest{})
 	if err != nil {

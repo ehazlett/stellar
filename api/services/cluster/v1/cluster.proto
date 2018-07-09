@@ -19,7 +19,7 @@ message ImagesRequest {}
 message NodesRequest {}
 
 message ContainersResponse {
-  repeated stellar.services.node.v1.Container containers = 1;
+  repeated Container containers = 1;
 }
 
 message ImagesResponse {
@@ -33,4 +33,9 @@ message Node {
 
 message NodesResponse {
     repeated Node nodes = 1;
+}
+
+message Container {
+    stellar.services.node.v1.Container container = 1;
+    Node node = 2;
 }

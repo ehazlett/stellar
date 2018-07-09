@@ -4,12 +4,11 @@ import (
 	"context"
 
 	api "github.com/ehazlett/stellar/api/services/cluster/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	"github.com/ehazlett/stellar/client"
 )
 
 func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*api.ContainersResponse, error) {
-	var containers []*nodeapi.Container
+	var containers []*api.Container
 
 	resp, err := s.Nodes(ctx, &api.NodesRequest{})
 	if err != nil {
@@ -25,7 +24,15 @@ func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*
 		if err != nil {
 			return nil, err
 		}
-		containers = append(containers, cont...)
+		for _, container := range cont {
+			containers = append(containers, &api.Container{
+				Container: container,
+				Node: &api.Node{
+					Name: node.Name,
+					Addr: node.Addr,
+				},
+			})
+		}
 		c.Close()
 	}
 
