@@ -41,9 +41,9 @@ var clusterContainersCommand = cli.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
-		fmt.Fprintf(w, "ID\tIMAGE\n")
+		fmt.Fprintf(w, "ID\tIMAGE\tRUNTIME\n")
 		for _, c := range resp.Containers {
-			fmt.Fprintf(w, "%s\t%s\n", c.ID, c.Image)
+			fmt.Fprintf(w, "%s\t%s\t%s\n", c.ID, c.Image, c.Runtime)
 		}
 		w.Flush()
 

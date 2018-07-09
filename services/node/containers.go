@@ -102,5 +102,6 @@ func (s *service) containerToProto(container containerd.Container) (*api.Contain
 		Task: &api.Container_Task{
 			Pid: pid,
 		},
+		Runtime: info.Runtime.Name,
 	}, nil
 }

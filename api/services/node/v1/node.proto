@@ -29,6 +29,7 @@ message Container {
   }
 
   Task task = 6;
+  string runtime = 7;
 }
 
 message ContainersResponse {
