@@ -23,7 +23,10 @@ func (s *service) Shutdown(ctx context.Context, req *api.ShutdownRequest) (*ptyp
 		logrus.Debugf("performing shutdown sync with peer %s", peer.Name)
 		c, err := client.NewClient(peer.Addr)
 		if err != nil {
-			return empty, err
+			logrus.WithFields(logrus.Fields{
+				"peer": peer.Name,
+			}).Errorf("error performing shutdown sync: %s", err)
+			continue
 		}
 		defer c.Close()
 
@@ -31,7 +34,10 @@ func (s *service) Shutdown(ctx context.Context, req *api.ShutdownRequest) (*ptyp
 			Name: peer.Name,
 			Addr: peer.Addr,
 		}); err != nil {
-			return empty, err
+			logrus.WithFields(logrus.Fields{
+				"peer": peer.Name,
+			}).Errorf("peer sync error: %s", err)
+			continue
 		}
 	}
 	return empty, nil

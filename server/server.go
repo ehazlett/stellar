@@ -29,7 +29,7 @@ var (
 	// TODO: make configurable
 	reconcileInterval = time.Second * 10
 	// TODO: make configurable
-	datastoreSyncInterval = time.Second * 60
+	datastoreSyncInterval = time.Second * 300
 )
 
 type Server struct {

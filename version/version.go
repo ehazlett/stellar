@@ -10,7 +10,7 @@ var (
 	Version = "0.1.0"
 
 	// Description is the application description
-	Description = "container runtime cluster"
+	Description = "simple container platform"
 
 	// Build will be overwritten automatically by the build system
 	Build = "-dev"
