@@ -9,23 +9,22 @@ import (
 )
 
 var nodeCommand = cli.Command{
-	Name:    "node",
-	Aliases: []string{"n"},
-	Usage:   "interact with nodes",
+	Name:  "node",
+	Usage: "interact with nodes",
 	Subcommands: []cli.Command{
 		nodeContainersCommand,
 	},
 }
 
 var nodeContainersCommand = cli.Command{
-	Name:    "containers",
-	Aliases: []string{"c"},
-	Usage:   "container management",
+	Name:  "containers",
+	Usage: "container management",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {
 			return err
 		}
+		defer client.Close()
 
 		containers, err := client.Node().Containers()
 		if err != nil {

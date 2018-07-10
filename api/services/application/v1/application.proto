@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package stellar.services.application.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/ehazlett/stellar/api/services/application/v1;application";
+
+service Application {
+  rpc Create(CreateRequest) returns (google.protobuf.Empty);
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+}
+
+message Process {
+  uint32 uid = 1;
+  uint32 gid = 2;
+  repeated string args = 3;
+  repeated string env = 4;
+}
+
+message Mount {
+  string type = 1;
+  string source = 2;
+  string destination = 4;
+  repeated string options = 5;
+}
+
+message Service {
+  string name = 1;
+  uint32 instances = 2;
+  string image = 3;
+  string runtime = 4;
+  string snapshotter = 5;
+  Process process = 6;
+  repeated string labels = 7;
+  bool network = 8;
+  repeated Mount mounts = 9;
+}
+
+message CreateRequest {
+  string name = 1;
+  repeated string labels = 2;
+  repeated Service services = 3;
+}
+
+message DeleteRequest {
+  string name = 1;
+}

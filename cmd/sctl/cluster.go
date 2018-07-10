@@ -16,9 +16,8 @@ import (
 )
 
 var clusterCommand = cli.Command{
-	Name:    "cluster",
-	Aliases: []string{"c"},
-	Usage:   "interact with cluster",
+	Name:  "cluster",
+	Usage: "interact with cluster",
 	Subcommands: []cli.Command{
 		clusterContainersCommand,
 		clusterNodesCommand,
@@ -26,14 +25,14 @@ var clusterCommand = cli.Command{
 }
 
 var clusterContainersCommand = cli.Command{
-	Name:    "containers",
-	Aliases: []string{"c"},
-	Usage:   "container management",
+	Name:  "containers",
+	Usage: "container management",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {
 			return err
 		}
+		defer client.Close()
 
 		resp, err := client.ClusterService().Containers(context.Background(), &clusterapi.ContainersRequest{})
 		if err != nil {
@@ -52,14 +51,14 @@ var clusterContainersCommand = cli.Command{
 }
 
 var clusterNodesCommand = cli.Command{
-	Name:    "nodes",
-	Aliases: []string{"n"},
-	Usage:   "cluster node management",
+	Name:  "nodes",
+	Usage: "cluster node management",
 	Action: func(c *cli.Context) error {
 		cl, err := getClient(c)
 		if err != nil {
 			return err
 		}
+		defer cl.Close()
 
 		nodes, err := cl.Cluster().Nodes()
 		if err != nil {

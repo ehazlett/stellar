@@ -4,23 +4,30 @@ import (
 	"context"
 	"time"
 
+	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	versionapi "github.com/ehazlett/stellar/api/services/version/v1"
+	ptypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 )
 
+var (
+	empty = &ptypes.Empty{}
+)
+
 type Client struct {
-	conn             *grpc.ClientConn
-	versionService   versionapi.VersionClient
-	healthService    healthapi.HealthClient
-	nodeService      nodeapi.NodeClient
-	clusterService   clusterapi.ClusterClient
-	datastoreService datastoreapi.DatastoreClient
-	networkService   networkapi.NetworkClient
+	conn               *grpc.ClientConn
+	versionService     versionapi.VersionClient
+	healthService      healthapi.HealthClient
+	nodeService        nodeapi.NodeClient
+	clusterService     clusterapi.ClusterClient
+	datastoreService   datastoreapi.DatastoreClient
+	networkService     networkapi.NetworkClient
+	applicationService applicationapi.ApplicationClient
 }
 
 func NewClient(addr string) (*Client, error) {
@@ -36,13 +43,14 @@ func NewClient(addr string) (*Client, error) {
 	}
 
 	client := &Client{
-		conn:             c,
-		versionService:   versionapi.NewVersionClient(c),
-		healthService:    healthapi.NewHealthClient(c),
-		nodeService:      nodeapi.NewNodeClient(c),
-		clusterService:   clusterapi.NewClusterClient(c),
-		datastoreService: datastoreapi.NewDatastoreClient(c),
-		networkService:   networkapi.NewNetworkClient(c),
+		conn:               c,
+		versionService:     versionapi.NewVersionClient(c),
+		healthService:      healthapi.NewHealthClient(c),
+		nodeService:        nodeapi.NewNodeClient(c),
+		clusterService:     clusterapi.NewClusterClient(c),
+		datastoreService:   datastoreapi.NewDatastoreClient(c),
+		networkService:     networkapi.NewNetworkClient(c),
+		applicationService: applicationapi.NewApplicationClient(c),
 	}
 
 	return client, nil
@@ -50,6 +58,12 @@ func NewClient(addr string) (*Client, error) {
 
 func (c *Client) Close() error {
 	return c.conn.Close()
+}
+
+func (c *Client) Application() *application {
+	return &application{
+		client: c.applicationService,
+	}
 }
 
 func (c *Client) Node() *node {
