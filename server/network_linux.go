@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/ehazlett/stellar"
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-)
-
-const (
-	stellarNetworkLabel = "io.stellar.network"
 )
 
 func (s *Server) initNetworking() error {
@@ -76,7 +73,7 @@ func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
 			"labels": container.Labels,
 			"pid":    container.Task.Pid,
 		}).Debug("configuring container network")
-		// TODO: allocate IP from network service
+		// allocate IP from network service
 		ip, err := client.Network().AllocateIP(container.ID, s.NodeName(), subnetCIDR)
 		if err != nil {
 			logrus.Errorf("error allocating IP for container %s: %s", container.ID, err)
@@ -268,6 +265,6 @@ func routeExists(link netlink.Link, network *net.IPNet, gateway net.IP) (bool, e
 }
 
 func networkEnabled(container *nodeapi.Container) bool {
-	_, exists := container.Labels[stellarNetworkLabel]
+	_, exists := container.Labels[stellar.StellarNetworkLabel]
 	return exists
 }

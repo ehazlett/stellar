@@ -9,6 +9,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/runtime/restart"
+	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -61,6 +62,9 @@ func (s *service) newContainer(ctx context.Context, service *api.Service) (conta
 		containerd.WithSnapshotter(snapshotter),
 		containerd.WithNewSnapshot(service.Name, image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
+		containerd.WithContainerLabels(map[string]string{
+			stellar.StellarNetworkLabel: "true",
+		}),
 		restart.WithStatus(containerd.Running),
 	)
 
@@ -76,6 +80,8 @@ func (s *service) newContainer(ctx context.Context, service *api.Service) (conta
 	if err := task.Start(ctx); err != nil {
 		return nil, err
 	}
+
+	// TODO: setup networking
 
 	return container, nil
 
