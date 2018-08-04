@@ -129,11 +129,14 @@ func (image *Image) Size(ctx context.Context, provider content.Provider, platfor
 // this direction because this abstraction is not needed.`
 func Manifest(ctx context.Context, provider content.Provider, image ocispec.Descriptor, platform string) (ocispec.Manifest, error) {
 	var (
-		matcher platforms.Matcher
-		m       *ocispec.Manifest
+		matcher  platforms.Matcher
+		m        *ocispec.Manifest
+		p        ocispec.Platform
+		wasIndex bool
 	)
 	if platform != "" {
-		p, err := platforms.Parse(platform)
+		var err error
+		p, err = platforms.Parse(platform)
 		if err != nil {
 			return ocispec.Manifest{}, err
 		}
@@ -143,7 +146,7 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 	if err := Walk(ctx, HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 		switch desc.MediaType {
 		case MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest:
-			p, err := content.ReadBlob(ctx, provider, desc.Digest)
+			p, err := content.ReadBlob(ctx, provider, desc)
 			if err != nil {
 				return nil, err
 			}
@@ -159,7 +162,7 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 				}
 
 				if desc.Platform == nil {
-					p, err := content.ReadBlob(ctx, provider, manifest.Config.Digest)
+					p, err := content.ReadBlob(ctx, provider, manifest.Config)
 					if err != nil {
 						return nil, err
 					}
@@ -180,7 +183,7 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 
 			return nil, nil
 		case MediaTypeDockerSchema2ManifestList, ocispec.MediaTypeImageIndex:
-			p, err := content.ReadBlob(ctx, provider, desc.Digest)
+			p, err := content.ReadBlob(ctx, provider, desc)
 			if err != nil {
 				return nil, err
 			}
@@ -201,6 +204,8 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 				}
 			}
 
+			wasIndex = true
+
 			return descs, nil
 
 		}
@@ -210,7 +215,11 @@ func Manifest(ctx context.Context, provider content.Provider, image ocispec.Desc
 	}
 
 	if m == nil {
-		return ocispec.Manifest{}, errors.Wrapf(errdefs.ErrNotFound, "manifest %v", image.Digest)
+		err := errors.Wrapf(errdefs.ErrNotFound, "manifest %v", image.Digest)
+		if wasIndex {
+			err = errors.Wrapf(errdefs.ErrNotFound, "no match for current platform %s in manifest %v", platforms.Format(p), image.Digest)
+		}
+		return ocispec.Manifest{}, err
 	}
 
 	return *m, nil
@@ -240,7 +249,7 @@ func Platforms(ctx context.Context, provider content.Provider, image ocispec.Des
 
 		switch desc.MediaType {
 		case MediaTypeDockerSchema2Config, ocispec.MediaTypeImageConfig:
-			p, err := content.ReadBlob(ctx, provider, desc.Digest)
+			p, err := content.ReadBlob(ctx, provider, desc)
 			if err != nil {
 				return nil, err
 			}
@@ -283,7 +292,7 @@ func Check(ctx context.Context, provider content.Provider, image ocispec.Descrip
 	required = append([]ocispec.Descriptor{mfst.Config}, mfst.Layers...)
 
 	for _, desc := range required {
-		ra, err := provider.ReaderAt(ctx, desc.Digest)
+		ra, err := provider.ReaderAt(ctx, desc)
 		if err != nil {
 			if errdefs.IsNotFound(err) {
 				missing = append(missing, desc)
@@ -305,7 +314,7 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
 	var descs []ocispec.Descriptor
 	switch desc.MediaType {
 	case MediaTypeDockerSchema2Manifest, ocispec.MediaTypeImageManifest:
-		p, err := content.ReadBlob(ctx, provider, desc.Digest)
+		p, err := content.ReadBlob(ctx, provider, desc)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +329,7 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
 		descs = append(descs, manifest.Config)
 		descs = append(descs, manifest.Layers...)
 	case MediaTypeDockerSchema2ManifestList, ocispec.MediaTypeImageIndex:
-		p, err := content.ReadBlob(ctx, provider, desc.Digest)
+		p, err := content.ReadBlob(ctx, provider, desc)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +360,7 @@ func Children(ctx context.Context, provider content.Provider, desc ocispec.Descr
 // These are used to verify that a set of layers unpacked to the expected
 // values.
 func RootFS(ctx context.Context, provider content.Provider, configDesc ocispec.Descriptor) ([]digest.Digest, error) {
-	p, err := content.ReadBlob(ctx, provider, configDesc.Digest)
+	p, err := content.ReadBlob(ctx, provider, configDesc)
 	if err != nil {
 		return nil, err
 	}

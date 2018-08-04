@@ -14,7 +14,7 @@
    limitations under the License.
 */
 
-package containerd
+package proxy
 
 import (
 	"context"
@@ -25,21 +25,23 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	protobuftypes "github.com/gogo/protobuf/types"
 	digest "github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-type remoteContent struct {
+type proxyContentStore struct {
 	client contentapi.ContentClient
 }
 
-// NewContentStoreFromClient returns a new content store
-func NewContentStoreFromClient(client contentapi.ContentClient) content.Store {
-	return &remoteContent{
+// NewContentStore returns a new content store which communicates over a GRPC
+// connection using the containerd content GRPC API.
+func NewContentStore(client contentapi.ContentClient) content.Store {
+	return &proxyContentStore{
 		client: client,
 	}
 }
 
-func (rs *remoteContent) Info(ctx context.Context, dgst digest.Digest) (content.Info, error) {
-	resp, err := rs.client.Info(ctx, &contentapi.InfoRequest{
+func (pcs *proxyContentStore) Info(ctx context.Context, dgst digest.Digest) (content.Info, error) {
+	resp, err := pcs.client.Info(ctx, &contentapi.InfoRequest{
 		Digest: dgst,
 	})
 	if err != nil {
@@ -49,8 +51,8 @@ func (rs *remoteContent) Info(ctx context.Context, dgst digest.Digest) (content.
 	return infoFromGRPC(resp.Info), nil
 }
 
-func (rs *remoteContent) Walk(ctx context.Context, fn content.WalkFunc, filters ...string) error {
-	session, err := rs.client.List(ctx, &contentapi.ListContentRequest{
+func (pcs *proxyContentStore) Walk(ctx context.Context, fn content.WalkFunc, filters ...string) error {
+	session, err := pcs.client.List(ctx, &contentapi.ListContentRequest{
 		Filters: filters,
 	})
 	if err != nil {
@@ -77,8 +79,8 @@ func (rs *remoteContent) Walk(ctx context.Context, fn content.WalkFunc, filters 
 	return nil
 }
 
-func (rs *remoteContent) Delete(ctx context.Context, dgst digest.Digest) error {
-	if _, err := rs.client.Delete(ctx, &contentapi.DeleteContentRequest{
+func (pcs *proxyContentStore) Delete(ctx context.Context, dgst digest.Digest) error {
+	if _, err := pcs.client.Delete(ctx, &contentapi.DeleteContentRequest{
 		Digest: dgst,
 	}); err != nil {
 		return errdefs.FromGRPC(err)
@@ -87,22 +89,23 @@ func (rs *remoteContent) Delete(ctx context.Context, dgst digest.Digest) error {
 	return nil
 }
 
-func (rs *remoteContent) ReaderAt(ctx context.Context, dgst digest.Digest) (content.ReaderAt, error) {
-	i, err := rs.Info(ctx, dgst)
+// ReaderAt ignores MediaType.
+func (pcs *proxyContentStore) ReaderAt(ctx context.Context, desc ocispec.Descriptor) (content.ReaderAt, error) {
+	i, err := pcs.Info(ctx, desc.Digest)
 	if err != nil {
 		return nil, err
 	}
 
 	return &remoteReaderAt{
 		ctx:    ctx,
-		digest: dgst,
+		digest: desc.Digest,
 		size:   i.Size,
-		client: rs.client,
+		client: pcs.client,
 	}, nil
 }
 
-func (rs *remoteContent) Status(ctx context.Context, ref string) (content.Status, error) {
-	resp, err := rs.client.Status(ctx, &contentapi.StatusRequest{
+func (pcs *proxyContentStore) Status(ctx context.Context, ref string) (content.Status, error) {
+	resp, err := pcs.client.Status(ctx, &contentapi.StatusRequest{
 		Ref: ref,
 	})
 	if err != nil {
@@ -120,8 +123,8 @@ func (rs *remoteContent) Status(ctx context.Context, ref string) (content.Status
 	}, nil
 }
 
-func (rs *remoteContent) Update(ctx context.Context, info content.Info, fieldpaths ...string) (content.Info, error) {
-	resp, err := rs.client.Update(ctx, &contentapi.UpdateRequest{
+func (pcs *proxyContentStore) Update(ctx context.Context, info content.Info, fieldpaths ...string) (content.Info, error) {
+	resp, err := pcs.client.Update(ctx, &contentapi.UpdateRequest{
 		Info: infoToGRPC(info),
 		UpdateMask: &protobuftypes.FieldMask{
 			Paths: fieldpaths,
@@ -133,8 +136,8 @@ func (rs *remoteContent) Update(ctx context.Context, info content.Info, fieldpat
 	return infoFromGRPC(resp.Info), nil
 }
 
-func (rs *remoteContent) ListStatuses(ctx context.Context, filters ...string) ([]content.Status, error) {
-	resp, err := rs.client.ListStatuses(ctx, &contentapi.ListStatusesRequest{
+func (pcs *proxyContentStore) ListStatuses(ctx context.Context, filters ...string) ([]content.Status, error) {
+	resp, err := pcs.client.ListStatuses(ctx, &contentapi.ListStatusesRequest{
 		Filters: filters,
 	})
 	if err != nil {
@@ -156,22 +159,29 @@ func (rs *remoteContent) ListStatuses(ctx context.Context, filters ...string) ([
 	return statuses, nil
 }
 
-func (rs *remoteContent) Writer(ctx context.Context, ref string, size int64, expected digest.Digest) (content.Writer, error) {
-	wrclient, offset, err := rs.negotiate(ctx, ref, size, expected)
+// Writer ignores MediaType.
+func (pcs *proxyContentStore) Writer(ctx context.Context, opts ...content.WriterOpt) (content.Writer, error) {
+	var wOpts content.WriterOpts
+	for _, opt := range opts {
+		if err := opt(&wOpts); err != nil {
+			return nil, err
+		}
+	}
+	wrclient, offset, err := pcs.negotiate(ctx, wOpts.Ref, wOpts.Desc.Size, wOpts.Desc.Digest)
 	if err != nil {
 		return nil, errdefs.FromGRPC(err)
 	}
 
 	return &remoteWriter{
-		ref:    ref,
+		ref:    wOpts.Ref,
 		client: wrclient,
 		offset: offset,
 	}, nil
 }
 
 // Abort implements asynchronous abort. It starts a new write session on the ref l
-func (rs *remoteContent) Abort(ctx context.Context, ref string) error {
-	if _, err := rs.client.Abort(ctx, &contentapi.AbortRequest{
+func (pcs *proxyContentStore) Abort(ctx context.Context, ref string) error {
+	if _, err := pcs.client.Abort(ctx, &contentapi.AbortRequest{
 		Ref: ref,
 	}); err != nil {
 		return errdefs.FromGRPC(err)
@@ -180,8 +190,8 @@ func (rs *remoteContent) Abort(ctx context.Context, ref string) error {
 	return nil
 }
 
-func (rs *remoteContent) negotiate(ctx context.Context, ref string, size int64, expected digest.Digest) (contentapi.Content_WriteClient, int64, error) {
-	wrclient, err := rs.client.Write(ctx)
+func (pcs *proxyContentStore) negotiate(ctx context.Context, ref string, size int64, expected digest.Digest) (contentapi.Content_WriteClient, int64, error) {
+	wrclient, err := pcs.client.Write(ctx)
 	if err != nil {
 		return nil, 0, err
 	}

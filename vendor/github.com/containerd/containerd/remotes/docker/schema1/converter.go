@@ -18,7 +18,6 @@ package schema1
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -31,6 +30,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/containerd/containerd/archive/compression"
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/images"
@@ -211,12 +211,12 @@ func (c *Converter) Convert(ctx context.Context, opts ...ConvertOpt) (ocispec.De
 	}
 
 	ref := remotes.MakeRefKey(ctx, desc)
-	if err := content.WriteBlob(ctx, c.contentStore, ref, bytes.NewReader(mb), desc.Size, desc.Digest, content.WithLabels(labels)); err != nil {
+	if err := content.WriteBlob(ctx, c.contentStore, ref, bytes.NewReader(mb), desc, content.WithLabels(labels)); err != nil {
 		return ocispec.Descriptor{}, errors.Wrap(err, "failed to write config")
 	}
 
 	ref = remotes.MakeRefKey(ctx, config)
-	if err := content.WriteBlob(ctx, c.contentStore, ref, bytes.NewReader(b), config.Size, config.Digest); err != nil {
+	if err := content.WriteBlob(ctx, c.contentStore, ref, bytes.NewReader(b), config); err != nil {
 		return ocispec.Descriptor{}, errors.Wrap(err, "failed to write config")
 	}
 
@@ -255,17 +255,18 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 	log.G(ctx).Debug("fetch blob")
 
 	var (
-		ref  = remotes.MakeRefKey(ctx, desc)
-		calc = newBlobStateCalculator()
-		size = desc.Size
+		ref            = remotes.MakeRefKey(ctx, desc)
+		calc           = newBlobStateCalculator()
+		compressMethod = compression.Gzip
 	)
 
 	// size may be unknown, set to zero for content ingest
-	if size == -1 {
-		size = 0
+	ingestDesc := desc
+	if ingestDesc.Size == -1 {
+		ingestDesc.Size = 0
 	}
 
-	cw, err := content.OpenWriter(ctx, c.contentStore, ref, size, desc.Digest)
+	cw, err := content.OpenWriter(ctx, c.contentStore, content.WithRef(ref), content.WithDescriptor(ingestDesc))
 	if err != nil {
 		if !errdefs.IsAlreadyExists(err) {
 			return err
@@ -274,19 +275,20 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 		// TODO: Check if blob -> diff id mapping already exists
 		// TODO: Check if blob empty label exists
 
-		ra, err := c.contentStore.ReaderAt(ctx, desc.Digest)
+		ra, err := c.contentStore.ReaderAt(ctx, desc)
 		if err != nil {
 			return err
 		}
 		defer ra.Close()
 
-		gr, err := gzip.NewReader(content.NewReader(ra))
+		r, err := compression.DecompressStream(content.NewReader(ra))
 		if err != nil {
 			return err
 		}
-		defer gr.Close()
 
-		_, err = io.Copy(calc, gr)
+		compressMethod = r.GetCompression()
+		_, err = io.Copy(calc, r)
+		r.Close()
 		if err != nil {
 			return err
 		}
@@ -303,13 +305,14 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 		pr, pw := io.Pipe()
 
 		eg.Go(func() error {
-			gr, err := gzip.NewReader(pr)
+			r, err := compression.DecompressStream(pr)
 			if err != nil {
 				return err
 			}
-			defer gr.Close()
 
-			_, err = io.Copy(calc, gr)
+			compressMethod = r.GetCompression()
+			_, err = io.Copy(calc, r)
+			r.Close()
 			pr.CloseWithError(err)
 			return err
 		})
@@ -317,7 +320,7 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 		eg.Go(func() error {
 			defer pw.Close()
 
-			return content.Copy(ctx, cw, io.TeeReader(rc, pw), size, desc.Digest)
+			return content.Copy(ctx, cw, io.TeeReader(rc, pw), ingestDesc.Size, ingestDesc.Digest)
 		})
 
 		if err := eg.Wait(); err != nil {
@@ -333,6 +336,11 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 		desc.Size = info.Size
 	}
 
+	if compressMethod == compression.Uncompressed {
+		log.G(ctx).WithField("id", desc.Digest).Debugf("changed media type for uncompressed schema1 layer blob")
+		desc.MediaType = images.MediaTypeDockerSchema2Layer
+	}
+
 	state := calc.State()
 
 	c.mu.Lock()
@@ -342,6 +350,7 @@ func (c *Converter) fetchBlob(ctx context.Context, desc ocispec.Descriptor) erro
 
 	return nil
 }
+
 func (c *Converter) schema1ManifestHistory() ([]ocispec.History, []digest.Digest, error) {
 	if c.pulledManifest == nil {
 		return nil, nil, errors.New("missing schema 1 manifest for conversion")
