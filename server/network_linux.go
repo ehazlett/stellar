@@ -79,7 +79,7 @@ func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
 			logrus.Errorf("error allocating IP for container %s: %s", container.ID, err)
 			continue
 		}
-		if err := client.Node().SetupContainerNetwork(container.ID, ip.String(), subnetCIDR, gw.String(), s.config.Bridge); err != nil {
+		if err := client.Node().SetupContainerNetwork(container.ID, ip.String(), subnetCIDR, gw.String()); err != nil {
 			logrus.Errorf("error setting up networking for container %s: %s", container.ID, err)
 			continue
 		}

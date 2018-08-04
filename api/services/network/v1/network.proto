@@ -9,6 +9,7 @@ option go_package = "github.com/ehazlett/stellar/api/services/network/v1;network
 
 service Network {
   rpc AllocateSubnet(AllocateSubnetRequest) returns (AllocateSubnetResponse);
+  rpc GetSubnet(GetSubnetRequest) returns (GetSubnetResponse);
   rpc DeallocateSubnet(DeallocateSubnetRequest) returns (google.protobuf.Empty);
   rpc Subnets(google.protobuf.Empty) returns (SubnetsResponse);
   rpc AllocateIP(AllocateIPRequest) returns (AllocateIPResponse);
@@ -26,6 +27,14 @@ message AllocateSubnetRequest {
 message AllocateSubnetResponse {
   string subnet_cidr = 1 [(gogoproto.customname) = "SubnetCIDR"];
   string node = 2;
+}
+
+message GetSubnetRequest {
+  string node = 1;
+}
+
+message GetSubnetResponse {
+  string subnet_cidr = 1 [(gogoproto.customname) = "SubnetCIDR"];
 }
 
 message DeallocateSubnetRequest {

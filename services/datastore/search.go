@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/containerd/containerd/errdefs"
 	bolt "github.com/coreos/bbolt"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
-	"github.com/ehazlett/stellar/errdefs"
 	"github.com/pkg/errors"
 )
 

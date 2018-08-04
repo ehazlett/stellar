@@ -4,5 +4,7 @@ const (
 	// APIVersion is the version of the API
 	APIVersion = "v1"
 	// StellarNetworkLabel is the label to identify that a container should use stellar networking
-	StellarNetworkLabel = "io.stellar.network"
+	StellarNetworkLabel = "stellar.io/network"
+	// StellarApplicationLabel is the label to identify that a container belongs to the stellar app
+	StellarApplicationLabel = "stellio.io/application"
 )

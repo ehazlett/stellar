@@ -2,10 +2,12 @@ package application
 
 import (
 	"context"
+	"net"
 	"strings"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/runtime/restart"
@@ -15,18 +17,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	defaultSnapshotter = "overlayfs"
+)
+
 func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.Empty, error) {
 	logrus.Debugf("creating application %s", req.Name)
 	ctx = namespaces.WithNamespace(ctx, s.namespace)
 	for _, service := range req.Services {
-		if _, err := s.newContainer(ctx, service); err != nil {
+		if _, err := s.newContainer(ctx, req.Name, service); err != nil {
 			return empty, err
 		}
 	}
 	return empty, nil
 }
 
-func (s *service) newContainer(ctx context.Context, service *api.Service) (containerd.Container, error) {
+func (s *service) newContainer(ctx context.Context, appName string, service *api.Service) (containerd.Container, error) {
 	var (
 		opts  []oci.SpecOpts
 		cOpts []containerd.NewContainerOpts
@@ -42,10 +48,21 @@ func (s *service) newContainer(ctx context.Context, service *api.Service) (conta
 	opts = append(opts, oci.WithEnv(service.Process.Env))
 	cOpts = append(cOpts, containerd.WithContainerLabels(convertLabels(service.Labels)))
 	cOpts = append(cOpts, containerd.WithRuntime(service.Runtime, nil))
-	snapshotter := service.Snapshotter
+	snapshotter := defaultSnapshotter
+	if service.Snapshotter != "" {
+		snapshotter = service.Snapshotter
+	}
 	image, err := client.GetImage(ctx, service.Image)
 	if err != nil {
-		return nil, err
+		if !errdefs.IsNotFound(err) {
+			return nil, err
+		}
+		// pull
+		img, err := client.Pull(ctx, service.Image, containerd.WithPullUnpack)
+		if err != nil {
+			return nil, err
+		}
+		image = img
 	}
 	unpacked, err := image.IsUnpacked(ctx, snapshotter)
 	if err != nil {
@@ -63,7 +80,8 @@ func (s *service) newContainer(ctx context.Context, service *api.Service) (conta
 		containerd.WithNewSnapshot(service.Name, image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
 		containerd.WithContainerLabels(map[string]string{
-			stellar.StellarNetworkLabel: "true",
+			stellar.StellarApplicationLabel: appName,
+			stellar.StellarNetworkLabel:     "true",
 		}),
 		restart.WithStatus(containerd.Running),
 	)
@@ -82,9 +100,41 @@ func (s *service) newContainer(ctx context.Context, service *api.Service) (conta
 	}
 
 	// TODO: setup networking
+	c, err := s.client()
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
 
+	subnetCIDR, err := c.Network().GetSubnet(s.nodeName())
+	if err != nil {
+		return nil, err
+	}
+	ip, err := c.Network().AllocateIP(service.Name, s.nodeName(), subnetCIDR)
+	if err != nil {
+		return nil, err
+	}
+	gw, err := gateway(subnetCIDR)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Node().SetupContainerNetwork(container.ID(), ip.String(), subnetCIDR, gw); err != nil {
+		return nil, err
+	}
 	return container, nil
 
+}
+
+func gateway(subnetCIDR string) (string, error) {
+	ip, ipnet, err := net.ParseCIDR(subnetCIDR)
+	if err != nil {
+		return "", err
+	}
+
+	gw := ip.Mask(ipnet.Mask)
+	gw[3]++
+
+	return gw.String(), nil
 }
 
 func convertLabels(values []string) map[string]string {

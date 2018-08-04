@@ -7,15 +7,18 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/containerd/containerd/errdefs"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
-	"github.com/ehazlett/stellar/errdefs"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 )
 
 var (
+	// ErrNoAvailableSubnets returns an error if there are no available subnets to allocate
 	ErrNoAvailableSubnets = errors.New("no available subnets in network configuration")
+	// ErrSubnetNotFound returns an error if no subnet is found for the node
+	ErrSubnetNotFound = errors.New("subnet not found")
 	// format: subnets.<node>
 	dsSubnetsKey = "subnets.%s"
 )
@@ -82,6 +85,24 @@ func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetReq
 	return &api.AllocateSubnetResponse{
 		SubnetCIDR: string(bSubnetCIDR),
 		Node:       req.Node,
+	}, nil
+}
+
+func (s *service) GetSubnet(ctx context.Context, req *api.GetSubnetRequest) (*api.GetSubnetResponse, error) {
+	localSubnetKey := fmt.Sprintf(dsSubnetsKey, req.Node)
+
+	localSubnetResp, err := s.ds.Get(ctx, &datastoreapi.GetRequest{
+		Bucket: dsNetworkBucketName,
+		Key:    localSubnetKey,
+	})
+	if err != nil {
+		err = errdefs.FromGRPC(err)
+		if !errdefs.IsNotFound(err) {
+			return nil, ErrSubnetNotFound
+		}
+	}
+	return &api.GetSubnetResponse{
+		SubnetCIDR: string(localSubnetResp.Data.Value),
 	}, nil
 }
 

@@ -82,12 +82,12 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, netSvc)
+	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, netSvc)
 	if err != nil {
 		return nil, err
 	}
 
-	appSvc, err := applicationservice.New(cfg.ContainerdAddr, cfg.Namespace, netSvc)
+	appSvc, err := applicationservice.New(cfg.ContainerdAddr, cfg.Namespace, a)
 	if err != nil {
 		return nil, err
 	}

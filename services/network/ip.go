@@ -7,9 +7,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/containerd/containerd/errdefs"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
-	"github.com/ehazlett/stellar/errdefs"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 )

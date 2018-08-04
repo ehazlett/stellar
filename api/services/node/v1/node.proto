@@ -57,7 +57,6 @@ message ImagesResponse {
 message ContainerNetworkRequest {
   string id = 1 [(gogoproto.customname) = "ID"];
   string ip = 2 [(gogoproto.customname) = "IP"];
-  string bridge = 3;
-  string network = 4;
-  string gateway = 5;
+  string network = 3;
+  string gateway = 4;
 }

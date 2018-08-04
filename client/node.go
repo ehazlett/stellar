@@ -33,7 +33,7 @@ func (n *node) Container(id string) (*nodeapi.Container, error) {
 	return resp.Container, nil
 }
 
-func (n *node) SetupContainerNetwork(id, ip, network, gateway, bridge string) error {
+func (n *node) SetupContainerNetwork(id, ip, network, gateway string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -42,7 +42,6 @@ func (n *node) SetupContainerNetwork(id, ip, network, gateway, bridge string) er
 		IP:      ip,
 		Network: network,
 		Gateway: gateway,
-		Bridge:  bridge,
 	}); err != nil {
 		return err
 	}

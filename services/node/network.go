@@ -33,7 +33,7 @@ func (s *service) SetupContainerNetwork(ctx context.Context, req *api.ContainerN
 	ip := net.ParseIP(req.IP)
 	ipnet.IP = ip
 
-	veth, err := s.createVeth(ctx, req.ID, req.Bridge, ipnet, gw)
+	veth, err := s.createVeth(ctx, req.ID, ipnet, gw)
 	if err != nil {
 		return empty, err
 	}
@@ -44,13 +44,12 @@ func (s *service) SetupContainerNetwork(ctx context.Context, req *api.ContainerN
 		"ip":      req.IP,
 		"network": req.Network,
 		"gateway": req.Gateway,
-		"bridge":  req.Bridge,
 	}).Debug("configured veth")
 
 	return empty, nil
 }
 
-func (s *service) createVeth(ctx context.Context, id, bridge string, ipnet *net.IPNet, gw net.IP) (netlink.Link, error) {
+func (s *service) createVeth(ctx context.Context, id string, ipnet *net.IPNet, gw net.IP) (netlink.Link, error) {
 	resp, err := s.Container(ctx, &api.ContainerRequest{
 		ID: id,
 	})
@@ -60,9 +59,9 @@ func (s *service) createVeth(ctx context.Context, id, bridge string, ipnet *net.
 	container := resp.Container
 	pid := container.Task.Pid
 
-	br, err := netlink.LinkByName(bridge)
+	br, err := netlink.LinkByName(s.bridge)
 	if err != nil {
-		return nil, errors.Wrapf(err, "%s not found", bridge)
+		return nil, errors.Wrapf(err, "%s not found", s.bridge)
 	}
 	attrs := netlink.NewLinkAttrs()
 	// a deterministic name is generated as ethernet device names have a limitation on length

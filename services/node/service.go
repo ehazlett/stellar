@@ -15,13 +15,15 @@ const (
 type service struct {
 	containerdAddr string
 	namespace      string
+	bridge         string
 	networkService networkapi.NetworkServer
 }
 
-func New(containerdAddr, namespace string, svc networkapi.NetworkServer) (*service, error) {
+func New(containerdAddr, namespace, bridge string, svc networkapi.NetworkServer) (*service, error) {
 	return &service{
 		containerdAddr: containerdAddr,
 		namespace:      namespace,
+		bridge:         bridge,
 		networkService: svc,
 	}, nil
 }

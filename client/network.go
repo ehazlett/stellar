@@ -35,6 +35,18 @@ func (n *network) AllocateSubnet(node string) (string, error) {
 	return resp.SubnetCIDR, nil
 }
 
+func (n *network) GetSubnet(node string) (string, error) {
+	ctx := context.Background()
+	resp, err := n.client.GetSubnet(ctx, &networkapi.GetSubnetRequest{
+		Node: node,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.SubnetCIDR, nil
+}
+
 func (n *network) AddRoute(cidr, target string) error {
 	ctx := context.Background()
 	if _, err := n.client.AddRoute(ctx, &networkapi.AddRouteRequest{
