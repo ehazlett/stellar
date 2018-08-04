@@ -9,6 +9,7 @@
             "name": "redis",
             "image": "docker.io/library/redis:alpine",
             "runtime": "io.containerd.runtime.v1.linux",
+            "snapshotter": "overlayfs",
             "process": {
                 "uid": 0,
                 "gid": 0,

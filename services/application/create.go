@@ -5,7 +5,10 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/runtime/restart"
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -13,6 +16,7 @@ import (
 
 func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.Empty, error) {
 	logrus.Debugf("creating application %s", req.Name)
+	ctx = namespaces.WithNamespace(ctx, s.namespace)
 	for _, service := range req.Services {
 		if _, err := s.newContainer(ctx, service); err != nil {
 			return empty, err
@@ -57,6 +61,7 @@ func (s *service) newContainer(ctx context.Context, service *api.Service) (conta
 		containerd.WithSnapshotter(snapshotter),
 		containerd.WithNewSnapshot(service.Name, image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
+		restart.WithStatus(containerd.Running),
 	)
 
 	container, err := client.NewContainer(ctx, service.Name, cOpts...)
@@ -64,10 +69,13 @@ func (s *service) newContainer(ctx context.Context, service *api.Service) (conta
 		return nil, err
 	}
 
-	//// TODO: start
-	//if _, err := container.NewTask(ctx, cio.Stdio); err != nil {
-	//	return nil, err
-	//}
+	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
+	if err != nil {
+		return nil, err
+	}
+	if err := task.Start(ctx); err != nil {
+		return nil, err
+	}
 
 	return container, nil
 

@@ -2,6 +2,7 @@ package node
 
 import (
 	"github.com/containerd/containerd"
+	"github.com/ehazlett/stellar"
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	api "github.com/ehazlett/stellar/api/services/node/v1"
 	"google.golang.org/grpc"
@@ -35,5 +36,5 @@ func (s *service) ID() string {
 }
 
 func (s *service) containerd() (*containerd.Client, error) {
-	return containerd.New(s.containerdAddr, containerd.WithDefaultNamespace(s.namespace))
+	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }

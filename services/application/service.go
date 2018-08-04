@@ -2,6 +2,7 @@ package application
 
 import (
 	"github.com/containerd/containerd"
+	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	ptypes "github.com/gogo/protobuf/types"
@@ -40,5 +41,5 @@ func (s *service) ID() string {
 }
 
 func (s *service) containerd() (*containerd.Client, error) {
-	return containerd.New(s.containerdAddr, containerd.WithDefaultNamespace(s.namespace))
+	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }
