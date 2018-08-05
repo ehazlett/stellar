@@ -20,7 +20,7 @@ func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*
 		if err != nil {
 			return nil, err
 		}
-		cont, err := c.Node().Containers()
+		cont, err := c.Node().Containers(req.Filters...)
 		if err != nil {
 			return nil, err
 		}

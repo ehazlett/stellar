@@ -3,6 +3,7 @@ package cluster
 import (
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/cluster/v1"
 	"google.golang.org/grpc"
 )
@@ -35,5 +36,5 @@ func (s *service) ID() string {
 }
 
 func (s *service) containerd() (*containerd.Client, error) {
-	return containerd.New(s.containerdAddr, containerd.WithDefaultNamespace(s.namespace))
+	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }

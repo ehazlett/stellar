@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
+	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/version/v1"
 	"github.com/ehazlett/stellar/version"
 	"github.com/gogo/protobuf/types"
@@ -36,7 +37,7 @@ func (s *service) ID() string {
 }
 
 func (s *service) containerd() (*containerd.Client, error) {
-	return containerd.New(s.containerdAddr, containerd.WithDefaultNamespace(s.namespace))
+	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }
 
 func (s *service) containerdVersion(ctx context.Context) (containerd.Version, error) {

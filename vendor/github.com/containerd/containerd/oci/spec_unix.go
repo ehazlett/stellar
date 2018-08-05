@@ -76,12 +76,13 @@ func defaultNamespaces() []specs.LinuxNamespace {
 	}
 }
 
-func createDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
+func populateDefaultSpec(ctx context.Context, s *Spec, id string) error {
 	ns, err := namespaces.NamespaceRequired(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	s := &specs.Spec{
+
+	*s = Spec{
 		Version: specs.Version,
 		Root: &specs.Root{
 			Path: defaultRootfsPath,
@@ -153,7 +154,9 @@ func createDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
 		},
 		Linux: &specs.Linux{
 			MaskedPaths: []string{
+				"/proc/acpi",
 				"/proc/kcore",
+				"/proc/keys",
 				"/proc/latency_stats",
 				"/proc/timer_list",
 				"/proc/timer_stats",
@@ -181,5 +184,5 @@ func createDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
 			Namespaces: defaultNamespaces(),
 		},
 	}
-	return s, nil
+	return nil
 }

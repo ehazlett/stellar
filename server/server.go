@@ -14,6 +14,7 @@ import (
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
+	applicationservice "github.com/ehazlett/stellar/services/application"
 	clusterservice "github.com/ehazlett/stellar/services/cluster"
 	datastoreservice "github.com/ehazlett/stellar/services/datastore"
 	healthservice "github.com/ehazlett/stellar/services/health"
@@ -81,13 +82,18 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, netSvc)
+	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, a)
+	if err != nil {
+		return nil, err
+	}
+
+	appSvc, err := applicationservice.New(cfg.ContainerdAddr, cfg.Namespace, a)
 	if err != nil {
 		return nil, err
 	}
 
 	// register with agent
-	for _, svc := range []services.Service{vs, ns, hs, cs, ds, netSvc} {
+	for _, svc := range []services.Service{vs, ns, hs, cs, ds, netSvc, appSvc} {
 		if err := a.Register(svc); err != nil {
 			return nil, err
 		}

@@ -1,0 +1,32 @@
+{
+    "name": "example",
+    "labels": [
+        "env=prod",
+        "region=us-east"
+    ],
+    "services": [
+        {
+            "name": "redis",
+            "image": "docker.io/library/redis:alpine",
+            "runtime": "io.containerd.runtime.v1.linux",
+            "snapshotter": "overlayfs",
+            "process": {
+                "uid": 0,
+                "gid": 0,
+                "args": ["redis-server"]
+            },
+            "labels": [
+                "env=prod"
+            ],
+            "network": true,
+            "mounts": [
+                {
+                    "type": "bind",
+                    "source": "/mnt/data",
+                    "destination": "/data",
+                    "options": ["rbind"]
+                }
+            ]
+        }
+    ]
+}

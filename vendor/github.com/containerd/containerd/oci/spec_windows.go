@@ -22,8 +22,8 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
 
-func createDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
-	return &specs.Spec{
+func populateDefaultSpec(ctx context.Context, s *Spec, id string) error {
+	*s = Spec{
 		Version: specs.Version,
 		Root:    &specs.Root{},
 		Process: &specs.Process{
@@ -39,5 +39,6 @@ func createDefaultSpec(ctx context.Context, id string) (*specs.Spec, error) {
 				AllowUnqualifiedDNSQuery: true,
 			},
 		},
-	}, nil
+	}
+	return nil
 }

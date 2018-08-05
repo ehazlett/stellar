@@ -3,9 +3,9 @@ package datastore
 import (
 	"context"
 
+	"github.com/containerd/containerd/errdefs"
 	bolt "github.com/coreos/bbolt"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
-	"github.com/ehazlett/stellar/errdefs"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

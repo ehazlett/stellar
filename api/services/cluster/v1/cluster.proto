@@ -12,7 +12,9 @@ service Cluster {
   rpc Nodes(NodesRequest) returns (NodesResponse);
 }
 
-message ContainersRequest {}
+message ContainersRequest {
+  repeated string filters = 1;
+}
 
 message ImagesRequest {}
 

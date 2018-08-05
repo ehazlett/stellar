@@ -35,6 +35,7 @@ func main() {
 		return nil
 	}
 	app.Commands = []cli.Command{
+		appCommand,
 		nodeCommand,
 		clusterCommand,
 	}
