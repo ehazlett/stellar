@@ -1,5 +1,5 @@
 {
-    "name": "example-application",
+    "name": "example",
     "labels": [
         "env=prod",
         "region=us-east"

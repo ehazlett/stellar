@@ -11,9 +11,11 @@ type node struct {
 	client nodeapi.NodeClient
 }
 
-func (n *node) Containers() ([]*nodeapi.Container, error) {
+func (n *node) Containers(filters ...string) ([]*nodeapi.Container, error) {
 	ctx := context.Background()
-	resp, err := n.client.Containers(ctx, &nodeapi.ContainersRequest{})
+	resp, err := n.client.Containers(ctx, &nodeapi.ContainersRequest{
+		Filters: filters,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +33,19 @@ func (n *node) Container(id string) (*nodeapi.Container, error) {
 	}
 
 	return resp.Container, nil
+}
+
+func (n *node) DeleteContainer(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	if _, err := n.client.DeleteContainer(ctx, &nodeapi.DeleteContainerRequest{
+		ID: id,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (n *node) SetupContainerNetwork(id, ip, network, gateway string) error {

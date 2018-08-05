@@ -20,9 +20,11 @@ func (c *cluster) Nodes() ([]*clusterapi.Node, error) {
 	return resp.Nodes, nil
 }
 
-func (c *cluster) Containers() ([]*clusterapi.Container, error) {
+func (c *cluster) Containers(filters ...string) ([]*clusterapi.Container, error) {
 	ctx := context.Background()
-	resp, err := c.client.Containers(ctx, &clusterapi.ContainersRequest{})
+	resp, err := c.client.Containers(ctx, &clusterapi.ContainersRequest{
+		Filters: filters,
+	})
 	if err != nil {
 		return nil, err
 	}

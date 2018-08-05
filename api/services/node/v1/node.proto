@@ -13,9 +13,12 @@ service Node {
   rpc Container(ContainerRequest) returns (ContainerResponse);
   rpc Images(ImagesRequest) returns (ImagesResponse);
   rpc SetupContainerNetwork(ContainerNetworkRequest) returns (google.protobuf.Empty);
+  rpc DeleteContainer(DeleteContainerRequest) returns (google.protobuf.Empty);
 }
 
-message ContainersRequest {}
+message ContainersRequest {
+  repeated string filters = 1;
+}
 
 message Container {
   string id = 1 [(gogoproto.customname) = "ID"];
@@ -59,4 +62,8 @@ message ContainerNetworkRequest {
   string ip = 2 [(gogoproto.customname) = "IP"];
   string network = 3;
   string gateway = 4;
+}
+
+message DeleteContainerRequest {
+  string id = 1 [(gogoproto.customname) = "ID"];
 }

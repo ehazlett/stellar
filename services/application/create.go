@@ -2,11 +2,15 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
+	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
@@ -14,6 +18,7 @@ import (
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	ptypes "github.com/gogo/protobuf/types"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,6 +27,7 @@ const (
 )
 
 func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.Empty, error) {
+	// TODO: move this to the node service for creation of containers
 	logrus.Debugf("creating application %s", req.Name)
 	ctx = namespaces.WithNamespace(ctx, s.namespace)
 	for _, service := range req.Services {
@@ -36,7 +42,6 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 	var (
 		opts  []oci.SpecOpts
 		cOpts []containerd.NewContainerOpts
-		//spec  containerd.NewContainerOpts
 	)
 
 	client, err := s.containerd()
@@ -45,9 +50,12 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 	}
 	defer client.Close()
 
-	opts = append(opts, oci.WithEnv(service.Process.Env))
+	id := fmt.Sprintf("%s.%s", appName, service.Name)
+	opts = append(opts, oci.WithEnv(service.Process.Env), withMounts(service.Mounts))
 	cOpts = append(cOpts, containerd.WithContainerLabels(convertLabels(service.Labels)))
-	cOpts = append(cOpts, containerd.WithRuntime(service.Runtime, nil))
+	if service.Runtime != "" {
+		cOpts = append(cOpts, containerd.WithRuntime(service.Runtime, nil))
+	}
 	snapshotter := defaultSnapshotter
 	if service.Snapshotter != "" {
 		snapshotter = service.Snapshotter
@@ -77,7 +85,7 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 	cOpts = append(cOpts,
 		containerd.WithImage(image),
 		containerd.WithSnapshotter(snapshotter),
-		containerd.WithNewSnapshot(service.Name, image),
+		containerd.WithNewSnapshot(id, image),
 		containerd.WithNewSpec(oci.WithImageConfig(image)),
 		containerd.WithContainerLabels(map[string]string{
 			stellar.StellarApplicationLabel: appName,
@@ -86,12 +94,13 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 		restart.WithStatus(containerd.Running),
 	)
 
-	container, err := client.NewContainer(ctx, service.Name, cOpts...)
+	container, err := client.NewContainer(ctx, id, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	task, err := container.NewTask(ctx, cio.NewCreator(cio.WithStdio))
+	// TODO: redirect output somewhere
+	task, err := container.NewTask(ctx, cio.NullIO)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +119,7 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 	if err != nil {
 		return nil, err
 	}
-	ip, err := c.Network().AllocateIP(service.Name, s.nodeName(), subnetCIDR)
+	ip, err := c.Network().AllocateIP(id, s.nodeName(), subnetCIDR)
 	if err != nil {
 		return nil, err
 	}
@@ -118,11 +127,40 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 	if err != nil {
 		return nil, err
 	}
-	if err := c.Node().SetupContainerNetwork(container.ID(), ip.String(), subnetCIDR, gw); err != nil {
+	if err := c.Node().SetupContainerNetwork(id, ip.String(), subnetCIDR, gw); err != nil {
 		return nil, err
 	}
 	return container, nil
 
+}
+
+func withMounts(mounts []*api.Mount) oci.SpecOpts {
+	return func(ctx context.Context, _ oci.Client, c *containers.Container, s *oci.Spec) error {
+		for _, cm := range mounts {
+			if cm.Type == "bind" {
+				// create source dir if it does not exist
+				if err := os.MkdirAll(filepath.Dir(cm.Source), 0755); err != nil {
+					return err
+				}
+				if err := os.Mkdir(cm.Source, 0755); err != nil {
+					if !os.IsExist(err) {
+						return err
+					}
+				} else {
+					if err := os.Chown(cm.Source, int(s.Process.User.UID), int(s.Process.User.GID)); err != nil {
+						return err
+					}
+				}
+			}
+			s.Mounts = append(s.Mounts, specs.Mount{
+				Type:        cm.Type,
+				Source:      cm.Source,
+				Destination: cm.Destination,
+				Options:     cm.Options,
+			})
+		}
+		return nil
+	}
 }
 
 func gateway(subnetCIDR string) (string, error) {

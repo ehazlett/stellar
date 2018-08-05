@@ -97,3 +97,34 @@ func (n *network) AllocateIP(id, node, subnetCIDR string) (net.IP, error) {
 	ip := net.ParseIP(resp.IP)
 	return ip, nil
 }
+
+func (n *network) GetIP(id, node string) (net.IP, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	resp, err := n.client.GetIP(ctx, &networkapi.GetIPRequest{
+		ID:   id,
+		Node: node,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ip := net.ParseIP(resp.IP)
+	return ip, nil
+}
+
+func (n *network) ReleaseIP(id, ip, node string) (*ptypes.Empty, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	if _, err := n.client.ReleaseIP(ctx, &networkapi.ReleaseIPRequest{
+		ID:   id,
+		IP:   ip,
+		Node: node,
+	}); err != nil {
+		return empty, err
+	}
+
+	return empty, nil
+}

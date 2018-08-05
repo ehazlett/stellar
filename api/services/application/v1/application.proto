@@ -9,6 +9,8 @@ option go_package = "github.com/ehazlett/stellar/api/services/application/v1;app
 service Application {
   rpc Create(CreateRequest) returns (google.protobuf.Empty);
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc Get(GetRequest) returns (GetResponse);
 }
 
 message Process {
@@ -27,14 +29,13 @@ message Mount {
 
 message Service {
   string name = 1;
-  uint32 instances = 2;
-  string image = 3;
-  string runtime = 4;
-  string snapshotter = 5;
-  Process process = 6;
-  repeated string labels = 7;
-  bool network = 8;
-  repeated Mount mounts = 9;
+  string image = 2;
+  string runtime = 3;
+  string snapshotter = 4;
+  Process process = 5;
+  repeated string labels = 6;
+  bool network = 7;
+  repeated Mount mounts = 8;
 }
 
 message CreateRequest {
@@ -45,4 +46,23 @@ message CreateRequest {
 
 message DeleteRequest {
   string name = 1;
+}
+
+message ListRequest {}
+
+message App {
+  string name = 1;
+  repeated Service services = 2;
+}
+
+message ListResponse {
+  repeated App applications = 1;
+}
+
+message GetRequest {
+  string name = 1;
+}
+
+message GetResponse {
+  App application = 1;
 }

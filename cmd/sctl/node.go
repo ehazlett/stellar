@@ -19,6 +19,15 @@ var nodeCommand = cli.Command{
 var nodeContainersCommand = cli.Command{
 	Name:  "containers",
 	Usage: "container management",
+	Subcommands: []cli.Command{
+		nodeContainersListCommand,
+		nodeDeleteContainerCommand,
+	},
+}
+
+var nodeContainersListCommand = cli.Command{
+	Name:  "list",
+	Usage: "list node containers",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {
@@ -37,6 +46,31 @@ var nodeContainersCommand = cli.Command{
 			fmt.Fprintf(w, "%s\t%s\t%s\n", c.ID, c.Image, c.Runtime)
 		}
 		w.Flush()
+
+		return nil
+	},
+}
+
+var nodeDeleteContainerCommand = cli.Command{
+	Name:  "delete",
+	Usage: "delete container",
+	Action: func(c *cli.Context) error {
+		client, err := getClient(c)
+		if err != nil {
+			return err
+		}
+		defer client.Close()
+
+		id := c.Args().First()
+		if id == "" {
+			return fmt.Errorf("you must specify an id")
+		}
+
+		if err := client.Node().DeleteContainer(id); err != nil {
+			return err
+		}
+
+		fmt.Printf("%s deleted", id)
 
 		return nil
 	},

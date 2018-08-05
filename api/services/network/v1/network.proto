@@ -13,6 +13,7 @@ service Network {
   rpc DeallocateSubnet(DeallocateSubnetRequest) returns (google.protobuf.Empty);
   rpc Subnets(google.protobuf.Empty) returns (SubnetsResponse);
   rpc AllocateIP(AllocateIPRequest) returns (AllocateIPResponse);
+  rpc GetIP(GetIPRequest) returns (GetIPResponse);
   rpc ReleaseIP(ReleaseIPRequest) returns (google.protobuf.Empty);
   rpc Configure(ConfigureRequest) returns (google.protobuf.Empty);
   rpc AddRoute(AddRouteRequest) returns (google.protobuf.Empty);
@@ -51,6 +52,15 @@ message AllocateIPRequest {
 message AllocateIPResponse {
   string ip = 1 [(gogoproto.customname) = "IP"];
   string node = 2;
+}
+
+message GetIPRequest {
+  string id = 1 [(gogoproto.customname) = "ID"];
+  string node = 2;
+}
+
+message GetIPResponse {
+  string ip = 1 [(gogoproto.customname) = "IP"];
 }
 
 message ReleaseIPRequest {

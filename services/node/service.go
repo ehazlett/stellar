@@ -2,9 +2,10 @@ package node
 
 import (
 	"github.com/containerd/containerd"
+	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
-	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	api "github.com/ehazlett/stellar/api/services/node/v1"
+	"github.com/ehazlett/stellar/client"
 	"google.golang.org/grpc"
 )
 
@@ -16,15 +17,15 @@ type service struct {
 	containerdAddr string
 	namespace      string
 	bridge         string
-	networkService networkapi.NetworkServer
+	agent          *element.Agent
 }
 
-func New(containerdAddr, namespace, bridge string, svc networkapi.NetworkServer) (*service, error) {
+func New(containerdAddr, namespace, bridge string, agent *element.Agent) (*service, error) {
 	return &service{
 		containerdAddr: containerdAddr,
 		namespace:      namespace,
 		bridge:         bridge,
-		networkService: svc,
+		agent:          agent,
 	}, nil
 }
 
@@ -39,4 +40,12 @@ func (s *service) ID() string {
 
 func (s *service) containerd() (*containerd.Client, error) {
 	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
+}
+
+func (s *service) client() (*client.Client, error) {
+	peer, err := s.agent.LocalNode()
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(peer.Addr)
 }

@@ -1,6 +1,8 @@
 package application
 
 import (
+	"fmt"
+
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
@@ -55,4 +57,25 @@ func (s *service) client() (*client.Client, error) {
 
 func (s *service) nodeName() string {
 	return s.agent.Config().NodeName
+}
+
+func (s *service) nodeClient(id string) (*client.Client, error) {
+	c, err := s.client()
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	nodes, err := c.Cluster().Nodes()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, node := range nodes {
+		if node.Name == id {
+			return client.NewClient(node.Addr)
+		}
+	}
+
+	return nil, fmt.Errorf("node %s not found in cluster", id)
 }

@@ -25,8 +25,10 @@ func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*
 	if err != nil {
 		return nil, err
 	}
+	logrus.Debugf("reserved ips: %+v", reservedIPs)
 
 	if ip, exists := reservedIPs[req.ID]; exists {
+		logrus.Debugf("returning existing reserved ip: %s", ip.String())
 		return &api.AllocateIPResponse{
 			IP:   ip.String(),
 			Node: req.Node,
@@ -54,6 +56,7 @@ func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*
 			continue
 		}
 		ipKey := fmt.Sprintf(dsIPsKey, req.Node, req.ID)
+		logrus.Debugf("ip key: %s", ipKey)
 		if _, err := s.ds.Set(ctx, &datastoreapi.SetRequest{
 			Bucket: dsNetworkBucketName,
 			Key:    ipKey,
@@ -63,6 +66,7 @@ func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*
 			return nil, err
 		}
 
+		logrus.Debugf("ip for %s: %s", req.ID, ip.String())
 		return &api.AllocateIPResponse{
 			IP:   ip.String(),
 			Node: req.Node,
@@ -70,6 +74,21 @@ func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*
 	}
 
 	return nil, ErrNoAvailableIP
+}
+
+func (s *service) GetIP(ctx context.Context, req *api.GetIPRequest) (*api.GetIPResponse, error) {
+	ipKey := fmt.Sprintf(dsIPsKey, req.Node, req.ID)
+	resp, err := s.ds.Get(ctx, &datastoreapi.GetRequest{
+		Bucket: dsNetworkBucketName,
+		Key:    ipKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.GetIPResponse{
+		IP: string(resp.Data.Value),
+	}, nil
 }
 
 func (s *service) ReleaseIP(ctx context.Context, req *api.ReleaseIPRequest) (*ptypes.Empty, error) {
@@ -99,12 +118,13 @@ func (s *service) getIPs(ctx context.Context, node string) (map[string]net.IP, e
 	}
 	ips := make(map[string]net.IP, len(searchResp.Data))
 	for _, kv := range searchResp.Data {
+		logrus.Debugf("getIPs: key=%s val=%s", kv.Key, string(kv.Value))
 		p := strings.Split(kv.Key, ".")
-		if len(p) != 3 {
+		if len(p) < 3 {
 			logrus.Errorf("unexpected IP key format: %s", kv.Key)
 			continue
 		}
-		id := p[2]
+		id := strings.Join(p[2:], ".")
 		ip := net.ParseIP(string(kv.Value))
 		ips[id] = ip
 	}
