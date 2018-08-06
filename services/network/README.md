@@ -30,7 +30,3 @@ Stellar manages the container ethernet device as follows:
 
 ## IPAM
 The network service also manages IPAM.  IPAM data is stored in the Stellar datastore.
-
-## DNS
-The network service provides a DNS service to the cluster to allow application and service lookup by name.  To prevent "re-inventing the wheel" we plan to use CoreDNS with a plugin that uses Stellar as the backend for zone data.
-

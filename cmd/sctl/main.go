@@ -38,6 +38,7 @@ func main() {
 		appCommand,
 		nodeCommand,
 		clusterCommand,
+		nameserverCommand,
 	}
 
 	if err := app.Run(os.Args); err != nil {

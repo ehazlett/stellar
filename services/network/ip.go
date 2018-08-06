@@ -25,10 +25,8 @@ func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*
 	if err != nil {
 		return nil, err
 	}
-	logrus.Debugf("reserved ips: %+v", reservedIPs)
 
 	if ip, exists := reservedIPs[req.ID]; exists {
-		logrus.Debugf("returning existing reserved ip: %s", ip.String())
 		return &api.AllocateIPResponse{
 			IP:   ip.String(),
 			Node: req.Node,
@@ -118,7 +116,6 @@ func (s *service) getIPs(ctx context.Context, node string) (map[string]net.IP, e
 	}
 	ips := make(map[string]net.IP, len(searchResp.Data))
 	for _, kv := range searchResp.Data {
-		logrus.Debugf("getIPs: key=%s val=%s", kv.Key, string(kv.Value))
 		p := strings.Split(kv.Key, ".")
 		if len(p) < 3 {
 			logrus.Errorf("unexpected IP key format: %s", kv.Key)

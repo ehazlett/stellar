@@ -37,6 +37,10 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Start() error {
+	return nil
+}
+
 func (s *service) Started() time.Time {
 	return s.started
 }

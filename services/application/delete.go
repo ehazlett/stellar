@@ -34,7 +34,8 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 	}
 
 	for _, cc := range containers {
-		logrus.Debugf("app delete: deleting container %s", cc.Container.ID)
+		id := cc.Container.ID
+		logrus.Debugf("app delete: deleting container %s", id)
 		nc, err := s.nodeClient(cc.Node.Name)
 		if err != nil {
 			logrus.Warnf("delete: error getting client for node %s: %s", cc.Node.Name, err)
@@ -45,8 +46,13 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 			logrus.Warnf("delete: error deleting service on node %s: %s", cc.Node.Name, err)
 			continue
 		}
-		nc.Close()
 
+		name := id + ".stellar"
+		if err := c.Nameserver().Delete("A", name); err != nil {
+			return nil, err
+		}
+
+		nc.Close()
 	}
 
 	return empty, nil

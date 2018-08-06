@@ -71,7 +71,10 @@ func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetReq
 			return nil, fmt.Errorf("no available subnet for current node; need %d subnets", assigned)
 		}
 
-		bSubnetCIDR = []byte(subnets[assigned].CIDR)
+		cidr := subnets[assigned].CIDR
+		logrus.Debugf("subnet for node: %s", cidr)
+
+		bSubnetCIDR = []byte(cidr)
 		if _, err := s.ds.Set(ctx, &datastoreapi.SetRequest{
 			Bucket: dsNetworkBucketName,
 			Key:    localSubnetKey,

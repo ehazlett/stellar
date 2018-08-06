@@ -8,6 +8,7 @@ import (
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
+	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	versionapi "github.com/ehazlett/stellar/api/services/version/v1"
@@ -28,6 +29,7 @@ type Client struct {
 	datastoreService   datastoreapi.DatastoreClient
 	networkService     networkapi.NetworkClient
 	applicationService applicationapi.ApplicationClient
+	nameserverService  nameserverapi.NameserverClient
 }
 
 func NewClient(addr string) (*Client, error) {
@@ -51,6 +53,7 @@ func NewClient(addr string) (*Client, error) {
 		datastoreService:   datastoreapi.NewDatastoreClient(c),
 		networkService:     networkapi.NewNetworkClient(c),
 		applicationService: applicationapi.NewApplicationClient(c),
+		nameserverService:  nameserverapi.NewNameserverClient(c),
 	}
 
 	return client, nil
@@ -90,6 +93,12 @@ func (c *Client) Network() *network {
 	}
 }
 
+func (c *Client) Nameserver() *nameserver {
+	return &nameserver{
+		client: c.nameserverService,
+	}
+}
+
 func (c *Client) Version() *version {
 	return &version{
 		client: c.versionService,
@@ -124,4 +133,8 @@ func (c *Client) DatastoreService() datastoreapi.DatastoreClient {
 
 func (c *Client) NetworkService() networkapi.NetworkClient {
 	return c.networkService
+}
+
+func (c *Client) NameserverService() nameserverapi.NameserverClient {
+	return c.nameserverService
 }

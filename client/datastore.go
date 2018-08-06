@@ -28,6 +28,16 @@ func (d *datastore) Get(bucket, key string) ([]byte, error) {
 	return resp.Data.Value, nil
 }
 
+func (d *datastore) CreateBucket(bucket string) error {
+	ctx := context.Background()
+	if _, err := d.client.CreateBucket(ctx, &datastoreapi.CreateBucketRequest{
+		Bucket: bucket,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *datastore) Search(bucket, prefix string) ([]types.KeyValue, error) {
 	ctx := context.Background()
 	resp, err := d.client.Search(ctx, &datastoreapi.SearchRequest{
@@ -64,11 +74,12 @@ func (d *datastore) Set(bucket, key string, value []byte, sync bool) error {
 	return nil
 }
 
-func (d *datastore) Delete(bucket, key string) error {
+func (d *datastore) Delete(bucket, key string, sync bool) error {
 	ctx := context.Background()
 	if _, err := d.client.Delete(ctx, &datastoreapi.DeleteRequest{
 		Bucket: bucket,
 		Key:    key,
+		Sync:   sync,
 	}); err != nil {
 		return err
 	}

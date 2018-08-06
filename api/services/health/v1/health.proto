@@ -9,7 +9,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/health/v1;health";
 
 service Health {
-	rpc Health(google.protobuf.Empty) returns (HealthResponse);
+  rpc Health(google.protobuf.Empty) returns (HealthResponse);
 }
 
 message HealthResponse {

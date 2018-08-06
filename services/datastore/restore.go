@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"os"
+	"path/filepath"
 
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
 	ptypes "github.com/gogo/protobuf/types"
@@ -13,11 +14,13 @@ func (s *service) Restore(ctx context.Context, req *api.RestoreRequest) (*ptypes
 	s.db.Close()
 	defer s.lock.Unlock()
 
-	if err := os.Remove(dbFilename); err != nil {
+	dbPath := filepath.Join(s.dir, dbFilename)
+
+	if err := os.Remove(dbPath); err != nil {
 		return empty, err
 	}
 
-	f, err := os.OpenFile(dbFilename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	f, err := os.OpenFile(dbPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return empty, err
 	}

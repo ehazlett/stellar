@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-// Maximum number of TCP queries before we close the socket.
+// Default maximum number of TCP queries before we close the socket.
 const maxTCPQueries = 128
 
 // Interval for stop worker if no load
@@ -303,6 +303,8 @@ type Server struct {
 	DecorateReader DecorateReader
 	// DecorateWriter is optional, allows customization of the process that writes raw DNS messages.
 	DecorateWriter DecorateWriter
+	// Maximum number of TCP queries before we close the socket. Default is maxTCPQueries (unlimited if -1).
+	MaxTCPQueries int
 
 	// UDP packet or TCP connection queue
 	queue chan *response
@@ -311,6 +313,13 @@ type Server struct {
 	// Shutdown handling
 	lock    sync.RWMutex
 	started bool
+}
+
+func (srv *Server) isStarted() bool {
+	srv.lock.RLock()
+	started := srv.started
+	srv.lock.RUnlock()
+	return started
 }
 
 func (srv *Server) worker(w *response) {
@@ -510,12 +519,9 @@ func (srv *Server) serveTCP(l net.Listener) error {
 
 	for {
 		rw, err := l.Accept()
-		srv.lock.RLock()
-		if !srv.started {
-			srv.lock.RUnlock()
+		if !srv.isStarted() {
 			return nil
 		}
-		srv.lock.RUnlock()
 		if err != nil {
 			if neterr, ok := err.(net.Error); ok && neterr.Temporary() {
 				continue
@@ -543,12 +549,9 @@ func (srv *Server) serveUDP(l *net.UDPConn) error {
 	// deadline is not used here
 	for {
 		m, s, err := reader.ReadUDP(l, rtimeout)
-		srv.lock.RLock()
-		if !srv.started {
-			srv.lock.RUnlock()
+		if !srv.isStarted() {
 			return nil
 		}
-		srv.lock.RUnlock()
 		if err != nil {
 			if netErr, ok := err.(net.Error); ok && netErr.Temporary() {
 				continue
@@ -593,8 +596,12 @@ func (srv *Server) serve(w *response) {
 
 	timeout := srv.getReadTimeout()
 
-	// TODO(miek): make maxTCPQueries configurable?
-	for q := 0; q < maxTCPQueries; q++ {
+	limit := srv.MaxTCPQueries
+	if limit == 0 {
+		limit = maxTCPQueries
+	}
+
+	for q := 0; q < limit || limit == -1; q++ {
 		var err error
 		w.msg, err = reader.ReadTCP(w.tcp, timeout)
 		if err != nil {

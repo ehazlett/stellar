@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package stellar.services.nameserver.v1;
+
+import weak "gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/ehazlett/stellar/api/services/nameserver/v1;nameserver";
+
+service Nameserver {
+  rpc Lookup(LookupRequest) returns (LookupResponse);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc Create(CreateRequest) returns (google.protobuf.Empty);
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+}
+
+message LookupRequest {
+    string query = 1;
+}
+
+enum RecordType {
+  UNKNOWN = 0;
+  A = 1;
+  CNAME = 2;
+  MX = 3;
+  TXT = 4;
+  SRV = 5;
+}
+
+message Record {
+    RecordType type = 1;
+    string name = 2;
+    string value = 3;
+    google.protobuf.Any options = 4;
+}
+
+message LookupResponse {
+  string name = 1;
+  repeated Record records = 2;
+}
+
+message ListRequest {}
+
+message ListResponse {
+  repeated Record records = 1;
+}
+
+message CreateRequest {
+  string name = 1;
+  repeated Record records = 2;
+}
+
+message DeleteRequest {
+  RecordType type = 1;
+  string name = 2;
+}

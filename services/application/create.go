@@ -51,11 +51,6 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 	defer client.Close()
 
 	id := fmt.Sprintf("%s.%s", appName, service.Name)
-	opts = append(opts, oci.WithEnv(service.Process.Env), withMounts(service.Mounts))
-	cOpts = append(cOpts, containerd.WithContainerLabels(convertLabels(service.Labels)))
-	if service.Runtime != "" {
-		cOpts = append(cOpts, containerd.WithRuntime(service.Runtime, nil))
-	}
 	snapshotter := defaultSnapshotter
 	if service.Snapshotter != "" {
 		snapshotter = service.Snapshotter
@@ -81,12 +76,19 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 			return nil, err
 		}
 	}
-	opts = append(opts, oci.WithImageConfig(image))
+	opts = append(opts, oci.WithImageConfig(image), s.withStellarResolvConf, withMounts(service.Mounts))
+	if service.Process != nil && service.Process.Env != nil {
+		opts = append(opts, oci.WithEnv(service.Process.Env))
+	}
+	cOpts = append(cOpts, containerd.WithContainerLabels(convertLabels(service.Labels)))
+	if service.Runtime != "" {
+		cOpts = append(cOpts, containerd.WithRuntime(service.Runtime, nil))
+	}
 	cOpts = append(cOpts,
 		containerd.WithImage(image),
 		containerd.WithSnapshotter(snapshotter),
 		containerd.WithNewSnapshot(id, image),
-		containerd.WithNewSpec(oci.WithImageConfig(image)),
+		containerd.WithNewSpec(opts...),
 		containerd.WithContainerLabels(map[string]string{
 			stellar.StellarApplicationLabel: appName,
 			stellar.StellarNetworkLabel:     "true",
@@ -108,7 +110,7 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 		return nil, err
 	}
 
-	// TODO: setup networking
+	// setup networking
 	c, err := s.client()
 	if err != nil {
 		return nil, err
@@ -128,6 +130,13 @@ func (s *service) newContainer(ctx context.Context, appName string, service *api
 		return nil, err
 	}
 	if err := c.Node().SetupContainerNetwork(id, ip.String(), subnetCIDR, gw); err != nil {
+		return nil, err
+	}
+	// update dns
+	// TODO: make domain configurable
+	recordType := "A"
+	name := id + ".stellar"
+	if err := c.Nameserver().Create(recordType, name, ip.String(), nil); err != nil {
 		return nil, err
 	}
 	return container, nil
@@ -161,6 +170,16 @@ func withMounts(mounts []*api.Mount) oci.SpecOpts {
 		}
 		return nil
 	}
+}
+
+func (s *service) withStellarResolvConf(ctx context.Context, _ oci.Client, c *containers.Container, spec *oci.Spec) error {
+	spec.Mounts = append(spec.Mounts, specs.Mount{
+		Type:        "bind",
+		Source:      filepath.Join(s.dataDir, "resolv.conf"),
+		Destination: "/etc/resolv.conf",
+		Options:     []string{"rbind", "ro"},
+	})
+	return nil
 }
 
 func gateway(subnetCIDR string) (string, error) {

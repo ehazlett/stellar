@@ -235,6 +235,7 @@ type Bridge struct {
 	LinkAttrs
 	MulticastSnooping *bool
 	HelloTime         *uint32
+	VlanFiltering     *bool
 }
 
 func (bridge *Bridge) Attrs() *LinkAttrs {
@@ -302,10 +303,11 @@ type TuntapFlag uint16
 // Tuntap links created via /dev/tun/tap, but can be destroyed via netlink
 type Tuntap struct {
 	LinkAttrs
-	Mode   TuntapMode
-	Flags  TuntapFlag
-	Queues int
-	Fds    []*os.File
+	Mode       TuntapMode
+	Flags      TuntapFlag
+	NonPersist bool
+	Queues     int
+	Fds        []*os.File
 }
 
 func (tuntap *Tuntap) Attrs() *LinkAttrs {
@@ -781,7 +783,10 @@ func (vti *Vti) Attrs() *LinkAttrs {
 	return &vti.LinkAttrs
 }
 
-func (iptun *Vti) Type() string {
+func (vti *Vti) Type() string {
+	if vti.Local.To4() == nil {
+		return "vti6"
+	}
 	return "vti"
 }
 
@@ -846,7 +851,7 @@ func (gtp *GTP) Type() string {
 // iproute2 supported devices;
 // vlan | veth | vcan | dummy | ifb | macvlan | macvtap |
 // bridge | bond | ipoib | ip6tnl | ipip | sit | vxlan |
-// gre | gretap | ip6gre | ip6gretap | vti | nlmon |
+// gre | gretap | ip6gre | ip6gretap | vti | vti6 | nlmon |
 // bond_slave | ipvlan
 
 // LinkNotFoundError wraps the various not found errors when

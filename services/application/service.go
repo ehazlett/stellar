@@ -23,13 +23,15 @@ var (
 type service struct {
 	containerdAddr string
 	namespace      string
+	dataDir        string
 	agent          *element.Agent
 }
 
-func New(containerdAddr, namespace string, agent *element.Agent) (*service, error) {
+func New(containerdAddr, namespace, dataDir string, agent *element.Agent) (*service, error) {
 	return &service{
 		containerdAddr: containerdAddr,
 		namespace:      namespace,
+		dataDir:        dataDir,
 		agent:          agent,
 	}, nil
 }
@@ -41,6 +43,10 @@ func (s *service) Register(server *grpc.Server) error {
 
 func (s *service) ID() string {
 	return serviceID
+}
+
+func (s *service) Start() error {
+	return nil
 }
 
 func (s *service) containerd() (*containerd.Client, error) {

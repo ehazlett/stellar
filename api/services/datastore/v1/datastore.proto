@@ -10,6 +10,7 @@ option go_package = "github.com/ehazlett/stellar/api/services/datastore/v1;datas
 service Datastore {
   rpc AcquireLock(AcquireLockRequest) returns (google.protobuf.Empty);
   rpc ReleaseLock(ReleaseLockRequest) returns (google.protobuf.Empty);
+  rpc CreateBucket(CreateBucketRequest) returns (google.protobuf.Empty);
   rpc Set(SetRequest) returns (google.protobuf.Empty);
   rpc Get(GetRequest) returns (GetResponse);
   rpc Search(SearchRequest) returns (SearchResponse);
@@ -26,6 +27,10 @@ message AcquireLockRequest {
 }
 
 message ReleaseLockRequest {}
+
+message CreateBucketRequest {
+  string bucket = 1;
+}
 
 message SetRequest {
   string bucket = 1;
@@ -63,6 +68,7 @@ message DeleteRequest {
   string bucket = 1;
   string key = 2;
   bool sync = 3;
+  bool no_tombstone = 4;
 }
 
 message BackupRequest {}
@@ -79,7 +85,13 @@ message ShutdownRequest {}
 
 message SyncRequest {}
 
+enum SyncAction {
+  SET = 0;
+  DELETE = 1;
+}
+
 message SyncOperation {
+  SyncAction action = 1;
   string bucket = 2;
   string key = 3;
   bytes value = 4;

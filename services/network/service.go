@@ -45,3 +45,7 @@ func (s *service) Register(server *grpc.Server) error {
 func (s *service) ID() string {
 	return serviceID
 }
+
+func (s *service) Start() error {
+	return nil
+}

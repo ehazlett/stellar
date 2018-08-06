@@ -35,6 +35,10 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Start() error {
+	return nil
+}
+
 func (s *service) containerd() (*containerd.Client, error) {
 	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }

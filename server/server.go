@@ -18,6 +18,7 @@ import (
 	clusterservice "github.com/ehazlett/stellar/services/cluster"
 	datastoreservice "github.com/ehazlett/stellar/services/datastore"
 	healthservice "github.com/ehazlett/stellar/services/health"
+	nameserverservice "github.com/ehazlett/stellar/services/nameserver"
 	networkservice "github.com/ehazlett/stellar/services/network"
 	nodeservice "github.com/ehazlett/stellar/services/node"
 	versionservice "github.com/ehazlett/stellar/services/version"
@@ -38,6 +39,7 @@ type Server struct {
 	config      *Config
 	synced      bool
 	nodeEventCh chan *element.NodeEvent
+	services    []services.Service
 }
 
 type Config struct {
@@ -82,18 +84,24 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	ns, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, a)
+	nodeSvc, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, a)
 	if err != nil {
 		return nil, err
 	}
 
-	appSvc, err := applicationservice.New(cfg.ContainerdAddr, cfg.Namespace, a)
+	appSvc, err := applicationservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.DataDir, a)
+	if err != nil {
+		return nil, err
+	}
+
+	nsSvc, err := nameserverservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, a)
 	if err != nil {
 		return nil, err
 	}
 
 	// register with agent
-	for _, svc := range []services.Service{vs, ns, hs, cs, ds, netSvc, appSvc} {
+	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, netSvc, appSvc, nsSvc}
+	for _, svc := range svcs {
 		if err := a.Register(svc); err != nil {
 			return nil, err
 		}
@@ -109,6 +117,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		agent:       a,
 		config:      cfg,
 		nodeEventCh: nodeEventCh,
+		services:    svcs,
 	}
 
 	go srv.eventHandler(nodeEventCh)
@@ -277,6 +286,13 @@ func (s *Server) Run() error {
 			}
 		}
 	}()
+
+	// start services
+	for _, svc := range s.services {
+		if err := svc.Start(); err != nil {
+			errCh <- err
+		}
+	}
 
 	for {
 		select {

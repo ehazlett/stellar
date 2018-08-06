@@ -27,7 +27,14 @@ func (s *service) Set(ctx context.Context, req *api.SetRequest) (*ptypes.Empty, 
 	logrus.WithFields(logrus.Fields{
 		"bucket": req.Bucket,
 		"key":    req.Key,
+		"sync":   req.Sync,
 	}).Debug("updated datastore")
+
+	if req.Sync {
+		if err := s.replicateToPeers(ctx); err != nil {
+			return empty, err
+		}
+	}
 
 	return empty, err
 }

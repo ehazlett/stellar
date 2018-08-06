@@ -10,7 +10,6 @@ import (
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/node/v1"
 	ptypes "github.com/gogo/protobuf/types"
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
@@ -79,20 +78,17 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 	defer client.Close()
 
 	wg := &sync.WaitGroup{}
-	logrus.Debugf("delete: LoadContainer")
 	container, err := c.LoadContainer(ctx, req.ID)
 	if err != nil {
 		return empty, err
 	}
 
-	logrus.Debugf("delete: container.Task")
 	task, err := container.Task(ctx, nil)
 	if err != nil {
 		if !errdefs.IsNotFound(err) {
 			return empty, err
 		}
 	}
-	logrus.Debugf("delete: task wait")
 	wait, err := task.Wait(ctx)
 	if err != nil {
 		return empty, err
@@ -101,18 +97,15 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		logrus.Debugf("delete: task kill")
 		if err := task.Kill(ctx, unix.SIGTERM, containerd.WithKillAll); err != nil {
 			logrus.Errorf("error killing application task: %s", err)
 			return
 		}
 		select {
 		case <-wait:
-			logrus.Debugf("delete: task delete")
 			task.Delete(ctx)
 			return
 		case <-time.After(5 * time.Second):
-			logrus.Debugf("delete: task force kill")
 			if err := task.Kill(ctx, unix.SIGKILL, containerd.WithKillAll); err != nil {
 				logrus.Errorf("error force killing application task: %s", err)
 				return
@@ -128,19 +121,17 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 		return empty, err
 	}
 
-	logrus.Debugf("delete: container delete")
 	if err := container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
 		return empty, err
 	}
 
 	if networkEnabled {
 		// release IP
-		logrus.Debugf("delete: GetIP")
 		ip, err := client.Network().GetIP(req.ID, s.agent.Config().NodeName)
 		if err != nil {
 			logrus.Warnf("error getting ip for containerd %s: %s", req.ID, err)
 		}
-		logrus.Debugf("delete: ReleaseIP")
+		logrus.Debugf("releasing ip %s for %s", ip.String(), req.ID)
 		if _, err := client.Network().ReleaseIP(req.ID, ip.String(), s.agent.Config().NodeName); err != nil {
 			logrus.Warnf("error getting ip for containerd %s: %s", req.ID, err)
 		}
@@ -196,7 +187,7 @@ func (s *service) containerToProto(container containerd.Container) (*api.Contain
 		ID:     container.ID(),
 		Image:  info.Image,
 		Labels: info.Labels,
-		Spec: &any.Any{
+		Spec: &ptypes.Any{
 			TypeUrl: info.Spec.TypeUrl,
 			Value:   info.Spec.Value,
 		},

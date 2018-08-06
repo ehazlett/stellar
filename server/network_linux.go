@@ -1,13 +1,23 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"net"
+	"os"
+	"path/filepath"
 
 	"github.com/ehazlett/stellar"
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
+)
+
+const (
+	resolvConfTemplate = `nameserver {{.}}
+ndots 0
+`
 )
 
 func (s *Server) initNetworking() error {
@@ -34,6 +44,10 @@ func (s *Server) initNetworking() error {
 		return err
 	}
 
+	if err := s.generateResolvConf(gw.String()); err != nil {
+		return err
+	}
+
 	// configure container networking
 	if err := s.initContainerNetworking(subnetCIDR, gw); err != nil {
 		return err
@@ -44,6 +58,27 @@ func (s *Server) initNetworking() error {
 		"gateway": gw.String(),
 	}).Info("network initialized")
 
+	return nil
+}
+
+func (s *Server) generateResolvConf(gw string) error {
+	resolvConfPath := filepath.Join(s.config.DataDir, "resolv.conf")
+	os.Remove(resolvConfPath)
+	f, err := os.Create(resolvConfPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	t := template.New("resolvconf")
+	tmpl, err := t.Parse(resolvConfTemplate)
+	if err != nil {
+		return err
+	}
+	var b bytes.Buffer
+	if err := tmpl.Execute(&b, gw); err != nil {
+		return err
+	}
+	f.Write(b.Bytes())
 	return nil
 }
 

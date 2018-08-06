@@ -12,6 +12,7 @@ import (
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
 	"github.com/ehazlett/stellar/client"
+	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -72,7 +73,7 @@ var clusterNodesCommand = cli.Command{
 				return err
 			}
 
-			resp, err := nc.HealthService().Health(context.Background(), nil)
+			resp, err := nc.HealthService().Health(context.Background(), &ptypes.Empty{})
 			if err != nil {
 				return err
 			}
