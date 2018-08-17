@@ -5,6 +5,7 @@ NAMESPACE?=ehazlett
 IMAGE_NAMESPACE?=$(NAMESPACE)
 APP=stellar
 CLI=sctl
+CNI_IPAM=stellar-cni-ipam
 REPO?=$(NAMESPACE)/$(APP)
 TAG?=dev
 BUILD?=-dev
@@ -33,7 +34,7 @@ docker-build: bindir
 	@docker run --rm -e GOOS=${GOOS} -e GOARCH=${GOARCH} -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make daemon cli; tar -C ./bin -cf - ." | tar -C ./bin -xf -
 	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
-binaries: daemon cli
+binaries: daemon cli cni-ipam
 	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
 bindir:
@@ -42,8 +43,11 @@ bindir:
 cli: bindir
 	@cd cmd/$(CLI) && CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(CLI) .
 
-daemon:
+daemon: bindir
 	@cd cmd/$(APP) && CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(APP) .
+
+cni-ipam: bindir
+	@cd cmd/$(CNI_IPAM) && CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(CNI_IPAM) .
 
 docs:
 	@docker build -t $(APP)-docs -f Dockerfile.docs .

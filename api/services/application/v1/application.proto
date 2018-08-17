@@ -3,6 +3,7 @@ syntax = "proto3";
 package stellar.services.application.v1;
 
 import "google/protobuf/empty.proto";
+import "github.com/ehazlett/stellar/api/services/node/v1/node.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/application/v1;application";
 
@@ -13,35 +14,10 @@ service Application {
   rpc Get(GetRequest) returns (GetResponse);
 }
 
-message Process {
-  uint32 uid = 1;
-  uint32 gid = 2;
-  repeated string args = 3;
-  repeated string env = 4;
-}
-
-message Mount {
-  string type = 1;
-  string source = 2;
-  string destination = 4;
-  repeated string options = 5;
-}
-
-message Service {
-  string name = 1;
-  string image = 2;
-  string runtime = 3;
-  string snapshotter = 4;
-  Process process = 5;
-  repeated string labels = 6;
-  bool network = 7;
-  repeated Mount mounts = 8;
-}
-
 message CreateRequest {
   string name = 1;
   repeated string labels = 2;
-  repeated Service services = 3;
+  repeated stellar.services.node.v1.Service services = 3;
 }
 
 message DeleteRequest {
@@ -52,7 +28,7 @@ message ListRequest {}
 
 message App {
   string name = 1;
-  repeated Service services = 2;
+  repeated stellar.services.node.v1.Service services = 2;
 }
 
 message ListResponse {

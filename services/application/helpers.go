@@ -3,16 +3,16 @@ package application
 import (
 	"context"
 
-	api "github.com/ehazlett/stellar/api/services/application/v1"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
+	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 )
 
-func containerToService(ctx context.Context, c *clusterapi.Container) (*api.Service, error) {
+func containerToService(ctx context.Context, c *clusterapi.Container) (*nodeapi.Service, error) {
 	labels := []string{}
 	for k, v := range c.Container.Labels {
 		labels = append(labels, k+"="+v)
 	}
-	return &api.Service{
+	return &nodeapi.Service{
 		Name:        c.Container.ID,
 		Image:       c.Container.Image,
 		Runtime:     c.Container.Runtime,
