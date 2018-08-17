@@ -213,7 +213,14 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 		Path: netPath,
 	}))
 
-	network, err := s.getNetwork()
+	netConfData, err := s.getNetworkConf()
+	if err != nil {
+		return empty, err
+	}
+	network, err := s.getNetwork(
+		gocni.WithConf([]byte(cniLoopbackConf)),
+		gocni.WithConf(netConfData),
+	)
 	if err != nil {
 		return empty, err
 	}
@@ -349,7 +356,11 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 		if err != nil {
 			return empty, err
 		}
-		network, err := s.getNetwork()
+		netConfData, err := s.getNetworkConf()
+		if err != nil {
+			return empty, err
+		}
+		network, err := s.getNetwork(gocni.WithConf(netConfData))
 		if err != nil {
 			return empty, err
 		}
@@ -425,7 +436,7 @@ func (s *service) containerToProto(container containerd.Container) (*api.Contain
 	}, nil
 }
 
-func (s *service) getNetwork() (gocni.CNI, error) {
+func (s *service) getNetworkConf() ([]byte, error) {
 	t := template.New("cni")
 	tmpl, err := t.Parse(cniConfTemplate)
 	if err != nil {
@@ -439,16 +450,17 @@ func (s *service) getNetwork() (gocni.CNI, error) {
 	if err := tmpl.Execute(&b, cniConf{NodeName: s.nodeName(), PeerAddr: peerAddr, Bridge: s.bridge}); err != nil {
 		return nil, err
 	}
+	return b.Bytes(), nil
+}
+
+func (s *service) getNetwork(opts ...gocni.CNIOpt) (gocni.CNI, error) {
 	network, err := gocni.New(
 		gocni.WithPluginDir([]string{"/opt/containerd/bin", "/opt/cni/bin"}))
 	if err != nil {
 		return nil, err
 	}
 	// network confs
-	if err := network.Load(
-		gocni.WithConf([]byte(cniLoopbackConf)),
-		gocni.WithConf(b.Bytes()),
-	); err != nil {
+	if err := network.Load(opts...); err != nil {
 		return nil, err
 	}
 	return network, nil

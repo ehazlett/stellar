@@ -4,11 +4,12 @@ Stellar is a simplified container platform.
 
 - Simple to deploy and use
 - No master or leader elections
+- Multihost networking
 - Cluster and node based operations
 - Extensible service system
 
 Stellar was designed to be a simple container platform for environments that
-do not have large orchestration requirements (IoT, edge, batch computing, etc).
+do not have large orchestration requirements (IoT, edge, CI, render farms, batch computing, etc).
 
 The following are the high level features it provides:
 

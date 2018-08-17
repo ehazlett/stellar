@@ -1,3 +1,3 @@
 # Requirements
 
-- [containerd](https://containerd.io) version 1.0+ is required to use Stellar
+- [containerd](https://github.com/containerd/containerd) version 1.1+ is required to use Stellar
