@@ -48,6 +48,7 @@ type Config struct {
 	Namespace      string
 	Subnet         *net.IPNet
 	DataDir        string
+	StateDir       string
 	Bridge         string
 }
 
@@ -58,6 +59,7 @@ func NewServer(cfg *Config) (*Server, error) {
 	}
 
 	// services
+	// TODO: pass only cfg and the agent to cleanup service.New
 	// TODO: implement dependencies for services to alleviate the loading order
 	vs, err := versionservice.New(cfg.ContainerdAddr, cfg.Namespace)
 	if err != nil {
@@ -84,7 +86,7 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	nodeSvc, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, a)
+	nodeSvc, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, cfg.DataDir, cfg.StateDir, a)
 	if err != nil {
 		return nil, err
 	}
@@ -239,10 +241,11 @@ func (s *Server) syncDatastore() error {
 func (s *Server) init() error {
 	started := time.Now()
 
-	// initialize networking
-	if err := s.initNetworking(); err != nil {
-		return err
-	}
+	// TODO: handle network init with CNI
+	//// initialize networking
+	//if err := s.initNetworking(); err != nil {
+	//	return err
+	//}
 
 	logrus.Debugf("initializion duration: %s", time.Since(started))
 

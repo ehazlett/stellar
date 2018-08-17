@@ -17,14 +17,18 @@ type service struct {
 	containerdAddr string
 	namespace      string
 	bridge         string
+	dataDir        string
+	stateDir       string
 	agent          *element.Agent
 }
 
-func New(containerdAddr, namespace, bridge string, agent *element.Agent) (*service, error) {
+func New(containerdAddr, namespace, bridge, dataDir, stateDir string, agent *element.Agent) (*service, error) {
 	return &service{
 		containerdAddr: containerdAddr,
 		namespace:      namespace,
 		bridge:         bridge,
+		dataDir:        dataDir,
+		stateDir:       stateDir,
 		agent:          agent,
 	}, nil
 }
@@ -52,4 +56,17 @@ func (s *service) client() (*client.Client, error) {
 		return nil, err
 	}
 	return client.NewClient(peer.Addr)
+}
+
+func (s *service) peerAddr() (string, error) {
+	peer, err := s.agent.LocalNode()
+	if err != nil {
+		return "", err
+	}
+
+	return peer.Addr, nil
+}
+
+func (s *service) nodeName() string {
+	return s.agent.Config().NodeName
 }

@@ -61,6 +61,15 @@ func (s *service) client() (*client.Client, error) {
 	return client.NewClient(peer.Addr)
 }
 
+func (s *service) peerAddr() (string, error) {
+	peer, err := s.agent.LocalNode()
+	if err != nil {
+		return "", err
+	}
+
+	return peer.Addr, nil
+}
+
 func (s *service) nodeName() string {
 	return s.agent.Config().NodeName
 }
