@@ -29,6 +29,7 @@ case.  Enjoy :)
 - Multihost Networking via [CNI](https://github.com/containernetworking/cni)
 - Single binary for simple daemon deployment
 - Masterless design
+- Efficient use of system resources
 
 # Building
 In order to build Stellar you will need the following:
