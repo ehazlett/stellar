@@ -143,3 +143,12 @@ Services:
     stellar.io/network=true
 
 ```
+
+By default all applications that have networking enabled will have a corresponding nameserver record
+created.  To view the records use the following:
+
+```
+$> sctl --addr 10.0.1.33:9000 nameserver list
+NAME                    TYPE                VALUE               OPTIONS
+example.redis.stellar   A                   172.16.0.4          nil
+```
