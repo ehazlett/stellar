@@ -23,8 +23,11 @@ import (
 	"github.com/containerd/containerd/oci"
 	"github.com/containerd/containerd/runtime/restart"
 	gocni "github.com/containerd/go-cni"
+	"github.com/containerd/typeurl"
 	"github.com/ehazlett/stellar"
+	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
 	api "github.com/ehazlett/stellar/api/services/node/v1"
+	"github.com/ehazlett/stellar/api/types"
 	ptypes "github.com/gogo/protobuf/types"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
@@ -256,7 +259,7 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 		return empty, err
 	}
 
-	// TODO: redirect output somewhere
+	// log
 	logPath, err := s.logPath(id)
 	if err != nil {
 		return empty, err
@@ -277,9 +280,39 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 	defer c.Close()
 
 	// TODO: make domain configurable
-	recordType := "A"
-	name := id + ".stellar"
-	if err := c.Nameserver().Create(recordType, name, ip, nil); err != nil {
+	var records []*nameserverapi.Record
+	recordName := id + ".stellar"
+	records = append(records, &nameserverapi.Record{
+		Type:  nameserverapi.RecordType_A,
+		Name:  recordName,
+		Value: ip,
+	})
+	records = append(records, &nameserverapi.Record{
+		Type:  nameserverapi.RecordType_TXT,
+		Name:  recordName,
+		Value: fmt.Sprintf("node=%s; updated=%s", s.nodeName(), time.Now().Format(time.RFC3339)),
+	})
+	// endpoints
+	for _, ep := range service.Endpoints {
+		o := &types.SRVOptions{
+			Service:  ep.Service,
+			Protocol: strings.ToLower(ep.Protocol.String()),
+			Priority: uint16(0),
+			Weight:   uint16(0),
+			Port:     uint16(ep.Port),
+		}
+		opts, err := typeurl.MarshalAny(o)
+		if err != nil {
+			return empty, err
+		}
+		records = append(records, &nameserverapi.Record{
+			Type:    nameserverapi.RecordType_SRV,
+			Name:    recordName,
+			Value:   recordName,
+			Options: opts,
+		})
+	}
+	if err := c.Nameserver().CreateRecords(recordName, records); err != nil {
 		return empty, err
 	}
 	return empty, nil

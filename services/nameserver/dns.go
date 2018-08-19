@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/containerd/typeurl"
 	api "github.com/ehazlett/stellar/api/services/nameserver/v1"
@@ -69,28 +70,37 @@ func (s *service) gateway() (net.IP, error) {
 func (s *service) handler(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
+	m.RecursionAvailable = true
+	// defer WriteMsg to ensure a response
+	defer logrus.Debugf("ns msg: %+v", m)
 	defer w.WriteMsg(m)
+
 	query := m.Question[0].Name
+	queryType := m.Question[0].Qtype
+
 	logrus.Debugf("nameserver: query=%q", query)
-	name := getName(query)
+	name := getName(query, queryType)
+
 	logrus.Debugf("nameserver: looking up %s", name)
 	resp, err := s.Lookup(context.Background(), &api.LookupRequest{
 		Query: name,
 	})
 	if err != nil {
 		logrus.Error(errors.Wrapf(err, "nameserver: error performing lookup for %s", name))
-		//w.WriteMsg(m)
 		return
 	}
-	m.Answer = make([]dns.RR, len(resp.Records))
-	for i, record := range resp.Records {
+	logrus.Debugf("ns: answering with %d records", len(resp.Records))
+	m.Answer = []dns.RR{}
+	m.Extra = []dns.RR{}
+
+	for _, record := range resp.Records {
 		var rr dns.RR
 		switch record.Type {
 		case api.RecordType_A:
 			ip := net.ParseIP(string(record.Value))
 			rr = &dns.A{
 				Hdr: dns.RR_Header{
-					Name:   query,
+					Name:   fqdn(name),
 					Rrtype: dns.TypeA,
 					Class:  dns.ClassINET,
 					Ttl:    0,
@@ -100,7 +110,7 @@ func (s *service) handler(w dns.ResponseWriter, r *dns.Msg) {
 		case api.RecordType_CNAME:
 			rr = &dns.CNAME{
 				Hdr: dns.RR_Header{
-					Name:   query,
+					Name:   fqdn(name),
 					Rrtype: dns.TypeCNAME,
 					Class:  dns.ClassINET,
 					Ttl:    0,
@@ -110,58 +120,72 @@ func (s *service) handler(w dns.ResponseWriter, r *dns.Msg) {
 		case api.RecordType_TXT:
 			rr = &dns.TXT{
 				Hdr: dns.RR_Header{
-					Name:   query,
-					Rrtype: dns.TypeCNAME,
+					Name:   fqdn(name),
+					Rrtype: dns.TypeTXT,
 					Class:  dns.ClassINET,
 					Ttl:    0,
 				},
 				Txt: []string{string(record.Value)},
 			}
-		case api.RecordType_SRV:
-			v, err := typeurl.UnmarshalAny(record.Options)
-			if err != nil {
-				logrus.Errorf("nameserver: unmarshalling record options: %s", err)
-				return
-			}
-			o, ok := v.(*types.SRVOptions)
-			if !ok {
-				logrus.Error("nameserver: invalid type for record options; expected SRVOptions")
-				return
-			}
-			rr = &dns.SRV{
-				Hdr: dns.RR_Header{
-					Name:   query,
-					Rrtype: dns.TypeSRV,
-					Class:  dns.ClassINET,
-					Ttl:    0,
-				},
-				Target:   string(record.Value),
-				Priority: o.Priority,
-				Weight:   o.Weight,
-				Port:     o.Port,
-			}
 		case api.RecordType_MX:
 			rr = &dns.MX{
 				Hdr: dns.RR_Header{
-					Name:   query,
+					Name:   fqdn(name),
 					Rrtype: dns.TypeMX,
 					Class:  dns.ClassINET,
 					Ttl:    0,
 				},
 				Mx: string(record.Value),
 			}
+		case api.RecordType_SRV: // srv is unique do to the return format
+			v, err := typeurl.UnmarshalAny(record.Options)
+			if err != nil {
+				logrus.Errorf("ns: unmarshalling record options: %s", err)
+				return
+			}
+			o, ok := v.(*types.SRVOptions)
+			if !ok {
+				logrus.Error("ns: invalid type for record options; expected SRVOptions")
+			}
+			rr = &dns.SRV{
+				Hdr: dns.RR_Header{
+					Name:   formatSRV(name, o),
+					Rrtype: dns.TypeSRV,
+					Class:  dns.ClassINET,
+					Ttl:    0,
+				},
+				Target:   query,
+				Priority: o.Priority,
+				Weight:   o.Weight,
+				Port:     o.Port,
+			}
 		default:
 			logrus.Errorf("nameserver: unsupported record type %s for %s", record.Type, name)
-			//w.WriteMsg(m)
-			return
 		}
 
-		m.Answer[i] = rr
+		// set for answer or extra
+		if rr.Header().Rrtype == queryType {
+			m.Answer = append(m.Answer, rr)
+		} else {
+			m.Extra = append(m.Extra, rr)
+		}
 	}
-
-	//w.WriteMsg(m)
 }
 
-func getName(query string) string {
+func getName(query string, queryType uint16) string {
+	// adjust lookup for srv
+	if queryType == dns.TypeSRV {
+		p := strings.Split(query, ".")
+		v := strings.Join(p[2:], ".")
+		return v[:len(v)-1]
+	}
 	return query[:len(query)-1]
+}
+
+func formatSRV(name string, opts *types.SRVOptions) string {
+	return fmt.Sprintf("_%s._%s.%s.", opts.Service, opts.Protocol, name)
+}
+
+func fqdn(name string) string {
+	return name + "."
 }

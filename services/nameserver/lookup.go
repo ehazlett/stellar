@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	api "github.com/ehazlett/stellar/api/services/nameserver/v1"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *service) Lookup(ctx context.Context, req *api.LookupRequest) (*api.LookupResponse, error) {
@@ -14,14 +15,20 @@ func (s *service) Lookup(ctx context.Context, req *api.LookupRequest) (*api.Look
 	}
 	defer c.Close()
 
-	val, err := c.Datastore().Get(dsNameserverBucketName, req.Query)
+	logrus.Debugf("lookup query=%s", req.Query)
+	kvs, err := c.Datastore().Search(dsNameserverBucketName, req.Query)
 	if err != nil {
 		return nil, err
 	}
 
 	var records []*api.Record
-	if err := json.Unmarshal(val, &records); err != nil {
-		return nil, err
+	for _, kv := range kvs {
+		var r []*api.Record
+		if err := json.Unmarshal(kv.Value, &r); err != nil {
+			return nil, err
+		}
+
+		records = append(records, r...)
 	}
 
 	return &api.LookupResponse{

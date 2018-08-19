@@ -6,6 +6,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/codegangsta/cli"
+	"github.com/containerd/typeurl"
+	"github.com/ehazlett/stellar/api/types"
 )
 
 var nameserverCommand = cli.Command{
@@ -36,7 +38,17 @@ var nameserverListRecordsCommand = cli.Command{
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 		fmt.Fprintf(w, "NAME\tTYPE\tVALUE\tOPTIONS\n")
 		for _, r := range records {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", r.Name, r.Type, r.Value, r.Options)
+			opts := ""
+			if r.Options != nil {
+				v, err := typeurl.UnmarshalAny(r.Options)
+				if err != nil {
+					return err
+				}
+				if o, ok := v.(types.NameserverOption); ok {
+					opts = o.String()
+				}
+			}
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", r.Name, r.Type, r.Value, opts)
 		}
 		w.Flush()
 

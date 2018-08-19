@@ -79,6 +79,19 @@ message Mount {
   repeated string options = 5;
 }
 
+enum Protocol {
+  TCP = 0;
+  UDP = 1;
+  HTTP = 2;
+}
+
+message Endpoint {
+  string service = 1;
+  Protocol protocol = 2;
+  string host = 3;
+  uint32 port = 4;
+}
+
 message Service {
   string name = 1;
   string image = 2;
@@ -88,6 +101,7 @@ message Service {
   repeated string labels = 6;
   bool network = 7;
   repeated Mount mounts = 8;
+  repeated Endpoint endpoints = 9;
 }
 
 message CreateContainerRequest {

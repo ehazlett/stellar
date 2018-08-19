@@ -2,7 +2,6 @@ package nameserver
 
 import (
 	"github.com/containerd/containerd"
-	"github.com/containerd/typeurl"
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/client"
@@ -10,13 +9,11 @@ import (
 	"google.golang.org/grpc"
 
 	api "github.com/ehazlett/stellar/api/services/nameserver/v1"
-	"github.com/ehazlett/stellar/api/types"
 )
 
 const (
 	serviceID              = "stellar.services.nameserver.v1"
 	dsNameserverBucketName = "stellar." + stellar.APIVersion + ".services.nameserver"
-	optionUrl              = "stellar.io/services/nameserver/types"
 )
 
 var (
@@ -28,10 +25,6 @@ type service struct {
 	namespace      string
 	bridge         string
 	agent          *element.Agent
-}
-
-func init() {
-	typeurl.Register(&types.SRVOptions{}, optionUrl+".SRVOptions")
 }
 
 func New(containerdAddr, namespace, bridge string, agent *element.Agent) (*service, error) {
