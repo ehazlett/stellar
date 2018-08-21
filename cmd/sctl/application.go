@@ -21,6 +21,11 @@ Services:{{ range .Services }}
   Snapshotter: {{ .Snapshotter }}
   Labels:{{ range .Labels }}
     {{.}}{{ end }}
+  Endpoints:{{ range .Endpoints }}
+    - Service: {{.Service}}
+      Protocol: {{.Protocol}}
+      Host: {{.Host}}
+      Port: {{.Port}}{{ end }}
 {{end}}
 `
 

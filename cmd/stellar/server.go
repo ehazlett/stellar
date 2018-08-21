@@ -5,6 +5,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/server"
 )
 
@@ -82,6 +83,11 @@ var serverCommand = cli.Command{
 			Usage: "advertise port",
 			Value: 7946,
 		},
+		cli.IntFlag{
+			Name:  "proxy-http-port",
+			Usage: "proxy http port",
+			Value: 80,
+		},
 		cli.StringSliceFlag{
 			Name:  "peer",
 			Usage: "one or more peers for agent to join",
@@ -115,7 +121,7 @@ func serverAction(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	srv, err := server.NewServer(&server.Config{
+	srv, err := server.NewServer(&stellar.Config{
 		AgentConfig:    agentConfig,
 		ContainerdAddr: containerdAddr,
 		Namespace:      namespace,
@@ -123,6 +129,7 @@ func serverAction(c *cli.Context) error {
 		DataDir:        c.String("data-dir"),
 		StateDir:       c.String("state-dir"),
 		Bridge:         c.String("bridge"),
+		ProxyHTTPPort:  c.Int("proxy-http-port"),
 	})
 	if err != nil {
 		return err

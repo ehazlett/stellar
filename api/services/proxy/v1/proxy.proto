@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package stellar.services.proxy.v1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/ehazlett/stellar/api/services/proxy/v1;proxy";
+
+service Proxy {
+  rpc Reload(ReloadRequest) returns (google.protobuf.Empty);
+}
+
+message ReloadRequest {}
