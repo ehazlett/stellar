@@ -10,16 +10,32 @@ import (
 
 func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.Empty, error) {
 	logrus.Debugf("creating application %s", req.Name)
-	c, err := s.client()
+	peers, err := s.agent.Peers()
 	if err != nil {
 		return empty, err
 	}
-	defer c.Close()
 
+	peerIdx := 0
 	for _, service := range req.Services {
+		// get random peer for deploy
+		peer := peers[peerIdx]
+		c, err := s.nodeClient(peer.Name)
+		if err != nil {
+			return empty, err
+		}
+
 		// TODO: make cluster aware
 		if err := c.Node().CreateContainer(req.Name, service); err != nil {
 			return empty, err
+		}
+
+		c.Close()
+
+		// update peer index for next deploy
+		if peerIdx > len(peers) {
+			peerIdx = 0
+		} else {
+			peerIdx++
 		}
 	}
 	return empty, nil

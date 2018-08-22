@@ -134,7 +134,6 @@ func (p *Proxy) Reload(apps []*applicationapi.App) error {
 			}
 			// parse url and notify update
 			for _, ep := range svc.Endpoints {
-				logrus.Debugf("proxy: checking endpoint %s for app %s", ep.Service, app.Name)
 				if strings.ToLower(ep.Protocol.String()) != "http" {
 					logrus.Warnf("proxy: unsupported protocol %s for endpoint %s", ep.Protocol, ep.Service)
 					continue
@@ -153,7 +152,7 @@ func (p *Proxy) Reload(apps []*applicationapi.App) error {
 
 	// trigger updates
 	for host, servers := range appServers {
-		serverID, err := p.generateServerID(servers)
+		serverID, err := p.generateServerID(host)
 		if err != nil {
 			logrus.Errorf("proxy: error generating server id: %s", err)
 			continue
@@ -224,13 +223,21 @@ func (p *Proxy) getUpdateAction(id string) updateAction {
 	return updateActionAdd
 }
 
-func (p *Proxy) generateServerID(v interface{}) (string, error) {
+func (p *Proxy) generateServerID(v interface{}, extra ...interface{}) (string, error) {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return "", err
 	}
 	h := sha1.New()
 	h.Write(data)
+	for _, x := range extra {
+		d, err := json.Marshal(x)
+		if err != nil {
+			return "", err
+
+		}
+		h.Write(d)
+	}
 	r := hex.EncodeToString(h.Sum(nil))[:24]
 	return r, nil
 }
@@ -238,6 +245,7 @@ func (p *Proxy) generateServerID(v interface{}) (string, error) {
 func (p *Proxy) pruneServers(next map[string]*backend) {
 	for k, b := range p.currentServers {
 		if _, exists := next[k]; !exists {
+			logrus.Debugf("proxy: %s not found; removing", k)
 			p.updateCh <- &proxyUpdate{
 				backend: b,
 				action:  updateActionRemove,
