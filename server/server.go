@@ -50,7 +50,6 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	}
 
 	// services
-	// TODO: pass only cfg and the agent to cleanup service.New
 	// TODO: implement dependencies for services to alleviate the loading order
 	vs, err := versionservice.New(cfg.ContainerdAddr, cfg.Namespace)
 	if err != nil {

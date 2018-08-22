@@ -66,7 +66,6 @@ var appCreateCommand = cli.Command{
 		if err != nil {
 			return errors.Wrapf(err, "error accessing config %s", configPath)
 		}
-
 		var req *api.CreateRequest
 		if err := json.Unmarshal(data, &req); err != nil {
 			return errors.Wrap(err, "error loading config")
