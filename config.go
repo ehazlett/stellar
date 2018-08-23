@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	AgentConfig    *element.Config
-	ContainerdAddr string
-	Namespace      string
-	Subnet         *net.IPNet
-	DataDir        string
-	StateDir       string
-	Bridge         string
-	ProxyHTTPPort  int
+	AgentConfig     *element.Config
+	ContainerdAddr  string
+	Namespace       string
+	Subnet          *net.IPNet
+	DataDir         string
+	StateDir        string
+	Bridge          string
+	UpstreamDNSAddr string
+	ProxyHTTPPort   int
 }

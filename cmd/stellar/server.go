@@ -88,6 +88,11 @@ var serverCommand = cli.Command{
 			Usage: "proxy http port",
 			Value: 80,
 		},
+		cli.StringFlag{
+			Name:  "upstream-dns-addr",
+			Usage: "address to forward non-cluster dns lookups",
+			Value: "1.1.1.1:53",
+		},
 		cli.StringSliceFlag{
 			Name:  "peer",
 			Usage: "one or more peers for agent to join",
@@ -122,14 +127,15 @@ func serverAction(c *cli.Context) error {
 		return err
 	}
 	srv, err := server.NewServer(&stellar.Config{
-		AgentConfig:    agentConfig,
-		ContainerdAddr: containerdAddr,
-		Namespace:      namespace,
-		Subnet:         subnet,
-		DataDir:        c.String("data-dir"),
-		StateDir:       c.String("state-dir"),
-		Bridge:         c.String("bridge"),
-		ProxyHTTPPort:  c.Int("proxy-http-port"),
+		AgentConfig:     agentConfig,
+		ContainerdAddr:  containerdAddr,
+		Namespace:       namespace,
+		Subnet:          subnet,
+		DataDir:         c.String("data-dir"),
+		StateDir:        c.String("state-dir"),
+		Bridge:          c.String("bridge"),
+		UpstreamDNSAddr: c.String("upstream-dns-addr"),
+		ProxyHTTPPort:   c.Int("proxy-http-port"),
 	})
 	if err != nil {
 		return err

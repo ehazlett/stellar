@@ -21,18 +21,20 @@ var (
 )
 
 type service struct {
-	containerdAddr string
-	namespace      string
-	bridge         string
-	agent          *element.Agent
+	containerdAddr  string
+	namespace       string
+	bridge          string
+	upstreamDNSAddr string
+	agent           *element.Agent
 }
 
 func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 	srv := &service{
-		containerdAddr: cfg.ContainerdAddr,
-		namespace:      cfg.Namespace,
-		bridge:         cfg.Bridge,
-		agent:          agent,
+		containerdAddr:  cfg.ContainerdAddr,
+		namespace:       cfg.Namespace,
+		bridge:          cfg.Bridge,
+		upstreamDNSAddr: cfg.UpstreamDNSAddr,
+		agent:           agent,
 	}
 
 	return srv, nil
