@@ -108,6 +108,7 @@ func (s *service) reload() error {
 
 	// notify updates
 	for _, update := range updates {
+		logrus.Debugf("proxy update: host=%s servers=%+v", update.backend.host, update.backend.servers)
 		s.updateCh <- update
 	}
 

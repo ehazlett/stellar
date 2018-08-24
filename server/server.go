@@ -234,11 +234,10 @@ func (s *Server) syncDatastore() error {
 func (s *Server) init() error {
 	started := time.Now()
 
-	// TODO: handle network init with CNI
-	//// initialize networking
-	//if err := s.initNetworking(); err != nil {
-	//	return err
-	//}
+	// initialize local networking
+	if err := s.initNetworking(); err != nil {
+		return err
+	}
 
 	logrus.Debugf("initializion duration: %s", time.Since(started))
 

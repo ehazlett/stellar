@@ -48,11 +48,6 @@ func (s *Server) initNetworking() error {
 		return err
 	}
 
-	// configure container networking
-	if err := s.initContainerNetworking(subnetCIDR, gw); err != nil {
-		return err
-	}
-
 	logrus.WithFields(logrus.Fields{
 		"subnet":  subnetCIDR,
 		"gateway": gw.String(),

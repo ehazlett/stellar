@@ -346,26 +346,29 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 			return empty, err
 		}
 	}
-	wait, err := task.Wait(ctx)
-	if err != nil {
-		return empty, err
-	}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := task.Kill(ctx, unix.SIGTERM, containerd.WithKillAll); err != nil {
-			logrus.Warnf("error killing container task: %s", err)
-		}
-		select {
-		case <-wait:
-			task.Delete(ctx)
-			return
-		case <-time.After(5 * time.Second):
-			if err := task.Kill(ctx, unix.SIGKILL, containerd.WithKillAll); err != nil {
-				logrus.Warnf("error force killing container task: %s", err)
+		if task != nil {
+			wait, err := task.Wait(ctx)
+			if err != nil {
+				logrus.Errorf("error waiting on task: %s", err)
+				return
 			}
-			return
+			if err := task.Kill(ctx, unix.SIGTERM, containerd.WithKillAll); err != nil {
+				logrus.Warnf("error killing container task: %s", err)
+			}
+			select {
+			case <-wait:
+				task.Delete(ctx)
+				return
+			case <-time.After(5 * time.Second):
+				if err := task.Kill(ctx, unix.SIGKILL, containerd.WithKillAll); err != nil {
+					logrus.Warnf("error force killing container task: %s", err)
+				}
+				return
+			}
 		}
 	}()
 
