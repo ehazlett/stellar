@@ -3,11 +3,30 @@ syntax = "proto3";
 package stellar.services.proxy.v1;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/proxy/v1;proxy";
 
 service Proxy {
   rpc Reload(ReloadRequest) returns (google.protobuf.Empty);
+  rpc Backends(BackendRequest) returns (BackendResponse);
 }
 
 message ReloadRequest {}
+
+message BackendRequest {}
+
+message Upstream {
+  string address = 1;
+  google.protobuf.Duration latency = 2;
+  string status = 3;
+}
+
+message Backend {
+    string host = 1;
+    repeated Upstream upstreams = 2;
+}
+
+message BackendResponse {
+    repeated Backend backends = 1;
+}

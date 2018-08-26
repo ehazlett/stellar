@@ -118,5 +118,4 @@ func (s *service) reload() error {
 	s.currentServers = next
 
 	return nil
-
 }

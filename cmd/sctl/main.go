@@ -39,6 +39,7 @@ func main() {
 		nodeCommand,
 		clusterCommand,
 		nameserverCommand,
+		proxyCommand,
 	}
 
 	if err := app.Run(os.Args); err != nil {

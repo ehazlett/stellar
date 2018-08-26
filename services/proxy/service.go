@@ -33,19 +33,20 @@ var (
 )
 
 type service struct {
-	containerdAddr string
-	namespace      string
-	agent          *element.Agent
-	proxyHTTPPort  int
-	errCh          chan error
-	updateCh       chan *proxyUpdate
-	currentServers map[string]*backend
-	mux            *route.Mux
+	containerdAddr           string
+	namespace                string
+	agent                    *element.Agent
+	proxyHTTPPort            int
+	proxyHealthcheckInterval time.Duration
+	errCh                    chan error
+	updateCh                 chan *proxyUpdate
+	currentServers           map[string]*backend
+	mux                      *route.Mux
 }
 
 type backend struct {
 	host    string
-	lb      *roundrobin.RoundRobin
+	lb      *roundrobin.Rebalancer
 	servers []*url.URL
 }
 
@@ -72,9 +73,10 @@ func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 	}()
 
 	return &service{
-		containerdAddr: cfg.ContainerdAddr,
-		namespace:      cfg.Namespace,
-		proxyHTTPPort:  cfg.ProxyHTTPPort,
+		containerdAddr:           cfg.ContainerdAddr,
+		namespace:                cfg.Namespace,
+		proxyHTTPPort:            cfg.ProxyHTTPPort,
+		proxyHealthcheckInterval: cfg.ProxyHealthcheckInterval,
 		errCh:          errCh,
 		updateCh:       make(chan *proxyUpdate),
 		currentServers: make(map[string]*backend),
@@ -108,6 +110,9 @@ func (s *service) Start() error {
 			}
 		}
 	}()
+
+	// start healthcheck
+	go s.healthcheck()
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
@@ -164,7 +169,7 @@ func (s *service) nodeClient(id string) (*client.Client, error) {
 	return nil, fmt.Errorf("node %s not found in cluster", id)
 }
 
-func newLB() (*roundrobin.RoundRobin, error) {
+func newLB() (*roundrobin.Rebalancer, error) {
 	// TODO: log separately?
 	l := logrus.New()
 	l.Out = ioutil.Discard
@@ -172,7 +177,15 @@ func newLB() (*roundrobin.RoundRobin, error) {
 	if err != nil {
 		return nil, err
 	}
-	lb, err := roundrobin.New(fwd, roundrobin.RoundRobinLogger(l))
+	rr, err := roundrobin.New(fwd, roundrobin.RoundRobinLogger(l))
+	if err != nil {
+		return nil, err
+	}
+
+	lb, err := roundrobin.NewRebalancer(rr,
+		roundrobin.RebalancerLogger(l),
+		roundrobin.RebalancerBackoff(time.Millisecond*250),
+	)
 	if err != nil {
 		return nil, err
 	}

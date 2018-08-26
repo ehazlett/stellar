@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/ehazlett/element"
@@ -88,6 +89,11 @@ var serverCommand = cli.Command{
 			Usage: "proxy http port",
 			Value: 80,
 		},
+		cli.DurationFlag{
+			Name:  "proxy-healthcheck-interval",
+			Usage: "proxy backend healthcheck interval",
+			Value: time.Second * 5,
+		},
 		cli.StringFlag{
 			Name:  "upstream-dns-addr",
 			Usage: "address to forward non-cluster dns lookups",
@@ -127,15 +133,16 @@ func serverAction(c *cli.Context) error {
 		return err
 	}
 	srv, err := server.NewServer(&stellar.Config{
-		AgentConfig:     agentConfig,
-		ContainerdAddr:  containerdAddr,
-		Namespace:       namespace,
-		Subnet:          subnet,
-		DataDir:         c.String("data-dir"),
-		StateDir:        c.String("state-dir"),
-		Bridge:          c.String("bridge"),
-		UpstreamDNSAddr: c.String("upstream-dns-addr"),
-		ProxyHTTPPort:   c.Int("proxy-http-port"),
+		AgentConfig:              agentConfig,
+		ContainerdAddr:           containerdAddr,
+		Namespace:                namespace,
+		Subnet:                   subnet,
+		DataDir:                  c.String("data-dir"),
+		StateDir:                 c.String("state-dir"),
+		Bridge:                   c.String("bridge"),
+		UpstreamDNSAddr:          c.String("upstream-dns-addr"),
+		ProxyHTTPPort:            c.Int("proxy-http-port"),
+		ProxyHealthcheckInterval: c.Duration("proxy-healthcheck-interval"),
 	})
 	if err != nil {
 		return err
