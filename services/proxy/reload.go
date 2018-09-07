@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"reflect"
 	"strings"
 
 	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
@@ -69,11 +68,9 @@ func (s *service) reload() error {
 		}
 	}
 
-	updates := []*proxyUpdate{}
-
 	// trigger updates
 	for host, servers := range appServers {
-		serverID, err := s.generateServerID(host)
+		serverID, err := generateID(host)
 		if err != nil {
 			logrus.Errorf("proxy: error generating server id: %s", err)
 			continue
@@ -93,6 +90,7 @@ func (s *service) reload() error {
 			}
 		}
 
+		// schedule update
 		update := &proxyUpdate{
 			backend: b,
 		}
@@ -101,21 +99,15 @@ func (s *service) reload() error {
 		next[serverID] = b
 	}
 
-	// nothing changed; skip
-	if reflect.DeepEqual(next, s.currentServers) {
-		return nil
-	}
-
 	// notify updates
 	for _, update := range updates {
 		logrus.Debugf("proxy update: host=%s servers=%+v", update.backend.host, update.backend.servers)
 		s.updateCh <- update
 	}
-
-	// prune
-	s.pruneServers(next)
 	// update current servers
 	s.currentServers = next
+	// prune
+	s.pruneServers(next)
 
 	return nil
 }

@@ -24,8 +24,12 @@ func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.E
 			return empty, err
 		}
 
-		// TODO: make cluster aware
 		if err := c.Node().CreateContainer(req.Name, service); err != nil {
+			return empty, err
+		}
+
+		// update proxy
+		if err := c.Proxy().Reload(); err != nil {
 			return empty, err
 		}
 

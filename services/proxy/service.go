@@ -1,18 +1,17 @@
 package proxy
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
+	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	api "github.com/ehazlett/stellar/api/services/proxy/v1"
 	"github.com/ehazlett/stellar/client"
 	ptypes "github.com/gogo/protobuf/types"
@@ -41,6 +40,7 @@ type service struct {
 	errCh                    chan error
 	updateCh                 chan *proxyUpdate
 	currentServers           map[string]*backend
+	currentApps              []*applicationapi.App
 	mux                      *route.Mux
 }
 
@@ -105,8 +105,22 @@ func (s *service) Start() error {
 	t := time.NewTicker(5 * time.Second)
 	go func() {
 		for range t.C {
-			if err := s.reload(); err != nil {
+			c, err := s.client()
+			if err != nil {
 				logrus.Errorf("proxy: %s", err)
+				continue
+			}
+			apps, err := c.Application().List()
+			if err != nil {
+				logrus.Errorf("proxy: %s", err)
+				continue
+			}
+
+			if !reflect.DeepEqual(apps, s.currentApps) {
+				if err := s.reload(); err != nil {
+					logrus.Errorf("proxy: %s", err)
+					continue
+				}
 			}
 		}
 	}()
@@ -199,25 +213,6 @@ func (s *service) getUpdateAction(id string) updateAction {
 	}
 
 	return updateActionAdd
-}
-
-func (s *service) generateServerID(v interface{}, extra ...interface{}) (string, error) {
-	data, err := json.Marshal(v)
-	if err != nil {
-		return "", err
-	}
-	h := sha1.New()
-	h.Write(data)
-	for _, x := range extra {
-		d, err := json.Marshal(x)
-		if err != nil {
-			return "", err
-
-		}
-		h.Write(d)
-	}
-	r := hex.EncodeToString(h.Sum(nil))[:24]
-	return r, nil
 }
 
 func (s *service) pruneServers(next map[string]*backend) {

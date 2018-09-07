@@ -1,11 +1,33 @@
 package proxy
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
 )
+
+func generateID(v interface{}, extra ...interface{}) (string, error) {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	h := sha1.New()
+	h.Write(data)
+	for _, x := range extra {
+		d, err := json.Marshal(x)
+		if err != nil {
+			return "", err
+
+		}
+		h.Write(d)
+	}
+	r := hex.EncodeToString(h.Sum(nil))[:24]
+	return r, nil
+}
 
 func checkConnection(endpoint *url.URL, timeout time.Duration) (time.Duration, error) {
 	zero := time.Millisecond * 0
