@@ -31,7 +31,7 @@ docker-generate:
 docker-build: bindir
 	@echo "** This uses a separate Dockerfile (Dockerfile.build) **"
 	@docker build -t $(APP)-dev -f Dockerfile.build .
-	@docker run --rm -e GOOS=${GOOS} -e GOARCH=${GOARCH} -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make daemon cli; tar -C ./bin -cf - ." | tar -C ./bin -xf -
+	@docker run --rm -e GOOS=${GOOS} -e GOARCH=${GOARCH} -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make cli daemon cni-ipam; tar -C ./bin -cf - ." | tar -C ./bin -xf -
 	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
 binaries: daemon cli cni-ipam
