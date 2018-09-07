@@ -2,24 +2,18 @@ package proxy
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"reflect"
 	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
-	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	api "github.com/ehazlett/stellar/api/services/proxy/v1"
 	"github.com/ehazlett/stellar/client"
+	"github.com/ehazlett/stellar/version"
 	ptypes "github.com/gogo/protobuf/types"
-	"github.com/pkg/errors"
+	"github.com/mholt/caddy"
+	_ "github.com/mholt/caddy/caddyhttp"
 	"github.com/sirupsen/logrus"
-	"github.com/vulcand/oxy/forward"
-	"github.com/vulcand/oxy/roundrobin"
-	"github.com/vulcand/route"
 	"google.golang.org/grpc"
 )
 
@@ -36,31 +30,14 @@ type service struct {
 	namespace                string
 	agent                    *element.Agent
 	proxyHTTPPort            int
+	proxyHTTPSPort           int
 	proxyHealthcheckInterval time.Duration
+	server                   *caddy.Instance
 	errCh                    chan error
-	updateCh                 chan *proxyUpdate
-	currentServers           map[string]*backend
-	currentApps              []*applicationapi.App
-	mux                      *route.Mux
 }
 
-type backend struct {
-	host    string
-	lb      *roundrobin.Rebalancer
-	servers []*url.URL
-}
-
-type updateAction string
-
-const (
-	updateActionAdd    updateAction = "add"
-	updateActionUpdate updateAction = "update"
-	updateActionRemove updateAction = "remove"
-)
-
-type proxyUpdate struct {
-	action  updateAction
-	backend *backend
+func init() {
+	caddy.SetDefaultCaddyfileLoader("default", caddy.LoaderFunc(caddyLoader))
 }
 
 func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
@@ -72,16 +49,16 @@ func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 		}
 	}()
 
+	caddy.AppName = "stellar.proxy"
+	caddy.AppVersion = version.Version
+
 	return &service{
 		containerdAddr:           cfg.ContainerdAddr,
 		namespace:                cfg.Namespace,
 		proxyHTTPPort:            cfg.ProxyHTTPPort,
 		proxyHealthcheckInterval: cfg.ProxyHealthcheckInterval,
-		errCh:          errCh,
-		updateCh:       make(chan *proxyUpdate),
-		currentServers: make(map[string]*backend),
-		mux:            route.NewMux(),
-		agent:          agent,
+		errCh: errCh,
+		agent: agent,
 	}, nil
 }
 
@@ -95,42 +72,23 @@ func (s *service) ID() string {
 }
 
 func (s *service) Start() error {
-	go s.updater()
-
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.proxyHTTPPort),
-		Handler: s.mux,
+	caddyfile, err := caddy.LoadCaddyfile("http")
+	if err != nil {
+		return err
 	}
 
+	s.instance, err = caddy.Start(caddyfile)
+	if err != nil {
+		return err
+	}
 	t := time.NewTicker(5 * time.Second)
 	go func() {
 		for range t.C {
-			c, err := s.client()
-			if err != nil {
-				logrus.Errorf("proxy: %s", err)
-				continue
-			}
-			apps, err := c.Application().List()
-			if err != nil {
-				logrus.Errorf("proxy: %s", err)
-				continue
-			}
-
-			if !reflect.DeepEqual(apps, s.currentApps) {
-				if err := s.reload(); err != nil {
-					logrus.Errorf("proxy: %s", err)
-					continue
-				}
-			}
-		}
-	}()
-
-	// start healthcheck
-	go s.healthcheck()
-
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			logrus.Error(errors.Wrap(err, "proxy"))
+			//c, err := s.client()
+			//if err != nil {
+			//	logrus.Errorf("proxy: %s", err)
+			//	continue
+			//}
 		}
 	}()
 
@@ -183,46 +141,15 @@ func (s *service) nodeClient(id string) (*client.Client, error) {
 	return nil, fmt.Errorf("node %s not found in cluster", id)
 }
 
-func newLB() (*roundrobin.Rebalancer, error) {
-	// TODO: log separately?
-	l := logrus.New()
-	l.Out = ioutil.Discard
-	fwd, err := forward.New(forward.Logger(l))
+func (s *service) caddyLoader(serverType string) (caddy.Input, error) {
+	data, err := generateConfig()
 	if err != nil {
 		return nil, err
 	}
-	rr, err := roundrobin.New(fwd, roundrobin.RoundRobinLogger(l))
-	if err != nil {
-		return nil, err
-	}
+	return caddy.CaddyfileInput{
+		Contents:       contents,
+		Filepath:       caddy.DefaultConfigFile,
+		ServerTypeName: serverType,
+	}, nil
 
-	lb, err := roundrobin.NewRebalancer(rr,
-		roundrobin.RebalancerLogger(l),
-		roundrobin.RebalancerBackoff(time.Millisecond*250),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return lb, nil
-}
-
-func (s *service) getUpdateAction(id string) updateAction {
-	if _, ok := s.currentServers[id]; ok {
-		return updateActionUpdate
-	}
-
-	return updateActionAdd
-}
-
-func (s *service) pruneServers(next map[string]*backend) {
-	for k, b := range s.currentServers {
-		if _, exists := next[k]; !exists {
-			logrus.Debugf("proxy: %s not found; removing", k)
-			s.updateCh <- &proxyUpdate{
-				backend: b,
-				action:  updateActionRemove,
-			}
-		}
-	}
 }

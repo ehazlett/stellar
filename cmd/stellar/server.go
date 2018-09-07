@@ -86,8 +86,13 @@ var serverCommand = cli.Command{
 		},
 		cli.IntFlag{
 			Name:  "proxy-http-port",
-			Usage: "proxy http port",
+			Usage: "https port for the proxy service",
 			Value: 80,
+		},
+		cli.IntFlag{
+			Name:  "proxy-https-port",
+			Usage: "https port for the proxy service",
+			Value: 443,
 		},
 		cli.DurationFlag{
 			Name:  "proxy-healthcheck-interval",
@@ -142,6 +147,7 @@ func serverAction(c *cli.Context) error {
 		Bridge:                   c.String("bridge"),
 		UpstreamDNSAddr:          c.String("upstream-dns-addr"),
 		ProxyHTTPPort:            c.Int("proxy-http-port"),
+		ProxyHTTPSPort:           c.Int("proxy-https-port"),
 		ProxyHealthcheckInterval: c.Duration("proxy-healthcheck-interval"),
 	})
 	if err != nil {
