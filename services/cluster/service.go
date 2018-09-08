@@ -42,3 +42,30 @@ func (s *service) Start() error {
 func (s *service) containerd() (*containerd.Client, error) {
 	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }
+
+func (s *service) nodes() ([]*api.Node, error) {
+	peer, err := s.agent.LocalNode()
+	if err != nil {
+		return nil, err
+	}
+	nodes := []*api.Node{
+		{
+			Name: peer.Name,
+			Addr: peer.Addr,
+		},
+	}
+
+	peers, err := s.agent.Peers()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, peer := range peers {
+		nodes = append(nodes, &api.Node{
+			Name: peer.Name,
+			Addr: peer.Addr,
+		})
+	}
+
+	return nodes, nil
+}

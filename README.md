@@ -27,6 +27,7 @@ case.  Enjoy :)
 
 - Container execution via [containerd](https://github.com/containerd/containerd)
 - Multihost Networking via [CNI](https://github.com/containernetworking/cni)
+- Service Discovery via DNS
 - Single binary for simple daemon deployment
 - Masterless design
 - Builtin Proxy using [Caddy](https://caddyserver.com) (zero downtime reloads, canary deploys, health checks, automatic HTTPS)

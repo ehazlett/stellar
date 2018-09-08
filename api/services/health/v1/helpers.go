@@ -7,6 +7,6 @@ import (
 )
 
 // Started returns the timestamp as time.Time
-func (m *HealthResponse) Started() (time.Time, error) {
+func (m *NodeHealth) Started() (time.Time, error) {
 	return ptypes.TimestampFromProto(m.StartedAt)
 }

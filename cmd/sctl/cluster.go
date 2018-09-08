@@ -10,9 +10,6 @@ import (
 	"github.com/codegangsta/cli"
 	humanize "github.com/dustin/go-humanize"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
-	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
-	"github.com/ehazlett/stellar/client"
-	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,29 +58,16 @@ var clusterNodesCommand = cli.Command{
 		}
 		defer cl.Close()
 
-		nodes, err := cl.Cluster().Nodes()
+		nodes, err := cl.Cluster().Health()
 		if err != nil {
 			return err
 		}
 
-		info := map[*clusterapi.Node]*healthapi.HealthResponse{}
-		for _, node := range nodes {
-			nc, err := client.NewClient(node.Addr)
-			if err != nil {
-				return err
-			}
-
-			resp, err := nc.HealthService().Health(context.Background(), &ptypes.Empty{})
-			if err != nil {
-				return err
-			}
-			info[node] = resp
-			nc.Close()
-		}
-
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 		fmt.Fprintf(w, "NAME\tADDR\tOS\tUPTIME\tCPUS\tMEMORY (USED)\n")
-		for node, health := range info {
+		for _, nodeHealth := range nodes {
+			node := nodeHealth.Node
+			health := nodeHealth.Health
 			started, err := health.Started()
 			if err != nil {
 				logrus.Error(err)

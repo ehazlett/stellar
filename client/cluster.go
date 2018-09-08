@@ -31,3 +31,13 @@ func (c *cluster) Containers(filters ...string) ([]*clusterapi.Container, error)
 
 	return resp.Containers, nil
 }
+
+func (c *cluster) Health() ([]*clusterapi.NodeHealth, error) {
+	ctx := context.Background()
+	resp, err := c.client.Health(ctx, &clusterapi.HealthRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Nodes, nil
+}

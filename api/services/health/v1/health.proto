@@ -12,7 +12,7 @@ service Health {
   rpc Health(google.protobuf.Empty) returns (HealthResponse);
 }
 
-message HealthResponse {
+message NodeHealth {
   string os_name = 1 [(gogoproto.customname) = "OSName"];
   string os_version = 2 [(gogoproto.customname) = "OSVersion"];
   // TODO: use gogoproto.stdtime (returning panic: message/group field time.Time:bytes without pointer when trying to use)
@@ -22,6 +22,10 @@ message HealthResponse {
   int64 memory_free = 6;
   int64 memory_used = 7;
   repeated Peer peers = 8;
+}
+
+message HealthResponse {
+  NodeHealth health = 1;
 }
 
 message Peer {

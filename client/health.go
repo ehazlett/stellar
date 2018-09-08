@@ -18,5 +18,5 @@ func (h *health) Peers() ([]*healthapi.Peer, error) {
 		return nil, err
 	}
 
-	return resp.Peers, nil
+	return resp.Health.Peers, nil
 }

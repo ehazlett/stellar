@@ -73,13 +73,15 @@ func (s *service) Health(ctx context.Context, _ *ptypes.Empty) (*api.HealthRespo
 	}
 
 	return &api.HealthResponse{
-		OSName:      osInfo.OSName,
-		OSVersion:   osInfo.OSVersion,
-		StartedAt:   ts,
-		Cpus:        int64(runtime.NumCPU()),
-		MemoryTotal: int64(memory.Total),
-		MemoryFree:  int64(memory.Free),
-		MemoryUsed:  int64(memory.Used),
-		Peers:       peers,
+		Health: &api.NodeHealth{
+			OSName:      osInfo.OSName,
+			OSVersion:   osInfo.OSVersion,
+			StartedAt:   ts,
+			Cpus:        int64(runtime.NumCPU()),
+			MemoryTotal: int64(memory.Total),
+			MemoryFree:  int64(memory.Free),
+			MemoryUsed:  int64(memory.Used),
+			Peers:       peers,
+		},
 	}, nil
 }

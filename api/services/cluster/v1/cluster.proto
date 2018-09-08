@@ -3,6 +3,7 @@ syntax = "proto3";
 package stellar.services.cluster.v1;
 
 import "api/services/node/v1/node.proto";
+import "github.com/ehazlett/stellar/api/services/health/v1/health.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/cluster/v1;cluster";
 
@@ -10,6 +11,7 @@ service Cluster {
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Images(ImagesRequest) returns (ImagesResponse);
   rpc Nodes(NodesRequest) returns (NodesResponse);
+  rpc Health(HealthRequest) returns (HealthResponse);
 }
 
 message ContainersRequest {
@@ -40,4 +42,13 @@ message NodesResponse {
 message Container {
     stellar.services.node.v1.Container container = 1;
     Node node = 2;
+}
+
+message HealthRequest {}
+message NodeHealth {
+  Node node = 1;
+  stellar.services.health.v1.NodeHealth health = 2;
+}
+message HealthResponse {
+  repeated NodeHealth nodes = 1;
 }
