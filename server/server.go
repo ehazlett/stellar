@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
@@ -21,6 +21,7 @@ import (
 	nameserverservice "github.com/ehazlett/stellar/services/nameserver"
 	networkservice "github.com/ehazlett/stellar/services/network"
 	nodeservice "github.com/ehazlett/stellar/services/node"
+	proxyservice "github.com/ehazlett/stellar/services/proxy"
 	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -36,30 +37,19 @@ var (
 
 type Server struct {
 	agent       *element.Agent
-	config      *Config
+	config      *stellar.Config
 	synced      bool
 	nodeEventCh chan *element.NodeEvent
 	services    []services.Service
 }
 
-type Config struct {
-	AgentConfig    *element.Config
-	ContainerdAddr string
-	Namespace      string
-	Subnet         *net.IPNet
-	DataDir        string
-	StateDir       string
-	Bridge         string
-}
-
-func NewServer(cfg *Config) (*Server, error) {
+func NewServer(cfg *stellar.Config) (*Server, error) {
 	a, err := element.NewAgent(cfg.AgentConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	// services
-	// TODO: pass only cfg and the agent to cleanup service.New
 	// TODO: implement dependencies for services to alleviate the loading order
 	vs, err := versionservice.New(cfg.ContainerdAddr, cfg.Namespace)
 	if err != nil {
@@ -71,38 +61,41 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
-	cs, err := clusterservice.New(a, cfg.ContainerdAddr, cfg.Namespace)
+	cs, err := clusterservice.New(cfg, a)
 	if err != nil {
 		return nil, err
 	}
 
-	ds, err := datastoreservice.New(a, cfg.DataDir)
+	ds, err := datastoreservice.New(cfg, a)
 	if err != nil {
 		return nil, err
 	}
 
-	netSvc, err := networkservice.New(ds, a, cfg.Subnet)
+	netSvc, err := networkservice.New(cfg, a, ds)
 	if err != nil {
 		return nil, err
 	}
 
-	nodeSvc, err := nodeservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, cfg.DataDir, cfg.StateDir, a)
+	nodeSvc, err := nodeservice.New(cfg, a)
 	if err != nil {
 		return nil, err
 	}
 
-	appSvc, err := applicationservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.DataDir, a)
+	appSvc, err := applicationservice.New(cfg, a)
 	if err != nil {
 		return nil, err
 	}
 
-	nsSvc, err := nameserverservice.New(cfg.ContainerdAddr, cfg.Namespace, cfg.Bridge, a)
+	nsSvc, err := nameserverservice.New(cfg, a)
 	if err != nil {
 		return nil, err
 	}
-
+	proxySvc, err := proxyservice.New(cfg, a)
+	if err != nil {
+		return nil, err
+	}
 	// register with agent
-	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, netSvc, appSvc, nsSvc}
+	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, netSvc, appSvc, nsSvc, proxySvc}
 	for _, svc := range svcs {
 		if err := a.Register(svc); err != nil {
 			return nil, err
@@ -241,11 +234,10 @@ func (s *Server) syncDatastore() error {
 func (s *Server) init() error {
 	started := time.Now()
 
-	// TODO: handle network init with CNI
-	//// initialize networking
-	//if err := s.initNetworking(); err != nil {
-	//	return err
-	//}
+	// initialize local networking
+	if err := s.initNetworking(); err != nil {
+		return err
+	}
 
 	logrus.Debugf("initializion duration: %s", time.Since(started))
 

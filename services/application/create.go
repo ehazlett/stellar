@@ -16,10 +16,35 @@ func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.E
 	}
 	defer c.Close()
 
+	nodes, err := c.Cluster().Nodes()
+	if err != nil {
+		return empty, err
+	}
+
+	nodeIdx := 0
 	for _, service := range req.Services {
-		// TODO: make cluster aware
-		if err := c.Node().CreateContainer(req.Name, service); err != nil {
+		// get random peer for deploy
+		node := nodes[nodeIdx]
+		nc, err := s.nodeClient(node.Name)
+		if err != nil {
 			return empty, err
+		}
+
+		if err := nc.Node().CreateContainer(req.Name, service); err != nil {
+			return empty, err
+		}
+
+		// update proxy
+		if err := nc.Proxy().Reload(); err != nil {
+			return empty, err
+		}
+
+		nc.Close()
+
+		// update peer index for next deploy
+		nodeIdx++
+		if nodeIdx >= len(nodes) {
+			nodeIdx = 0
 		}
 	}
 	return empty, nil

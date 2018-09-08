@@ -16,11 +16,18 @@ import (
 // Default maximum number of TCP queries before we close the socket.
 const maxTCPQueries = 128
 
-// Interval for stop worker if no load
-const idleWorkerTimeout = 10 * time.Second
+// The maximum number of idle workers.
+//
+// This controls the maximum number of workers that are allowed to stay
+// idle waiting for incoming requests before being torn down.
+//
+// If this limit is reached, the server will just keep spawning new
+// workers (goroutines) for each incoming request. In this case, each
+// worker will only be used for a single request.
+const maxIdleWorkersCount = 10000
 
-// Maximum number of workers
-const maxWorkersCount = 10000
+// The maximum length of time a worker may idle for before being destroyed.
+const idleWorkerTimeout = 10 * time.Second
 
 // Handler is implemented by any value that implements ServeDNS.
 type Handler interface {
@@ -151,7 +158,7 @@ func (mux *ServeMux) match(q string, t uint16) Handler {
 		for i := 0; i < l; i++ {
 			b[i] = q[off+i]
 			if b[i] >= 'A' && b[i] <= 'Z' {
-				b[i] |= ('a' - 'A')
+				b[i] |= 'a' - 'A'
 			}
 		}
 		if h, ok := mux.z[string(b[:l])]; ok { // causes garbage, might want to change the map key
@@ -327,7 +334,7 @@ func (srv *Server) worker(w *response) {
 
 	for {
 		count := atomic.LoadInt32(&srv.workersCount)
-		if count > maxWorkersCount {
+		if count > maxIdleWorkersCount {
 			return
 		}
 		if atomic.CompareAndSwapInt32(&srv.workersCount, count, count+1) {
@@ -367,10 +374,17 @@ func (srv *Server) spawnWorker(w *response) {
 	}
 }
 
+func unlockOnce(l sync.Locker) func() {
+	var once sync.Once
+	return func() { once.Do(l.Unlock) }
+}
+
 // ListenAndServe starts a nameserver on the configured address in *Server.
 func (srv *Server) ListenAndServe() error {
+	unlock := unlockOnce(&srv.lock)
 	srv.lock.Lock()
-	defer srv.lock.Unlock()
+	defer unlock()
+
 	if srv.started {
 		return &Error{err: "server already started"}
 	}
@@ -396,10 +410,8 @@ func (srv *Server) ListenAndServe() error {
 		}
 		srv.Listener = l
 		srv.started = true
-		srv.lock.Unlock()
-		err = srv.serveTCP(l)
-		srv.lock.Lock() // to satisfy the defer at the top
-		return err
+		unlock()
+		return srv.serveTCP(l)
 	case "tcp-tls", "tcp4-tls", "tcp6-tls":
 		network := "tcp"
 		if srv.Net == "tcp4-tls" {
@@ -414,10 +426,8 @@ func (srv *Server) ListenAndServe() error {
 		}
 		srv.Listener = l
 		srv.started = true
-		srv.lock.Unlock()
-		err = srv.serveTCP(l)
-		srv.lock.Lock() // to satisfy the defer at the top
-		return err
+		unlock()
+		return srv.serveTCP(l)
 	case "udp", "udp4", "udp6":
 		a, err := net.ResolveUDPAddr(srv.Net, addr)
 		if err != nil {
@@ -432,10 +442,8 @@ func (srv *Server) ListenAndServe() error {
 		}
 		srv.PacketConn = l
 		srv.started = true
-		srv.lock.Unlock()
-		err = srv.serveUDP(l)
-		srv.lock.Lock() // to satisfy the defer at the top
-		return err
+		unlock()
+		return srv.serveUDP(l)
 	}
 	return &Error{err: "bad network"}
 }
@@ -443,8 +451,10 @@ func (srv *Server) ListenAndServe() error {
 // ActivateAndServe starts a nameserver with the PacketConn or Listener
 // configured in *Server. Its main use is to start a server from systemd.
 func (srv *Server) ActivateAndServe() error {
+	unlock := unlockOnce(&srv.lock)
 	srv.lock.Lock()
-	defer srv.lock.Unlock()
+	defer unlock()
+
 	if srv.started {
 		return &Error{err: "server already started"}
 	}
@@ -464,18 +474,14 @@ func (srv *Server) ActivateAndServe() error {
 				return e
 			}
 			srv.started = true
-			srv.lock.Unlock()
-			e := srv.serveUDP(t)
-			srv.lock.Lock() // to satisfy the defer at the top
-			return e
+			unlock()
+			return srv.serveUDP(t)
 		}
 	}
 	if l != nil {
 		srv.started = true
-		srv.lock.Unlock()
-		e := srv.serveTCP(l)
-		srv.lock.Lock() // to satisfy the defer at the top
-		return e
+		unlock()
+		return srv.serveTCP(l)
 	}
 	return &Error{err: "bad listeners"}
 }

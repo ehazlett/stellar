@@ -22,13 +22,13 @@ type service struct {
 	agent          *element.Agent
 }
 
-func New(containerdAddr, namespace, bridge, dataDir, stateDir string, agent *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 	return &service{
-		containerdAddr: containerdAddr,
-		namespace:      namespace,
-		bridge:         bridge,
-		dataDir:        dataDir,
-		stateDir:       stateDir,
+		containerdAddr: cfg.ContainerdAddr,
+		namespace:      cfg.Namespace,
+		bridge:         cfg.Bridge,
+		dataDir:        cfg.DataDir,
+		stateDir:       cfg.StateDir,
 		agent:          agent,
 	}, nil
 }

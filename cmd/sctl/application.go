@@ -21,6 +21,11 @@ Services:{{ range .Services }}
   Snapshotter: {{ .Snapshotter }}
   Labels:{{ range .Labels }}
     {{.}}{{ end }}
+  Endpoints:{{ range .Endpoints }}
+    - Service: {{.Service}}
+      Protocol: {{.Protocol}}
+      Host: {{.Host}}
+      Port: {{.Port}}{{ end }}
 {{end}}
 `
 
@@ -61,7 +66,6 @@ var appCreateCommand = cli.Command{
 		if err != nil {
 			return errors.Wrapf(err, "error accessing config %s", configPath)
 		}
-
 		var req *api.CreateRequest
 		if err := json.Unmarshal(data, &req); err != nil {
 			return errors.Wrap(err, "error loading config")

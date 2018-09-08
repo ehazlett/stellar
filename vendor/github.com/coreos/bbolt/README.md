@@ -1,9 +1,12 @@
 bbolt
-====
+=====
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/coreos/bbolt?style=flat-square)](https://goreportcard.com/report/github.com/coreos/bbolt)
-[![Coverage](https://codecov.io/gh/coreos/bbolt/branch/master/graph/badge.svg)](https://codecov.io/gh/coreos/bbolt)
-[![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/coreos/bbolt)
+[![Go Report Card](https://goreportcard.com/badge/github.com/etcd-io/bbolt?style=flat-square)](https://goreportcard.com/report/github.com/etcd-io/bbolt)
+[![Coverage](https://codecov.io/gh/etcd-io/bbolt/branch/master/graph/badge.svg)](https://codecov.io/gh/etcd-io/bbolt)
+[![Build Status Travis](https://img.shields.io/travis/etcd-io/bboltlabs.svg?style=flat-square&&branch=master)](https://travis-ci.com/etcd-io/bbolt)
+[![Godoc](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)](https://godoc.org/github.com/etcd-io/bbolt)
+[![Releases](https://img.shields.io/github/release/etcd-io/bbolt/all.svg?style=flat-square)](https://github.com/etcd-io/bbolt/releases)
+[![LICENSE](https://img.shields.io/github/license/etcd-io/bbolt.svg?style=flat-square)](https://github.com/etcd-io/bbolt/blob/master/LICENSE)
 
 bbolt is a fork of [Ben Johnson's][gh_ben] [Bolt][bolt] key/value
 store. The purpose of this fork is to provide the Go community with an active
@@ -32,6 +35,12 @@ test coverage and randomized black box testing are used to ensure database
 consistency and thread safety. Bolt is currently used in high-load production
 environments serving databases as large as 1TB. Many companies such as
 Shopify and Heroku use Bolt-backed services every day.
+
+## Project versioning
+
+bbolt uses [semantic versioning](http://semver.org).
+API should not change between patch and minor releases.
+New minor versions may add additional features to the API.
 
 ## Table of Contents
 
@@ -71,11 +80,26 @@ Shopify and Heroku use Bolt-backed services every day.
 To start using Bolt, install Go and run `go get`:
 
 ```sh
-$ go get github.com/coreos/bbolt/...
+$ go get go.etcd.io/bbolt/...
 ```
 
 This will retrieve the library and install the `bolt` command line utility into
 your `$GOBIN` path.
+
+
+### Importing bbolt
+
+To use bbolt as an embedded key-value store, import as:
+
+```go
+import bolt "go.etcd.io/bbolt"
+
+db, err := bolt.Open(path, 0666, nil)
+if err != nil {
+  return err
+}
+defer db.Close()
+```
 
 
 ### Opening a database
@@ -91,7 +115,7 @@ package main
 import (
 	"log"
 
-	bolt "github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 func main() {
@@ -534,7 +558,7 @@ this from a read-only transaction, it will perform a hot backup and not block
 your other database reads and writes.
 
 By default, it will use a regular file handle which will utilize the operating
-system's page cache. See the [`Tx`](https://godoc.org/github.com/coreos/bbolt#Tx)
+system's page cache. See the [`Tx`](https://godoc.org/go.etcd.io/bbolt#Tx)
 documentation for information about optimizing for larger-than-RAM datasets.
 
 One common use case is to backup over HTTP so you can use tools like `cURL` to

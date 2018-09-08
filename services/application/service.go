@@ -27,11 +27,11 @@ type service struct {
 	agent          *element.Agent
 }
 
-func New(containerdAddr, namespace, dataDir string, agent *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 	return &service{
-		containerdAddr: containerdAddr,
-		namespace:      namespace,
-		dataDir:        dataDir,
+		containerdAddr: cfg.ContainerdAddr,
+		namespace:      cfg.Namespace,
+		dataDir:        cfg.DataDir,
 		agent:          agent,
 	}, nil
 }

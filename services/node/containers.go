@@ -238,7 +238,10 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 	// TODO check result for length
 	ip := netResult.Interfaces[defaultIfName].IPConfigs[0].IP.String()
 
-	cOpts = append(cOpts, containerd.WithContainerLabels(convertLabels(service.Labels)))
+	cOpts = append(cOpts,
+		containerd.WithContainerLabels(convertLabels(service.Labels)),
+		containerd.WithContainerExtension(stellar.StellarServiceExtension, req.Service),
+	)
 	if service.Runtime != "" {
 		cOpts = append(cOpts, containerd.WithRuntime(service.Runtime, nil))
 	}
@@ -343,26 +346,29 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 			return empty, err
 		}
 	}
-	wait, err := task.Wait(ctx)
-	if err != nil {
-		return empty, err
-	}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := task.Kill(ctx, unix.SIGTERM, containerd.WithKillAll); err != nil {
-			logrus.Warnf("error killing container task: %s", err)
-		}
-		select {
-		case <-wait:
-			task.Delete(ctx)
-			return
-		case <-time.After(5 * time.Second):
-			if err := task.Kill(ctx, unix.SIGKILL, containerd.WithKillAll); err != nil {
-				logrus.Warnf("error force killing container task: %s", err)
+		if task != nil {
+			wait, err := task.Wait(ctx)
+			if err != nil {
+				logrus.Errorf("error waiting on task: %s", err)
+				return
 			}
-			return
+			if err := task.Kill(ctx, unix.SIGTERM, containerd.WithKillAll); err != nil {
+				logrus.Warnf("error killing container task: %s", err)
+			}
+			select {
+			case <-wait:
+				task.Delete(ctx)
+				return
+			case <-time.After(5 * time.Second):
+				if err := task.Kill(ctx, unix.SIGKILL, containerd.WithKillAll); err != nil {
+					logrus.Warnf("error force killing container task: %s", err)
+				}
+				return
+			}
 		}
 	}()
 
@@ -453,7 +459,12 @@ func (s *service) containerToProto(container containerd.Container) (*api.Contain
 		pid = task.Pid()
 	}
 
-	return &api.Container{
+	exts, err := container.Extensions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctr := &api.Container{
 		ID:     container.ID(),
 		Image:  info.Image,
 		Labels: info.Labels,
@@ -465,8 +476,14 @@ func (s *service) containerToProto(container containerd.Container) (*api.Contain
 		Task: &api.Container_Task{
 			Pid: pid,
 		},
-		Runtime: info.Runtime.Name,
-	}, nil
+		Runtime:    info.Runtime.Name,
+		Extensions: make(map[string]*ptypes.Any),
+	}
+	for k, ext := range exts {
+		ctr.Extensions[k] = &ext
+	}
+
+	return ctr, nil
 }
 
 func (s *service) getNetworkConf() ([]byte, error) {

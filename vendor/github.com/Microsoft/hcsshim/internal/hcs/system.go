@@ -2,18 +2,39 @@ package hcs
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/Microsoft/hcsshim/internal/interop"
 	"github.com/Microsoft/hcsshim/internal/schema1"
+	"github.com/Microsoft/hcsshim/internal/timeout"
 	"github.com/sirupsen/logrus"
 )
 
-var (
-	defaultTimeout = time.Minute * 4
-)
+// currentContainerStarts is used to limit the number of concurrent container
+// starts.
+var currentContainerStarts containerStarts
+
+type containerStarts struct {
+	maxParallel int
+	inProgress  int
+	sync.Mutex
+}
+
+func init() {
+	mpsS := os.Getenv("HCSSHIM_MAX_PARALLEL_START")
+	if len(mpsS) > 0 {
+		mpsI, err := strconv.Atoi(mpsS)
+		if err != nil || mpsI < 0 {
+			return
+		}
+		currentContainerStarts.maxParallel = mpsI
+	}
+}
 
 type System struct {
 	handleLock     sync.RWMutex
@@ -43,7 +64,10 @@ func CreateComputeSystem(id string, hcsDocumentInterface interface{}) (*System, 
 		resultp  *uint16
 		identity syscall.Handle
 	)
+	completed := false
+	go syscallWatcher(fmt.Sprintf("CreateCompleteSystem %s: %s", id, hcsDocument), &completed)
 	createError := hcsCreateComputeSystem(id, hcsDocument, identity, &computeSystem.handle, &resultp)
+	completed = true
 
 	if createError == nil || IsPending(createError) {
 		if err := computeSystem.registerCallback(); err != nil {
@@ -54,7 +78,7 @@ func CreateComputeSystem(id string, hcsDocumentInterface interface{}) (*System, 
 		}
 	}
 
-	events, err := processAsyncHcsResult(createError, resultp, computeSystem.callbackNumber, hcsNotificationSystemCreateCompleted, &defaultTimeout)
+	events, err := processAsyncHcsResult(createError, resultp, computeSystem.callbackNumber, hcsNotificationSystemCreateCompleted, &timeout.SystemCreate)
 	if err != nil {
 		if err == ErrTimeout {
 			// Terminate the compute system if it still exists. We're okay to
@@ -115,7 +139,10 @@ func GetComputeSystems(q schema1.ComputeSystemQuery) ([]schema1.ContainerPropert
 		resultp         *uint16
 		computeSystemsp *uint16
 	)
+	completed := false
+	go syscallWatcher(fmt.Sprintf("GetComputeSystems %s:", query), &completed)
 	err = hcsEnumerateComputeSystems(query, &computeSystemsp, &resultp)
+	completed = true
 	events := processHcsResult(resultp)
 	if err != nil {
 		return nil, &HcsError{Op: operation, Err: err, Events: events}
@@ -145,9 +172,38 @@ func (computeSystem *System) Start() error {
 		return makeSystemError(computeSystem, "Start", "", ErrAlreadyClosed, nil)
 	}
 
+	// This is a very simple backoff-retry loop to limit the number
+	// of parallel container starts if environment variable
+	// HCSSHIM_MAX_PARALLEL_START is set to a positive integer.
+	// It should generally only be used as a workaround to various
+	// platform issues that exist between RS1 and RS4 as of Aug 2018
+	if currentContainerStarts.maxParallel > 0 {
+		for {
+			currentContainerStarts.Lock()
+			if currentContainerStarts.inProgress < currentContainerStarts.maxParallel {
+				currentContainerStarts.inProgress++
+				currentContainerStarts.Unlock()
+				break
+			}
+			if currentContainerStarts.inProgress == currentContainerStarts.maxParallel {
+				currentContainerStarts.Unlock()
+				time.Sleep(100 * time.Millisecond)
+			}
+		}
+		// Make sure we decrement the count when we are done.
+		defer func() {
+			currentContainerStarts.Lock()
+			currentContainerStarts.inProgress--
+			currentContainerStarts.Unlock()
+		}()
+	}
+
 	var resultp *uint16
+	completed := false
+	go syscallWatcher(fmt.Sprintf("StartComputeSystem %s:", computeSystem.ID()), &completed)
 	err := hcsStartComputeSystem(computeSystem.handle, "", &resultp)
-	events, err := processAsyncHcsResult(err, resultp, computeSystem.callbackNumber, hcsNotificationSystemStartCompleted, &defaultTimeout)
+	completed = true
+	events, err := processAsyncHcsResult(err, resultp, computeSystem.callbackNumber, hcsNotificationSystemStartCompleted, &timeout.SystemStart)
 	if err != nil {
 		return makeSystemError(computeSystem, "Start", "", err, events)
 	}
@@ -173,7 +229,10 @@ func (computeSystem *System) Shutdown() error {
 	}
 
 	var resultp *uint16
+	completed := false
+	go syscallWatcher(fmt.Sprintf("ShutdownComputeSystem %s:", computeSystem.ID()), &completed)
 	err := hcsShutdownComputeSystem(computeSystem.handle, "", &resultp)
+	completed = true
 	events := processHcsResult(resultp)
 	if err != nil {
 		return makeSystemError(computeSystem, "Shutdown", "", err, events)
@@ -196,7 +255,10 @@ func (computeSystem *System) Terminate() error {
 	}
 
 	var resultp *uint16
+	completed := false
+	go syscallWatcher(fmt.Sprintf("TerminateComputeSystem %s:", computeSystem.ID()), &completed)
 	err := hcsTerminateComputeSystem(computeSystem.handle, "", &resultp)
+	completed = true
 	events := processHcsResult(resultp)
 	if err != nil {
 		return makeSystemError(computeSystem, "Terminate", "", err, events)
@@ -245,7 +307,10 @@ func (computeSystem *System) Properties(types ...schema1.PropertyType) (*schema1
 	}
 
 	var resultp, propertiesp *uint16
+	completed := false
+	go syscallWatcher(fmt.Sprintf("GetComputeSystemProperties %s:", computeSystem.ID()), &completed)
 	err = hcsGetComputeSystemProperties(computeSystem.handle, string(queryj), &propertiesp, &resultp)
+	completed = true
 	events := processHcsResult(resultp)
 	if err != nil {
 		return nil, makeSystemError(computeSystem, "Properties", "", err, events)
@@ -274,8 +339,11 @@ func (computeSystem *System) Pause() error {
 	}
 
 	var resultp *uint16
+	completed := false
+	go syscallWatcher(fmt.Sprintf("PauseComputeSystem %s:", computeSystem.ID()), &completed)
 	err := hcsPauseComputeSystem(computeSystem.handle, "", &resultp)
-	events, err := processAsyncHcsResult(err, resultp, computeSystem.callbackNumber, hcsNotificationSystemPauseCompleted, &defaultTimeout)
+	completed = true
+	events, err := processAsyncHcsResult(err, resultp, computeSystem.callbackNumber, hcsNotificationSystemPauseCompleted, &timeout.SystemPause)
 	if err != nil {
 		return makeSystemError(computeSystem, "Pause", "", err, events)
 	}
@@ -296,8 +364,11 @@ func (computeSystem *System) Resume() error {
 	}
 
 	var resultp *uint16
+	completed := false
+	go syscallWatcher(fmt.Sprintf("ResumeComputeSystem %s:", computeSystem.ID()), &completed)
 	err := hcsResumeComputeSystem(computeSystem.handle, "", &resultp)
-	events, err := processAsyncHcsResult(err, resultp, computeSystem.callbackNumber, hcsNotificationSystemResumeCompleted, &defaultTimeout)
+	completed = true
+	events, err := processAsyncHcsResult(err, resultp, computeSystem.callbackNumber, hcsNotificationSystemResumeCompleted, &timeout.SystemResume)
 	if err != nil {
 		return makeSystemError(computeSystem, "Resume", "", err, events)
 	}
@@ -329,7 +400,10 @@ func (computeSystem *System) CreateProcess(c interface{}) (*Process, error) {
 	configuration := string(configurationb)
 	logrus.Debugf(title+" config=%s", configuration)
 
+	completed := false
+	go syscallWatcher(fmt.Sprintf("CreateProcess %s: %s", computeSystem.ID(), configuration), &completed)
 	err = hcsCreateProcess(computeSystem.handle, configuration, &processInfo, &processHandle, &resultp)
+	completed = true
 	events := processHcsResult(resultp)
 	if err != nil {
 		return nil, makeSystemError(computeSystem, "CreateProcess", configuration, err, events)
@@ -369,7 +443,10 @@ func (computeSystem *System) OpenProcess(pid int) (*Process, error) {
 		return nil, makeSystemError(computeSystem, "OpenProcess", "", ErrAlreadyClosed, nil)
 	}
 
+	completed := false
+	go syscallWatcher(fmt.Sprintf("OpenProcess %s: %d", computeSystem.ID(), pid), &completed)
 	err := hcsOpenProcess(computeSystem.handle, uint32(pid), &processHandle, &resultp)
+	completed = true
 	events := processHcsResult(resultp)
 	if err != nil {
 		return nil, makeSystemError(computeSystem, "OpenProcess", "", err, events)
@@ -405,7 +482,11 @@ func (computeSystem *System) Close() error {
 		return makeSystemError(computeSystem, "Close", "", err, nil)
 	}
 
-	if err := hcsCloseComputeSystem(computeSystem.handle); err != nil {
+	completed := false
+	go syscallWatcher(fmt.Sprintf("CloseComputeSystem %s:", computeSystem.ID()), &completed)
+	err := hcsCloseComputeSystem(computeSystem.handle)
+	completed = true
+	if err != nil {
 		return makeSystemError(computeSystem, "Close", "", err, nil)
 	}
 
@@ -491,7 +572,10 @@ func (computeSystem *System) Modify(config interface{}) error {
 	logrus.Debugf(title + " " + requestString)
 
 	var resultp *uint16
+	completed := false
+	go syscallWatcher(fmt.Sprintf("ModifyComputeSystem %s: %s", computeSystem.ID(), requestString), &completed)
 	err = hcsModifyComputeSystem(computeSystem.handle, requestString, &resultp)
+	completed = true
 	events := processHcsResult(resultp)
 	if err != nil {
 		return makeSystemError(computeSystem, "Modify", requestString, err, events)

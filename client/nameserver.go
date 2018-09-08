@@ -44,6 +44,17 @@ func (n *nameserver) Create(rtype, name, value string, options interface{}) erro
 	return nil
 }
 
+func (n *nameserver) Lookup(query string) ([]*nameserverapi.Record, error) {
+	ctx := context.Background()
+	resp, err := n.client.Lookup(ctx, &nameserverapi.LookupRequest{
+		Query: query,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Records, nil
+}
+
 func (n *nameserver) CreateRecords(name string, records []*nameserverapi.Record) error {
 	ctx := context.Background()
 	if _, err := n.client.Create(ctx, &nameserverapi.CreateRequest{

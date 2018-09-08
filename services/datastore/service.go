@@ -41,10 +41,10 @@ type tombstone struct {
 	Value     []byte
 }
 
-func New(a *element.Agent, dir string) (*service, error) {
+func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
 	svc := &service{
 		agent:                 a,
-		dir:                   dir,
+		dir:                   cfg.DataDir,
 		lock:                  &sync.Mutex{},
 		lockChan:              make(chan bool),
 		dsTombstoneBucketName: "stellar." + stellar.APIVersion + "." + a.Config().NodeName + ".services.datastore.tombstone",

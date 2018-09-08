@@ -2,9 +2,11 @@ package main
 
 import (
 	"net"
+	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/server"
 )
 
@@ -82,6 +84,31 @@ var serverCommand = cli.Command{
 			Usage: "advertise port",
 			Value: 7946,
 		},
+		cli.IntFlag{
+			Name:  "proxy-http-port",
+			Usage: "https port for the proxy service",
+			Value: 80,
+		},
+		cli.IntFlag{
+			Name:  "proxy-https-port",
+			Usage: "https port for the proxy service",
+			Value: 443,
+		},
+		cli.StringFlag{
+			Name:  "proxy-tls-email",
+			Usage: "email for the auto TLS proxy service",
+			Value: "",
+		},
+		cli.DurationFlag{
+			Name:  "proxy-healthcheck-interval",
+			Usage: "proxy backend healthcheck interval",
+			Value: time.Second * 5,
+		},
+		cli.StringFlag{
+			Name:  "upstream-dns-addr",
+			Usage: "address to forward non-cluster dns lookups",
+			Value: "1.1.1.1:53",
+		},
 		cli.StringSliceFlag{
 			Name:  "peer",
 			Usage: "one or more peers for agent to join",
@@ -115,14 +142,19 @@ func serverAction(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	srv, err := server.NewServer(&server.Config{
-		AgentConfig:    agentConfig,
-		ContainerdAddr: containerdAddr,
-		Namespace:      namespace,
-		Subnet:         subnet,
-		DataDir:        c.String("data-dir"),
-		StateDir:       c.String("state-dir"),
-		Bridge:         c.String("bridge"),
+	srv, err := server.NewServer(&stellar.Config{
+		AgentConfig:              agentConfig,
+		ContainerdAddr:           containerdAddr,
+		Namespace:                namespace,
+		Subnet:                   subnet,
+		DataDir:                  c.String("data-dir"),
+		StateDir:                 c.String("state-dir"),
+		Bridge:                   c.String("bridge"),
+		UpstreamDNSAddr:          c.String("upstream-dns-addr"),
+		ProxyHTTPPort:            c.Int("proxy-http-port"),
+		ProxyHTTPSPort:           c.Int("proxy-https-port"),
+		ProxyTLSEmail:            c.String("proxy-tls-email"),
+		ProxyHealthcheckInterval: c.Duration("proxy-healthcheck-interval"),
 	})
 	if err != nil {
 		return err

@@ -71,9 +71,6 @@ func (s *service) handler(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.RecursionAvailable = true
-	// defer WriteMsg to ensure a response
-	defer logrus.Debugf("ns msg: %+v", m)
-	defer w.WriteMsg(m)
 
 	query := m.Question[0].Name
 	queryType := m.Question[0].Qtype
@@ -87,9 +84,25 @@ func (s *service) handler(w dns.ResponseWriter, r *dns.Msg) {
 	})
 	if err != nil {
 		logrus.Error(errors.Wrapf(err, "nameserver: error performing lookup for %s", name))
+		w.WriteMsg(m)
 		return
 	}
-	logrus.Debugf("ns: answering with %d records", len(resp.Records))
+	// forward if empty
+	if len(resp.Records) == 0 {
+		x, err := dns.Exchange(r, s.upstreamDNSAddr)
+		if err != nil {
+			logrus.Errorf("nameserver: error forwarding lookup: %+v", err)
+			w.WriteMsg(m)
+			return
+		}
+		x.SetReply(r)
+		w.WriteMsg(x)
+		return
+	}
+
+	// defer WriteMsg to ensure a response
+	defer w.WriteMsg(m)
+
 	m.Answer = []dns.RR{}
 	m.Extra = []dns.RR{}
 

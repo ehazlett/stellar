@@ -50,7 +50,17 @@ Stellar applications are represented in JSON format for portability and interope
             "name": "ui",
             "image": "docker.io/ehazlett/ui:alpine",
             "network": true,
-            "instances": 4
+            "instances": 4,
+	    "endpoints": [
+                {
+                    "service": "ui",
+                    "protocol": "http",
+                    "host": "example.com",
+                    "port": 8080,
+                    "tls": false
+                }
+            ]
+
         }
     ]
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/ehazlett/stellar"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
+	"github.com/ehazlett/stellar/client"
 	ptypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 )
@@ -29,9 +30,9 @@ type service struct {
 	ds      datastoreapi.DatastoreServer
 }
 
-func New(ds datastoreapi.DatastoreServer, agent *element.Agent, network *net.IPNet) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent, ds datastoreapi.DatastoreServer) (*service, error) {
 	return &service{
-		network: network,
+		network: cfg.Subnet,
 		agent:   agent,
 		ds:      ds,
 	}, nil
@@ -48,4 +49,12 @@ func (s *service) ID() string {
 
 func (s *service) Start() error {
 	return nil
+}
+
+func (s *service) client() (*client.Client, error) {
+	peer, err := s.agent.LocalNode()
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(peer.Addr)
 }

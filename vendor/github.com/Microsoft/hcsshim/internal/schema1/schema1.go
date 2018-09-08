@@ -35,6 +35,8 @@ type MappedDir struct {
 	BandwidthMaximum  uint64
 	IOPSMaximum       uint64
 	CreateInUtilityVM bool
+	// LinuxMetadata - Support added in 1803/RS4+.
+	LinuxMetadata bool `json:",omitempty"`
 }
 
 type MappedPipe struct {

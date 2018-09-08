@@ -31,7 +31,7 @@ func (s *service) Get(ctx context.Context, req *api.GetRequest) (*api.GetRespons
 		Name: req.Name,
 	}
 	for _, container := range containers {
-		svc, err := containerToService(ctx, container)
+		svc, err := s.containerToService(ctx, container)
 		if err != nil {
 			logrus.Error(err)
 			continue

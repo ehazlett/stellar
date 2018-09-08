@@ -18,10 +18,10 @@ type service struct {
 	agent          *element.Agent
 }
 
-func New(a *element.Agent, containerdAddr, namespace string) (*service, error) {
+func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
 	return &service{
-		containerdAddr: containerdAddr,
-		namespace:      namespace,
+		containerdAddr: cfg.ContainerdAddr,
+		namespace:      cfg.Namespace,
 		agent:          a,
 	}, nil
 }

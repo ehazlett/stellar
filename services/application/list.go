@@ -24,7 +24,7 @@ func (s *service) List(ctx context.Context, req *api.ListRequest) (*api.ListResp
 
 	apps := map[string]*api.App{}
 	for _, c := range containers {
-		svc, err := containerToService(ctx, c)
+		svc, err := s.containerToService(ctx, c)
 		if err != nil {
 			logrus.Error(err)
 			continue

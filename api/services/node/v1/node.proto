@@ -34,6 +34,7 @@ message Container {
 
   Task task = 6;
   string runtime = 7;
+  map<string,google.protobuf.Any> extensions = 8;
 }
 
 message ContainersResponse {
@@ -80,16 +81,19 @@ message Mount {
 }
 
 enum Protocol {
-  TCP = 0;
-  UDP = 1;
-  HTTP = 2;
+  UNKNOWN = 0;
+  TCP = 1;
+  UDP = 2;
+  HTTP = 3;
 }
 
+// NOTE: this uses a custom json unmarshaller (utils.go); update if fields are changed
 message Endpoint {
   string service = 1;
   Protocol protocol = 2;
   string host = 3;
   uint32 port = 4;
+  bool tls = 5 [(gogoproto.customname) = "TLS"];
 }
 
 message Service {
@@ -97,11 +101,12 @@ message Service {
   string image = 2;
   string runtime = 3;
   string snapshotter = 4;
-  Process process = 5;
-  repeated string labels = 6;
-  bool network = 7;
-  repeated Mount mounts = 8;
-  repeated Endpoint endpoints = 9;
+  string node = 5;
+  Process process = 6;
+  repeated string labels = 7;
+  bool network = 8;
+  repeated Mount mounts = 9;
+  repeated Endpoint endpoints = 10;
 }
 
 message CreateContainerRequest {
