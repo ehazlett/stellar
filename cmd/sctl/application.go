@@ -13,7 +13,6 @@ import (
 )
 
 var appInspectTemplate = `Name: {{ .Name }}
-
 Services:{{ range .Services }}
   Name: {{ .Name }}
   Image: {{ .Image }}
@@ -26,8 +25,7 @@ Services:{{ range .Services }}
       Protocol: {{.Protocol}}
       Host: {{.Host}}
       Port: {{.Port}}
-      TLS:  {{.TLS}}{{ end }}
-{{end}}
+      TLS:  {{.TLS}}{{ end }}{{end}}
 `
 
 var appCommand = cli.Command{
