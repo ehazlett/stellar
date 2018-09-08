@@ -14,11 +14,19 @@ PACKAGES=$(shell go list ./... | grep -v -e /vendor/)
 EXTENSIONS=$(wildcard extensions/*)
 CYCLO_PACKAGES=$(shell go list ./... | grep -v /vendor/ | sed "s/github.com\/$(NAMESPACE)\/$(APP)\///g" | tail -n +2)
 CWD=$(PWD)
+VNDR_ARGS=-whitelist github.com/gogo/protobuf -whitelist github.com/xenolf/lego -whitelist gopkg.in/square -whitelist github.com/mholt/caddy
 
 all: binaries
 
 deps:
-	@vndr -whitelist github.com/gogo/protobuf -whitelist github.com/xenolf/lego -whitelist gopkg.in/square -whitelist github.com/mholt/caddy
+	@vndr $(VNDR_ARGS)
+deps-init:
+	@vndr $(VNDR_ARGS) init
+	@# perform fixups
+	@rm -rf vendor/github.com/containerd/containerd/vendor
+	@rm -rf vendor/github.com/gogo/protobuf/.git
+	@rm -rf vendor/github.com/xenolf/lego/.git
+	@rm -rf vendor/github.com/mholt/caddy/.git
 
 generate:
 	@echo ${PACKAGES} | xargs protobuild -quiet
