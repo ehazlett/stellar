@@ -29,7 +29,7 @@ case.  Enjoy :)
 - Multihost Networking via [CNI](https://github.com/containernetworking/cni)
 - Single binary for simple daemon deployment
 - Masterless design
-- Builtin Proxy using [Caddy](https://caddyserver.com) (zero downtime reloads, health checks, automatic HTTPS)
+- Builtin Proxy using [Caddy](https://caddyserver.com) (zero downtime reloads, canary deploys, health checks, automatic HTTPS)
 - Efficient use of system resources
 
 # Building
