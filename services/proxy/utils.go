@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -15,7 +16,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (s *service) getApplicationEndpoints() (map[string][]*url.URL, error) {
+type idSorter []*endpoint
+
+func (s idSorter) Len() int           { return len(s) }
+func (s idSorter) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s idSorter) Less(i, j int) bool { return s[i].url.Host < s[j].url.Host }
+
+func (s *service) getApplicationEndpoints() (map[string][]*endpoint, error) {
 	c, err := s.client()
 	if err != nil {
 		return nil, err
@@ -27,8 +34,7 @@ func (s *service) getApplicationEndpoints() (map[string][]*url.URL, error) {
 		return nil, err
 	}
 
-	appServers := map[string][]*url.URL{}
-
+	appServers := map[string][]*endpoint{}
 	for _, app := range apps {
 		for _, svc := range app.Services {
 			if len(svc.Endpoints) == 0 {
@@ -46,18 +52,23 @@ func (s *service) getApplicationEndpoints() (map[string][]*url.URL, error) {
 					logrus.Warnf("proxy: unable to lookup service address: %s", err)
 					continue
 				}
-				servers := []*url.URL{}
+				servers := []*endpoint{}
 				for _, record := range records {
 					// only use A records
 					if record.Type != nameserverapi.RecordType_A {
 						continue
 					}
-					servers = append(servers, &url.URL{
+					u := &url.URL{
 						Scheme: "http",
 						Host:   fmt.Sprintf("%s:%d", record.Value, ep.Port),
 						Path:   "/",
+					}
+					servers = append(servers, &endpoint{
+						url: u,
+						tls: ep.TLS,
 					})
 				}
+				sort.Sort(idSorter(servers))
 				appServers[ep.Host] = append(appServers[ep.Host], servers...)
 			}
 		}
@@ -93,6 +104,7 @@ func checkConnection(endpoint *url.URL, timeout time.Duration) (time.Duration, e
 		if err != nil {
 			return zero, err
 		}
+		defer c.Close()
 		start := time.Now()
 		if _, err := c.Read([]byte{}); err != nil {
 			return zero, err

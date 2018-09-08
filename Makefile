@@ -18,7 +18,7 @@ CWD=$(PWD)
 all: binaries
 
 deps:
-	@vndr -whitelist github.com/gogo/protobuf -whitelist github.com/xenolf/lego -whitelist gopkg.in/square
+	@vndr -whitelist github.com/gogo/protobuf -whitelist github.com/xenolf/lego -whitelist gopkg.in/square -whitelist github.com/mholt/caddy
 
 generate:
 	@echo ${PACKAGES} | xargs protobuild -quiet

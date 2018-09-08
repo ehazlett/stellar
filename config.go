@@ -18,5 +18,6 @@ type Config struct {
 	UpstreamDNSAddr          string
 	ProxyHTTPPort            int
 	ProxyHTTPSPort           int
+	ProxyTLSEmail            string
 	ProxyHealthcheckInterval time.Duration
 }

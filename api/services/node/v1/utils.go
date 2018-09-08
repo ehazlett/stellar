@@ -20,6 +20,8 @@ func (m *Endpoint) UnmarshalJSON(data []byte) error {
 			m.Host = v.(string)
 		case "port":
 			m.Port = uint32(v.(float64))
+		case "tls":
+			m.TLS = v.(bool)
 		case "protocol":
 			p, err := parseProtocol(v)
 			if err != nil {

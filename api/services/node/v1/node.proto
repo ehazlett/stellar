@@ -93,6 +93,7 @@ message Endpoint {
   Protocol protocol = 2;
   string host = 3;
   uint32 port = 4;
+  bool tls = 5 [(gogoproto.customname) = "TLS"];
 }
 
 message Service {

@@ -94,6 +94,11 @@ var serverCommand = cli.Command{
 			Usage: "https port for the proxy service",
 			Value: 443,
 		},
+		cli.StringFlag{
+			Name:  "proxy-tls-email",
+			Usage: "email for the auto TLS proxy service",
+			Value: "",
+		},
 		cli.DurationFlag{
 			Name:  "proxy-healthcheck-interval",
 			Usage: "proxy backend healthcheck interval",
@@ -148,6 +153,7 @@ func serverAction(c *cli.Context) error {
 		UpstreamDNSAddr:          c.String("upstream-dns-addr"),
 		ProxyHTTPPort:            c.Int("proxy-http-port"),
 		ProxyHTTPSPort:           c.Int("proxy-https-port"),
+		ProxyTLSEmail:            c.String("proxy-tls-email"),
 		ProxyHealthcheckInterval: c.Duration("proxy-healthcheck-interval"),
 	})
 	if err != nil {
