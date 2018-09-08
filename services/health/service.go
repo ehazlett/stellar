@@ -80,7 +80,7 @@ func (s *service) Health(ctx context.Context, _ *ptypes.Empty) (*api.HealthRespo
 			Cpus:        int64(runtime.NumCPU()),
 			MemoryTotal: int64(memory.Total),
 			MemoryFree:  int64(memory.Free),
-			MemoryUsed:  int64(memory.Used),
+			MemoryUsed:  int64(memory.ActualUsed),
 			Peers:       peers,
 		},
 	}, nil
