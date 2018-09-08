@@ -14,18 +14,18 @@ import (
 
 var appInspectTemplate = `Name: {{ .Name }}
 Services:{{ range .Services }}
-  Name: {{ .Name }}
-  Image: {{ .Image }}
-  Runtime: {{ .Runtime }}
-  Snapshotter: {{ .Snapshotter }}
-  Labels:{{ range .Labels }}
-    {{.}}{{ end }}
-  Endpoints:{{ range .Endpoints }}
-    - Service: {{.Service}}
-      Protocol: {{.Protocol}}
-      Host: {{.Host}}
-      Port: {{.Port}}
-      TLS:  {{.TLS}}{{ end }}{{end}}
+  - Name: {{ .Name }}
+    Image: {{ .Image }}
+    Runtime: {{ .Runtime }}
+    Snapshotter: {{ .Snapshotter }}
+    Labels:{{ range .Labels }}
+      {{.}}{{ end }}{{ if .Endpoints }}
+    Endpoints:{{ range .Endpoints }}
+      - Service: {{.Service}}
+        Protocol: {{.Protocol}}
+        Host: {{.Host}}
+        Port: {{.Port}}
+        TLS:  {{.TLS}}{{ end }}{{ end }}{{ end }}
 `
 
 var appCommand = cli.Command{

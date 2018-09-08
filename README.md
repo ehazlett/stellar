@@ -134,16 +134,15 @@ example             1
 
 $> sctl --addr 10.0.1.33:9000 apps inspect example
 Name: example
-
 Services:
-  Name: example.redis
-  Image: docker.io/library/redis:alpine
-  Runtime: io.containerd.runtime.v1.linux
-  Snapshotter: overlayfs
-  Labels:
-    containerd.io/restart.status=running
-    stellar.io/application=example
-    stellar.io/network=true
+  - Name: example.redis
+    Image: docker.io/library/redis:alpine
+    Runtime: io.containerd.runtime.v1.linux
+    Snapshotter: overlayfs
+    Labels:
+      containerd.io/restart.status=running
+      stellar.io/application=example
+      stellar.io/network=true
 
 ```
 
@@ -152,6 +151,8 @@ created.  To view the records use the following:
 
 ```
 $> sctl --addr 10.0.1.33:9000 nameserver list
-NAME                    TYPE                VALUE               OPTIONS
-example.redis.stellar   A                   172.16.0.4          nil
+NAME                    TYPE                VALUE                                            OPTIONS
+example.redis.stellar   A                   172.16.0.4
+example.redis.stellar   TXT                 node=ctr-00; updated=2018-09-08T10:34:02-04:00
+
 ```
