@@ -25,7 +25,8 @@ Services:{{ range .Services }}
     - Service: {{.Service}}
       Protocol: {{.Protocol}}
       Host: {{.Host}}
-      Port: {{.Port}}{{ end }}
+      Port: {{.Port}}
+      TLS:  {{.TLS}}{{ end }}
 {{end}}
 `
 
