@@ -3,11 +3,18 @@ package application
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	"github.com/sirupsen/logrus"
 )
+
+type AppSorter []*api.App
+
+func (a AppSorter) Len() int           { return len(a) }
+func (a AppSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a AppSorter) Less(i, j int) bool { return a[i].Name < a[j].Name }
 
 func (s *service) List(ctx context.Context, req *api.ListRequest) (*api.ListResponse, error) {
 	// filter containers for application label
@@ -44,6 +51,7 @@ func (s *service) List(ctx context.Context, req *api.ListRequest) (*api.ListResp
 	for _, app := range apps {
 		applications = append(applications, app)
 	}
+	sort.Sort(AppSorter(applications))
 
 	return &api.ListResponse{
 		Applications: applications,
