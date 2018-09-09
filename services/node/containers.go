@@ -188,6 +188,9 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 		s.withStellarResolvConf,
 		withMounts(service.Mounts),
 	)
+	if service.Process != nil && service.Process.Args != nil {
+		opts = append(opts, oci.WithProcessArgs(service.Process.Args...))
+	}
 	if service.Process != nil && service.Process.Env != nil {
 		opts = append(opts, oci.WithEnv(service.Process.Env))
 	}
