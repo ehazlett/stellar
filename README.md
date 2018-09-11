@@ -63,7 +63,9 @@ To build binaries:
 # Running
 To run Stellar, once you have a working containerd installation follow these steps:
 
-- Build Stellar (all binaries will be in `/bin`)
+- Install [Containerd](https://github.com/containerd/containerd#getting-started) (must be 1.2+)
+- Build binaries or get a release
+- Copy `/bin/sctl` to `/usr/local/bin/`
 - Copy `/bin/stellar` to `/usr/local/bin/`
 - Copy `/bin/stellar-cni-ipam` to `/opt/containerd/bin/` or `/opt/cni/bin`
 
