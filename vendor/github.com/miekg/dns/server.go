@@ -6,8 +6,10 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/binary"
+	"errors"
 	"io"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -312,6 +314,9 @@ type Server struct {
 	DecorateWriter DecorateWriter
 	// Maximum number of TCP queries before we close the socket. Default is maxTCPQueries (unlimited if -1).
 	MaxTCPQueries int
+	// Whether to set the SO_REUSEPORT socket option, allowing multiple listeners to be bound to a single address.
+	// It is only supported on go1.11+ and when using ListenAndServe.
+	ReusePort bool
 
 	// UDP packet or TCP connection queue
 	queue chan *response
@@ -320,6 +325,9 @@ type Server struct {
 	// Shutdown handling
 	lock    sync.RWMutex
 	started bool
+
+	// A pool for UDP message buffers.
+	udpPool sync.Pool
 }
 
 func (srv *Server) isStarted() bool {
@@ -374,6 +382,22 @@ func (srv *Server) spawnWorker(w *response) {
 	}
 }
 
+func makeUDPBuffer(size int) func() interface{} {
+	return func() interface{} {
+		return make([]byte, size)
+	}
+}
+
+func (srv *Server) init() {
+	srv.queue = make(chan *response)
+
+	if srv.UDPSize == 0 {
+		srv.UDPSize = MinMsgSize
+	}
+
+	srv.udpPool.New = makeUDPBuffer(srv.UDPSize)
+}
+
 func unlockOnce(l sync.Locker) func() {
 	var once sync.Once
 	return func() { once.Do(l.Unlock) }
@@ -393,18 +417,13 @@ func (srv *Server) ListenAndServe() error {
 	if addr == "" {
 		addr = ":domain"
 	}
-	if srv.UDPSize == 0 {
-		srv.UDPSize = MinMsgSize
-	}
-	srv.queue = make(chan *response)
+
+	srv.init()
 	defer close(srv.queue)
+
 	switch srv.Net {
 	case "tcp", "tcp4", "tcp6":
-		a, err := net.ResolveTCPAddr(srv.Net, addr)
-		if err != nil {
-			return err
-		}
-		l, err := net.ListenTCP(srv.Net, a)
+		l, err := listenTCP(srv.Net, addr, srv.ReusePort)
 		if err != nil {
 			return err
 		}
@@ -413,37 +432,32 @@ func (srv *Server) ListenAndServe() error {
 		unlock()
 		return srv.serveTCP(l)
 	case "tcp-tls", "tcp4-tls", "tcp6-tls":
-		network := "tcp"
-		if srv.Net == "tcp4-tls" {
-			network = "tcp4"
-		} else if srv.Net == "tcp6-tls" {
-			network = "tcp6"
+		if srv.TLSConfig == nil || (len(srv.TLSConfig.Certificates) == 0 && srv.TLSConfig.GetCertificate == nil) {
+			return errors.New("dns: neither Certificates nor GetCertificate set in Config")
 		}
-
-		l, err := tls.Listen(network, addr, srv.TLSConfig)
+		network := strings.TrimSuffix(srv.Net, "-tls")
+		l, err := listenTCP(network, addr, srv.ReusePort)
 		if err != nil {
 			return err
 		}
+		l = tls.NewListener(l, srv.TLSConfig)
 		srv.Listener = l
 		srv.started = true
 		unlock()
 		return srv.serveTCP(l)
 	case "udp", "udp4", "udp6":
-		a, err := net.ResolveUDPAddr(srv.Net, addr)
+		l, err := listenUDP(srv.Net, addr, srv.ReusePort)
 		if err != nil {
 			return err
 		}
-		l, err := net.ListenUDP(srv.Net, a)
-		if err != nil {
-			return err
-		}
-		if e := setUDPSocketOptions(l); e != nil {
+		u := l.(*net.UDPConn)
+		if e := setUDPSocketOptions(u); e != nil {
 			return e
 		}
 		srv.PacketConn = l
 		srv.started = true
 		unlock()
-		return srv.serveUDP(l)
+		return srv.serveUDP(u)
 	}
 	return &Error{err: "bad network"}
 }
@@ -459,14 +473,12 @@ func (srv *Server) ActivateAndServe() error {
 		return &Error{err: "server already started"}
 	}
 
+	srv.init()
+	defer close(srv.queue)
+
 	pConn := srv.PacketConn
 	l := srv.Listener
-	srv.queue = make(chan *response)
-	defer close(srv.queue)
 	if pConn != nil {
-		if srv.UDPSize == 0 {
-			srv.UDPSize = MinMsgSize
-		}
 		// Check PacketConn interface's type is valid and value
 		// is not nil
 		if t, ok := pConn.(*net.UDPConn); ok && t != nil {
@@ -565,6 +577,9 @@ func (srv *Server) serveUDP(l *net.UDPConn) error {
 			return err
 		}
 		if len(m) < headerSize {
+			if cap(m) == srv.UDPSize {
+				srv.udpPool.Put(m[:srv.UDPSize])
+			}
 			continue
 		}
 		srv.spawnWorker(&response{msg: m, tsigSecret: srv.TsigSecret, udp: l, udpSession: s})
@@ -630,6 +645,10 @@ func (srv *Server) serve(w *response) {
 func (srv *Server) serveDNS(w *response) {
 	req := new(Msg)
 	err := req.Unpack(w.msg)
+	if w.udp != nil && cap(w.msg) == srv.UDPSize {
+		srv.udpPool.Put(w.msg[:srv.UDPSize])
+	}
+	w.msg = nil
 	if err != nil { // Send a FormatError back
 		x := new(Msg)
 		x.SetRcodeFormatError(req)
@@ -698,9 +717,10 @@ func (srv *Server) readTCP(conn net.Conn, timeout time.Duration) ([]byte, error)
 
 func (srv *Server) readUDP(conn *net.UDPConn, timeout time.Duration) ([]byte, *SessionUDP, error) {
 	conn.SetReadDeadline(time.Now().Add(timeout))
-	m := make([]byte, srv.UDPSize)
+	m := srv.udpPool.Get().([]byte)
 	n, s, err := ReadFromSessionUDP(conn, m)
 	if err != nil {
+		srv.udpPool.Put(m)
 		return nil, nil, err
 	}
 	m = m[:n]
