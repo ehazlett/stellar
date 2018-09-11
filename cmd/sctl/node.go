@@ -52,8 +52,9 @@ var nodeContainersListCommand = cli.Command{
 }
 
 var nodeDeleteContainerCommand = cli.Command{
-	Name:  "delete",
-	Usage: "delete container",
+	Name:      "delete",
+	Usage:     "delete container",
+	ArgsUsage: "<NAME>",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {

@@ -11,7 +11,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = version.Name + " cli"
+	app.Name = "sctl"
 	app.Version = version.BuildVersion()
 	app.Author = "@ehazlett"
 	app.Email = ""

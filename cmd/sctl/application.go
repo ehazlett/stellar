@@ -79,9 +79,10 @@ var appCreateCommand = cli.Command{
 }
 
 var appDeleteCommand = cli.Command{
-	Name:  "delete",
-	Usage: "delete an application",
-	Flags: []cli.Flag{},
+	Name:      "delete",
+	Usage:     "delete an application",
+	Flags:     []cli.Flag{},
+	ArgsUsage: "<NAME>",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {
@@ -141,6 +142,7 @@ var appInspectCommand = cli.Command{
 			Value: "text",
 		},
 	},
+	ArgsUsage: "<NAME>",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {

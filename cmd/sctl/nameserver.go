@@ -67,6 +67,7 @@ var nameserverCreateRecordCommand = cli.Command{
 		},
 		// TODO: handle resource record options
 	},
+	ArgsUsage: "<NAME> <VALUE>",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {
@@ -102,6 +103,7 @@ var nameserverDeleteRecordCommand = cli.Command{
 			Value: "A",
 		},
 	},
+	ArgsUsage: "<NAME>",
 	Action: func(c *cli.Context) error {
 		client, err := getClient(c)
 		if err != nil {
