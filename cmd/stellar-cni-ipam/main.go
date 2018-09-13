@@ -78,9 +78,6 @@ func cmdAdd(args *skel.CmdArgs) error {
 			Gateway: gw,
 		},
 	}
-	//result.DNS = types.DNS{
-	//	Nameservers: []string{gw.String()},
-	//}
 	result.Routes = []*types.Route{
 		{
 			Dst: net.IPNet{IP: net.IP{0, 0, 0, 0}, Mask: net.IPv4Mask(0, 0, 0, 0)},
