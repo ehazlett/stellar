@@ -20,6 +20,7 @@ const (
 	{{ range $backend := $server.Backends }}upstream {{ .Upstream }}
 	{{ end }}
     }
+    timeouts none
 }
 {{ end }}
 `
