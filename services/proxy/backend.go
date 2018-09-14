@@ -6,15 +6,23 @@ import (
 
 	api "github.com/ehazlett/stellar/api/services/proxy/v1"
 	ptypes "github.com/gogo/protobuf/types"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *service) Backends(ctx context.Context, req *api.BackendRequest) (*api.BackendResponse, error) {
 	var backends []*api.Backend
-	for _, server := range s.currentServers {
+
+	servers, err := s.bclient.Servers()
+	if err != nil {
+		return nil, err
+	}
+
+	logrus.Debugf("backend servers: %+v", servers)
+	for _, server := range servers {
 		backend := &api.Backend{
 			Host: server.Host,
 		}
-		for _, b := range server.Backends {
+		for _, b := range server.Upstreams {
 			up := s.loadUpstream(b)
 			backend.Upstreams = append(backend.Upstreams, up)
 		}
@@ -26,16 +34,16 @@ func (s *service) Backends(ctx context.Context, req *api.BackendRequest) (*api.B
 	}, nil
 }
 
-func (s *service) loadUpstream(upstream *Backend) *api.Upstream {
+func (s *service) loadUpstream(upstream string) *api.Upstream {
 	status := "up"
-	latency, err := checkConnection(upstream.URL(), s.cfg.ProxyHealthcheckInterval)
+	latency, err := checkConnection(upstream, s.cfg.ProxyHealthcheckInterval)
 	if err != nil {
 		latency = time.Millisecond * 0
 		status = err.Error()
 	}
 
 	return &api.Upstream{
-		Address: upstream.Upstream,
+		Address: upstream,
 		Latency: ptypes.DurationProto(latency),
 		Status:  status,
 	}

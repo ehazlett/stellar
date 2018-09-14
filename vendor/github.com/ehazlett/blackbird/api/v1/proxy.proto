@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package blackbird.api.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/ehazlett/blackbird/api/v1;api";
+
+service Proxy {
+  rpc AddServer(AddServerRequest) returns (google.protobuf.Empty);
+  rpc RemoveServer(RemoveServerRequest) returns (google.protobuf.Empty);
+  rpc Servers(ServersRequest) returns (ServersResponse);
+  rpc Reload(ReloadRequest) returns (google.protobuf.Empty);
+  rpc Config(ConfigRequest) returns (ConfigResponse);
+}
+
+enum Policy {
+  RANDOM = 0;
+  LEAST_CONN = 1;
+  ROUND_ROBIN = 2;
+  FIRST = 3;
+  IP_HASH = 4;
+  URI_HASH = 5;
+  HEADER = 6;
+}
+
+message HealthCheck {
+    string health_check = 1;
+    google.protobuf.Duration health_check_interval = 2;
+    google.protobuf.Duration health_check_timeout = 3;
+}
+
+message Server {
+    string host = 1;
+    string path = 2;
+    bool tls = 3 [(gogoproto.customname) = "TLS"];
+    Policy policy = 4;
+    google.protobuf.Duration timeouts = 5;
+    repeated string upstreams = 6;
+    HealthCheck health_check = 7;
+    bool insecure_skip_verify = 8;
+    string preset = 9;
+}
+
+message AddServerRequest {
+  Server server = 1;
+}
+
+message RemoveServerRequest {
+  string host = 1;
+}
+
+message ReloadRequest {}
+
+message ServersRequest {}
+
+message ServersResponse {
+  repeated Server servers = 1;
+}
+
+message ConfigRequest {}
+
+message ConfigResponse {
+  bytes data = 1;
+}

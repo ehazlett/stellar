@@ -13,6 +13,7 @@ import (
 func (s *service) Search(ctx context.Context, req *api.SearchRequest) (*api.SearchResponse, error) {
 	var data []*api.KeyValue
 
+	prefix := []byte(req.Prefix)
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Bucket))
 		if b == nil {
@@ -20,9 +21,7 @@ func (s *service) Search(ctx context.Context, req *api.SearchRequest) (*api.Sear
 		}
 
 		c := b.Cursor()
-
-		prefix := []byte(req.Prefix)
-		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+		for k, v := c.Seek(prefix); k != nil && req.Prefix == "*" || bytes.HasPrefix(k, prefix); k, v = c.Next() {
 			data = append(data, &api.KeyValue{
 				Key:   string(k),
 				Value: v,

@@ -28,10 +28,10 @@ case.  Enjoy :)
 - Container execution via [containerd](https://github.com/containerd/containerd)
 - Multihost Networking via [CNI](https://github.com/containernetworking/cni)
 - Service Discovery via DNS
-- Single binary for simple daemon deployment
+- Builtin Proxy using [Blackbird](https://github.com/ehazlett/blackbird) (zero downtime reloads, canary deploys, health checks, automatic HTTPS)
 - Masterless design
-- Builtin Proxy using [Caddy](https://caddyserver.com) (zero downtime reloads, canary deploys, health checks, automatic HTTPS)
 - Efficient use of system resources
+- Simple daemon deployment
 
 # Building
 In order to build Stellar you will need the following:

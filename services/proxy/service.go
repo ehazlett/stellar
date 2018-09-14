@@ -2,46 +2,41 @@ package proxy
 
 import (
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/containerd/containerd"
+	"github.com/ehazlett/blackbird"
+	blackbirdserver "github.com/ehazlett/blackbird/server"
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	api "github.com/ehazlett/stellar/api/services/proxy/v1"
 	"github.com/ehazlett/stellar/client"
-	"github.com/ehazlett/stellar/version"
 	ptypes "github.com/gogo/protobuf/types"
-	"github.com/mholt/caddy"
-	_ "github.com/mholt/caddy/caddyhttp"
-	"github.com/mholt/caddy/caddytls"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 const (
-	serviceID = "stellar.services.proxy.v1"
+	serviceID         = "stellar.services.proxy.v1"
+	blackbirdGRPCAddr = "unix:///run/blackbird.sock"
+	dsProxyBucketName = "stellar." + stellar.APIVersion + ".services.proxy"
 )
 
 var (
 	empty = &ptypes.Empty{}
 )
 
-type endpoint struct {
-	url *url.URL
-	tls bool
-}
-
 type service struct {
 	containerdAddr string
 	namespace      string
 	agent          *element.Agent
 	cfg            *stellar.Config
-	instance       *caddy.Instance
-	currentServers []*Server
-	configID       string
 	errCh          chan error
+
+	// set on start
+	server  *blackbirdserver.Server
+	bclient *blackbird.Client
 }
 
 func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
@@ -53,20 +48,12 @@ func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 		}
 	}()
 
-	caddy.AppName = version.Name
-	caddy.AppVersion = version.FullVersion()
-	caddy.Quiet = true
-	caddytls.Agreed = true
-	caddytls.DefaultCAUrl = "https://acme-v02.api.letsencrypt.org/directory"
-	caddytls.DefaultEmail = cfg.ProxyTLSEmail
-
 	return &service{
 		containerdAddr: cfg.ContainerdAddr,
 		namespace:      cfg.Namespace,
-		cfg:            cfg,
-		currentServers: []*Server{},
-		errCh:          errCh,
 		agent:          agent,
+		cfg:            cfg,
+		errCh:          errCh,
 	}, nil
 }
 
@@ -80,20 +67,38 @@ func (s *service) ID() string {
 }
 
 func (s *service) Start() error {
-	caddy.SetDefaultCaddyfileLoader("default", caddy.LoaderFunc(s.defaultLoader))
-	caddyfile, err := caddy.LoadCaddyfile("http")
+	client, err := s.client()
 	if err != nil {
+		return err
+	}
+	config := &blackbird.Config{
+		GRPCAddr:  blackbirdGRPCAddr,
+		HTTPPort:  s.cfg.ProxyHTTPPort,
+		HTTPSPort: s.cfg.ProxyHTTPSPort,
+		Debug:     false,
+	}
+	ds, err := newDatastore(client)
+	if err != nil {
+		return err
+	}
+	srv, err := blackbirdserver.NewServer(config, ds)
+	if err != nil {
+		return err
+	}
+	if err := srv.Run(); err != nil {
 		return err
 	}
 
-	s.instance, err = caddy.Start(caddyfile)
+	bc, err := blackbird.NewClient(blackbirdGRPCAddr)
 	if err != nil {
 		return err
 	}
+	s.bclient = bc
+
 	t := time.NewTicker(5 * time.Second)
 	go func() {
 		for range t.C {
-			logrus.Debug("proxy update check")
+			logrus.Debug("proxy reload")
 			// we do a periodic reload.  this might be better at scale
 			// if we check for application updates before trying to reload
 			if err := s.reload(); err != nil {
@@ -160,26 +165,4 @@ func (s *service) getApplications() ([]*applicationapi.App, error) {
 	defer c.Close()
 
 	return c.Application().List()
-}
-
-func (s *service) defaultLoader(serverType string) (caddy.Input, error) {
-	return caddy.CaddyfileInput{
-		Contents:       []byte(fmt.Sprintf(":%d", s.cfg.ProxyHTTPPort)),
-		Filepath:       caddy.DefaultConfigFile,
-		ServerTypeName: serverType,
-	}, nil
-
-}
-
-func (s *service) getCaddyConfig() (caddy.Input, error) {
-	data, err := s.generateConfig()
-	if err != nil {
-		return nil, err
-	}
-	return caddy.CaddyfileInput{
-		Contents:       data,
-		Filepath:       caddy.DefaultConfigFile,
-		ServerTypeName: "http",
-	}, nil
-
 }
