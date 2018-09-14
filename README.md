@@ -73,22 +73,22 @@ To start the initial node run `stellar -D server --bind-addr <node-ip> --adverti
 For example:
 
 ```
-$> stellar -D server --bind-addr 10.0.1.33 --advertise-addr 10.0.1.33
+$> stellar -D server --bind-addr 10.0.1.70 --advertise-addr 10.0.1.70
 ```
 
 To join additional nodes simply add the `--peer` flag.  For example:
 
 ```
-$> stellar -D server --bind-addr 10.0.1.34 --advertise-addr 10.0.1.34 --peer 10.0.1.33:7946
+$> stellar -D server --bind-addr 10.0.1.71 --advertise-addr 10.0.1.71 --peer 10.0.1.70:7946
 ```
 
 You will now have a two node cluster.  To see node information, use `sctl`.
 
 ```
-$> sctl --addr 10.0.1.33:9000 cluster nodes
-NAME                ADDR                OS                          UPTIME              CPUS                MEMORY (USED)
-ctr-00              10.0.1.33:9000      Linux (4.13.0-46-generic)   2 minutes           4                   952 MB / 1.0 GB
-ctr-01              10.0.1.34:9000      Linux (4.13.0-46-generic)   13 seconds          4                   943 MB / 1.0 GB
+$> sctl --addr 10.0.1.70:9000 cluster nodes
+NAME                ADDR                OS                       UPTIME              CPUS                MEMORY (USED)
+stellar-00          10.0.1.70:9000      Linux (4.17.0-3-amd64)   7 seconds           2                   242 MB / 2.1 GB
+stellar-01          10.0.1.71:9000      Linux (4.17.0-3-amd64)   6 seconds           2                   246 MB / 2.1 GB
 ```
 
 # Deploying an Application
@@ -124,17 +124,17 @@ To deploy an application, create an application config.  For example, create the
 Then run the following to deploy:
 
 ```
-$> sctl --addr 10.0.1.33:9000 apps create -f ./example.conf
+$> sctl --addr 10.0.1.70:9000 apps create -f ./example.conf
 ```
 
 You should now see the application deployed:
 
 ```
-$> sctl --addr 10.0.1.33:9000 apps list
+$> sctl --addr 10.0.1.70:9000 apps list
 NAME                SERVICES
 example             1
 
-$> sctl --addr 10.0.1.33:9000 apps inspect example
+$> sctl --addr 10.0.1.70:9000 apps inspect example
 Name: example
 Services:
   - Name: example.redis
@@ -152,9 +152,8 @@ By default all applications that have networking enabled will have a correspondi
 created.  To view the records use the following:
 
 ```
-$> sctl --addr 10.0.1.33:9000 nameserver list
+$> sctl --addr 10.0.1.70:9000 nameserver list
 NAME                    TYPE                VALUE                                            OPTIONS
 example.redis.stellar   A                   172.16.0.4
-example.redis.stellar   TXT                 node=ctr-00; updated=2018-09-08T10:34:02-04:00
-
+example.redis.stellar   TXT                 node=ctr-00; updated=2018-09-08T10:71:02-04:00
 ```
