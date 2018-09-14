@@ -155,5 +155,5 @@ created.  To view the records use the following:
 $> sctl --addr 10.0.1.70:9000 nameserver list
 NAME                    TYPE                VALUE                                            OPTIONS
 example.redis.stellar   A                   172.16.0.4
-example.redis.stellar   TXT                 node=ctr-00; updated=2018-09-08T10:71:02-04:00
+example.redis.stellar   TXT                 node=stellar-00; updated=2018-09-08T10:71:02-04:00
 ```
