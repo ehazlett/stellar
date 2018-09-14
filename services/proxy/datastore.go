@@ -28,10 +28,12 @@ func (d *datastore) Name() string {
 }
 
 func (d *datastore) Add(host string, srv *blackbirdapi.Server) error {
+	// since we grab the servers from the application service direct this is a noop
 	return nil
 }
 
 func (d *datastore) Remove(host string) error {
+	// since we grab the servers from the application service direct this is a noop
 	return nil
 }
 

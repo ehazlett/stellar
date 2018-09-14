@@ -6,7 +6,6 @@ import (
 
 	api "github.com/ehazlett/stellar/api/services/proxy/v1"
 	ptypes "github.com/gogo/protobuf/types"
-	"github.com/sirupsen/logrus"
 )
 
 func (s *service) Backends(ctx context.Context, req *api.BackendRequest) (*api.BackendResponse, error) {
@@ -17,7 +16,6 @@ func (s *service) Backends(ctx context.Context, req *api.BackendRequest) (*api.B
 		return nil, err
 	}
 
-	logrus.Debugf("backend servers: %+v", servers)
 	for _, server := range servers {
 		backend := &api.Backend{
 			Host: server.Host,
