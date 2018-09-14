@@ -15,7 +15,7 @@ func (s *service) List(ctx context.Context, req *api.ListRequest) (*api.ListResp
 	}
 	defer c.Close()
 
-	kvs, err := c.Datastore().Search(dsNameserverBucketName, "")
+	kvs, err := c.Datastore().Search(dsNameserverBucketName, "*")
 	if err != nil {
 		err = errdefs.FromGRPC(err)
 		if !errdefs.IsNotFound(err) {
