@@ -22,9 +22,10 @@ func main() {
 			Usage: "Enable debug logging",
 		},
 		cli.StringFlag{
-			Name:  "addr",
-			Usage: "stellar daemon address",
-			Value: "127.0.0.1:9000",
+			Name:   "addr",
+			Usage:  "stellar daemon address",
+			Value:  "127.0.0.1:9000",
+			EnvVar: "STELLAR_ADDR",
 		},
 	}
 	app.Before = func(c *cli.Context) error {
