@@ -114,6 +114,11 @@ var serverCommand = cli.Command{
 			Usage: "one or more peers for agent to join",
 			Value: &cli.StringSlice{},
 		},
+		cli.StringFlag{
+			Name:  "cniBinPath",
+			Usage: "path to look for cni binaries",
+			Value: "",
+		},
 	},
 }
 
@@ -155,6 +160,7 @@ func serverAction(c *cli.Context) error {
 		ProxyHTTPSPort:           c.Int("proxy-https-port"),
 		ProxyTLSEmail:            c.String("proxy-tls-email"),
 		ProxyHealthcheckInterval: c.Duration("proxy-healthcheck-interval"),
+		CNIBinPath:               c.String("cniBinPath"),
 	})
 	if err != nil {
 		return err
