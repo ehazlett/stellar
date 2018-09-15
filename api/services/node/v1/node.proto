@@ -15,6 +15,7 @@ service Node {
   rpc SetupContainerNetwork(ContainerNetworkRequest) returns (google.protobuf.Empty);
   rpc CreateContainer(CreateContainerRequest) returns (google.protobuf.Empty);
   rpc DeleteContainer(DeleteContainerRequest) returns (google.protobuf.Empty);
+  rpc RestartContainer(RestartContainerRequest) returns (google.protobuf.Empty);
 }
 
 message ContainersRequest {
@@ -115,5 +116,9 @@ message CreateContainerRequest {
 }
 
 message DeleteContainerRequest {
+  string id = 1 [(gogoproto.customname) = "ID"];
+}
+
+message RestartContainerRequest {
   string id = 1 [(gogoproto.customname) = "ID"];
 }

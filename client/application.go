@@ -51,3 +51,14 @@ func (a *application) Get(name string) (*api.App, error) {
 
 	return resp.Application, nil
 }
+
+func (a *application) Restart(name string) error {
+	ctx := context.Background()
+	if _, err := a.client.Restart(ctx, &api.RestartRequest{
+		Name: name,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

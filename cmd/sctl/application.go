@@ -37,6 +37,7 @@ var appCommand = cli.Command{
 		appCreateCommand,
 		appDeleteCommand,
 		appInspectCommand,
+		appRestartCommand,
 	},
 }
 
@@ -172,5 +173,28 @@ var appInspectCommand = cli.Command{
 		}
 
 		return f(app)
+	},
+}
+
+var appRestartCommand = cli.Command{
+	Name:      "restart",
+	Usage:     "restart application services",
+	ArgsUsage: "<NAME>",
+	Action: func(c *cli.Context) error {
+		client, err := getClient(c)
+		if err != nil {
+			return err
+		}
+		defer client.Close()
+
+		name := c.Args().First()
+		if name == "" {
+			return fmt.Errorf("you must specify an application name")
+		}
+		if err := client.Application().Restart(name); err != nil {
+			return err
+		}
+
+		return nil
 	},
 }

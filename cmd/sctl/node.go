@@ -21,6 +21,7 @@ var nodeContainersCommand = cli.Command{
 	Usage: "container management",
 	Subcommands: []cli.Command{
 		nodeContainersListCommand,
+		nodeRestartContainerCommand,
 		nodeDeleteContainerCommand,
 	},
 }
@@ -51,6 +52,32 @@ var nodeContainersListCommand = cli.Command{
 	},
 }
 
+var nodeRestartContainerCommand = cli.Command{
+	Name:      "restart",
+	Usage:     "restart container",
+	ArgsUsage: "<ID>",
+	Action: func(c *cli.Context) error {
+		client, err := getClient(c)
+		if err != nil {
+			return err
+		}
+		defer client.Close()
+
+		id := c.Args().First()
+		if id == "" {
+			return fmt.Errorf("you must specify an id")
+		}
+
+		if err := client.Node().RestartContainer(id); err != nil {
+			return err
+		}
+
+		fmt.Printf("%s restarted\n", id)
+
+		return nil
+	},
+}
+
 var nodeDeleteContainerCommand = cli.Command{
 	Name:      "delete",
 	Usage:     "delete container",
@@ -71,7 +98,7 @@ var nodeDeleteContainerCommand = cli.Command{
 			return err
 		}
 
-		fmt.Printf("%s deleted", id)
+		fmt.Printf("%s deleted\n", id)
 
 		return nil
 	},

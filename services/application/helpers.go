@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/containerd/typeurl"
 	"github.com/ehazlett/stellar"
@@ -37,4 +38,19 @@ func (s *service) containerToService(ctx context.Context, c *clusterapi.Containe
 	}
 
 	return svc, nil
+}
+
+func (s *service) getApplicationContainers(name string) ([]*clusterapi.Container, error) {
+	c, err := s.client()
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
+	containers, err := c.Cluster().Containers(fmt.Sprintf("labels.\"%s\"==\"%s\"", stellar.StellarApplicationLabel, name))
+	if err != nil {
+		return nil, err
+	}
+
+	return containers, nil
 }
