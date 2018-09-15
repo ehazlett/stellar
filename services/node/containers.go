@@ -39,7 +39,7 @@ const (
 	defaultSnapshotter = "overlayfs"
 	defaultIfName      = "eth0"
 	cniLoopbackConf    = `{
-	"cniVersion": "0.4.0",
+	"cniVersion": "0.3.1",
 	"name": "loopback",
 	"type": "loopback",
         "ipam": {
@@ -53,7 +53,7 @@ const (
 }
 	`
 	cniConfTemplate = `{
-        "cniVersion": "0.4.0",
+        "cniVersion": "0.3.1",
         "name": "stellar",
         "type": "bridge",
         "bridge": "{{.Bridge}}",
