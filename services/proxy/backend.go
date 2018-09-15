@@ -9,7 +9,7 @@ import (
 )
 
 func (s *service) Backends(ctx context.Context, req *api.BackendRequest) (*api.BackendResponse, error) {
-	var backends []*api.Backend
+	backends := []*api.Backend{}
 
 	servers, err := s.bclient.Servers()
 	if err != nil {

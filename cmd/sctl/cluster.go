@@ -64,7 +64,7 @@ var clusterNodesCommand = cli.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
-		fmt.Fprintf(w, "NAME\tADDR\tOS\tUPTIME\tCPUS\tMEMORY (USED)\n")
+		fmt.Fprintf(w, "NAME\tADDR\tOS\tUPTIME\tCPUS\tMEMORY\n")
 		for _, nodeHealth := range nodes {
 			node := nodeHealth.Node
 			health := nodeHealth.Health

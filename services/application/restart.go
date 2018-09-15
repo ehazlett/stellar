@@ -21,6 +21,7 @@ func (s *service) Restart(ctx context.Context, req *api.RestartRequest) (*ptypes
 	}
 
 	for _, cc := range containers {
+		logrus.Debugf("restarting container %s on node %s", cc.Container.ID, cc.Node.Name)
 		nc, err := s.nodeClient(cc.Node.Name)
 		if err != nil {
 			logrus.Warnf("delete: error getting client for node %s: %s", cc.Node.Name, err)
