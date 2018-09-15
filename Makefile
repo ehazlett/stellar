@@ -14,7 +14,7 @@ PACKAGES=$(shell go list ./... | grep -v -e /vendor/)
 EXTENSIONS=$(wildcard extensions/*)
 CYCLO_PACKAGES=$(shell go list ./... | grep -v /vendor/ | sed "s/github.com\/$(NAMESPACE)\/$(APP)\///g" | tail -n +2)
 CWD=$(PWD)
-VNDR_ARGS=-whitelist github.com/gogo/protobuf -whitelist github.com/xenolf/lego -whitelist gopkg.in/square -whitelist github.com/ehazlett/blackbird
+VNDR_ARGS=-whitelist github.com/gogo/protobuf -whitelist github.com/xenolf/lego -whitelist gopkg.in/square -whitelist github.com/ehazlett/blackbird -whitelist github.com/mholt/caddy
 
 all: binaries
 
@@ -27,6 +27,7 @@ deps-init:
 	@rm -rf vendor/github.com/containerd/containerd/.git
 	@rm -rf vendor/github.com/containerd/containerd/vendor
 	@rm -rf vendor/github.com/xenolf/lego/.git
+	@rm -rf vendor/github.com/mholt/caddy/.git
 	@rm -rf vendor/github.com/ehazlett/blackbird/.git
 	@rm -rf vendor/gopkg.in/square/.git
 
