@@ -90,6 +90,9 @@ check: vet lint
 test:
 	@go test -short -v -cover $(TEST_ARGS) ${PACKAGES}
 
+test-buildkit:
+	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.test --local context=. --local dockerfile=. --progress plain
+
 install:
 	@install -D -m 755 cmd/$(APP)/$(APP) /usr/local/bin/
 
