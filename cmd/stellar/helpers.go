@@ -40,6 +40,9 @@ func defaultConfig() (*stellar.Config, error) {
 		ProxyHTTPSPort:           443,
 		ProxyTLSEmail:            "",
 		ProxyHealthcheckInterval: time.Second * 5,
+		GatewayAddr:              localhost,
+		GatewayPort:              9001,
+		CNIBinPaths:              []string{"/opt/containerd/bin", "/opt/cni/bin"},
 	}, nil
 }
 
@@ -64,10 +67,10 @@ func getConfig(ctx *cli.Context) (*stellar.Config, error) {
 
 	agentAddr := ctx.String("agent-addr")
 	bindAddr := ctx.String("bind-addr")
-	gatewayAddr := ctx.String("gateway-addr")
 	if agentAddr == "" {
 		agentAddr = bindAddr
 	}
+	gatewayAddr := ctx.String("gateway-addr")
 	agentConfig := &element.Config{
 		NodeName:       ctx.String("node-name"),
 		AgentAddr:      agentAddr,
@@ -101,5 +104,6 @@ func getConfig(ctx *cli.Context) (*stellar.Config, error) {
 		ProxyHealthcheckInterval: ctx.Duration("proxy-healthcheck-interval"),
 		GatewayAddr:              gatewayAddr,
 		GatewayPort:              ctx.Int("gateway-port"),
+		CNIBinPaths:              ctx.StringSlice("cni-bin-path"),
 	}, nil
 }
