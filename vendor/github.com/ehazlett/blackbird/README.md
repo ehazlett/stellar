@@ -5,6 +5,15 @@ Blackbird is a GRPC proxy service using [Caddy](https://caddyserver.com).
 
 Blackbird uses a datastore to store server info.  By default, there is a simple in-memory datastore.  You can implement whatever you want to integrate with external systems.
 
+# Building
+Uses [dep](https://github.com/golang/dep) for dependencies.
+
+- `make`
+
+To just build binaries:
+
+- `make binaries`
+
 # Usage
 To start the server, run:
 
