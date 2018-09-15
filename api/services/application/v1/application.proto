@@ -12,6 +12,7 @@ service Application {
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
   rpc List(ListRequest) returns (ListResponse);
   rpc Get(GetRequest) returns (GetResponse);
+  rpc Restart(RestartRequest) returns (google.protobuf.Empty);
 }
 
 message CreateRequest {
@@ -41,4 +42,8 @@ message GetRequest {
 
 message GetResponse {
   App application = 1;
+}
+
+message RestartRequest {
+  string name = 1;
 }

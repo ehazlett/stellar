@@ -47,6 +47,17 @@ func (n *node) CreateContainer(appName string, service *nodeapi.Service) error {
 	return nil
 }
 
+func (n *node) RestartContainer(id string) error {
+	ctx := context.Background()
+	if _, err := n.client.RestartContainer(ctx, &nodeapi.RestartContainerRequest{
+		ID: id,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (n *node) DeleteContainer(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

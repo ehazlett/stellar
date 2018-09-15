@@ -265,16 +265,7 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 		return empty, err
 	}
 
-	// log
-	logPath, err := s.logPath(id)
-	if err != nil {
-		return empty, err
-	}
-	task, err := container.NewTask(ctx, cio.LogFile(logPath))
-	if err != nil {
-		return empty, err
-	}
-	if err := task.Start(ctx); err != nil {
+	if err := s.startTask(ctx, container); err != nil {
 		return empty, err
 	}
 
@@ -318,9 +309,58 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 			Options: opts,
 		})
 	}
+
 	if err := c.Nameserver().CreateRecords(recordName, records); err != nil {
 		return empty, err
 	}
+
+	return empty, nil
+}
+
+func (s *service) RestartContainer(ctx context.Context, req *api.RestartContainerRequest) (*ptypes.Empty, error) {
+	c, err := s.containerd()
+	if err != nil {
+		return empty, err
+	}
+	defer c.Close()
+
+	logrus.Debugf("restart: loading container %s", req.ID)
+	container, err := c.LoadContainer(ctx, req.ID)
+	if err != nil {
+		return empty, err
+	}
+
+	logrus.Debugf("restart: getting task for container %s", req.ID)
+	task, err := container.Task(ctx, nil)
+	if err != nil {
+		if !errdefs.IsNotFound(err) {
+			return empty, err
+		}
+	}
+
+	logrus.Debugf("restart: task: %+v", task)
+
+	if err == nil {
+		logrus.Debugf("updating container %s", req.ID)
+		if err := container.Update(ctx, restart.WithStatus(containerd.Stopped)); err != nil {
+			return empty, err
+		}
+
+		logrus.Debugf("killing task for container %s", req.ID)
+		if err := s.killTask(ctx, task); err != nil {
+			return empty, err
+		}
+	}
+
+	logrus.Debugf("starting task for container %s", req.ID)
+	if err := s.startTask(ctx, container); err != nil {
+		return empty, err
+	}
+
+	if err := container.Update(ctx, restart.WithStatus(containerd.Running)); err != nil {
+		return empty, err
+	}
+
 	return empty, nil
 }
 
@@ -337,7 +377,6 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 	}
 	defer client.Close()
 
-	wg := &sync.WaitGroup{}
 	container, err := c.LoadContainer(ctx, req.ID)
 	if err != nil {
 		return empty, err
@@ -350,32 +389,11 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 		}
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if task != nil {
-			wait, err := task.Wait(ctx)
-			if err != nil {
-				logrus.Errorf("error waiting on task: %s", err)
-				return
-			}
-			if err := task.Kill(ctx, unix.SIGTERM, containerd.WithKillAll); err != nil {
-				logrus.Warnf("error killing container task: %s", err)
-			}
-			select {
-			case <-wait:
-				task.Delete(ctx)
-				return
-			case <-time.After(5 * time.Second):
-				if err := task.Kill(ctx, unix.SIGKILL, containerd.WithKillAll); err != nil {
-					logrus.Warnf("error force killing container task: %s", err)
-				}
-				return
-			}
+	if task != nil {
+		if err := s.killTask(ctx, task); err != nil {
+			return empty, err
 		}
-	}()
-
-	wg.Wait()
+	}
 
 	networkEnabled, err := s.networkEnabled(ctx, container)
 	if err != nil {
@@ -417,6 +435,56 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 	}
 
 	return empty, nil
+}
+
+func (s *service) startTask(ctx context.Context, container containerd.Container) error {
+	logPath, err := s.logPath(container.ID())
+	if err != nil {
+		return err
+	}
+
+	task, err := container.NewTask(ctx, cio.LogFile(logPath))
+	if err != nil {
+		return err
+	}
+
+	if err := task.Start(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) killTask(ctx context.Context, task containerd.Task) error {
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	var err error
+	go func() {
+		defer wg.Done()
+		if task != nil {
+			wait, err := task.Wait(ctx)
+			if err != nil {
+				err = fmt.Errorf("error waiting on task: %s", err)
+				return
+			}
+			if err := task.Kill(ctx, unix.SIGTERM, containerd.WithKillAll); err != nil {
+				logrus.Warnf("error killing container task: %s", err)
+			}
+			select {
+			case <-wait:
+				task.Delete(ctx)
+				return
+			case <-time.After(5 * time.Second):
+				if err := task.Kill(ctx, unix.SIGKILL, containerd.WithKillAll); err != nil {
+					logrus.Warnf("error force killing container task: %s", err)
+				}
+				return
+			}
+		}
+	}()
+	wg.Wait()
+
+	return err
 }
 
 func (s *service) networkEnabled(ctx context.Context, container containerd.Container) (bool, error) {
