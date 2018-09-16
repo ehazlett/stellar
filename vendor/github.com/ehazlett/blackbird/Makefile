@@ -23,6 +23,9 @@ deps:
 deps-init:
 	@vndr $(VNDR_ARGS) init
 	@rm -rf vendor/github.com/gogo/protobuf/.git
+	@rm -rf vendor/github.com/xenolf/lego/.git
+	@rm -rf vendor/github.com/mholt/caddy/.git
+	@rm -rf vendor/gopkg.in/square/.git
 
 generate:
 	@echo ${PACKAGES} | xargs protobuild -quiet

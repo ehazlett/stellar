@@ -531,10 +531,7 @@ func compress(in []byte, cp Compressor, compressor encoding.Compressor) ([]byte,
 	}
 	cbuf := &bytes.Buffer{}
 	if compressor != nil {
-		z, err := compressor.Compress(cbuf)
-		if err != nil {
-			return nil, wrapErr(err)
-		}
+		z, _ := compressor.Compress(cbuf)
 		if _, err := z.Write(in); err != nil {
 			return nil, wrapErr(err)
 		}

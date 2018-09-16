@@ -21,27 +21,30 @@ func SetOutput(out io.Writer) {
 
 // SetFormatter sets the standard logger formatter.
 func SetFormatter(formatter Formatter) {
-	std.SetFormatter(formatter)
+	std.mu.Lock()
+	defer std.mu.Unlock()
+	std.Formatter = formatter
 }
 
 // SetLevel sets the standard logger level.
 func SetLevel(level Level) {
+	std.mu.Lock()
+	defer std.mu.Unlock()
 	std.SetLevel(level)
 }
 
 // GetLevel returns the standard logger level.
 func GetLevel() Level {
-	return std.GetLevel()
-}
-
-// IsLevelEnabled checks if the log level of the standard logger is greater than the level param
-func IsLevelEnabled(level Level) bool {
-	return std.IsLevelEnabled(level)
+	std.mu.Lock()
+	defer std.mu.Unlock()
+	return std.level()
 }
 
 // AddHook adds a hook to the standard logger hooks.
 func AddHook(hook Hook) {
-	std.AddHook(hook)
+	std.mu.Lock()
+	defer std.mu.Unlock()
+	std.Hooks.Add(hook)
 }
 
 // WithError creates an entry from the standard logger and adds an error to it, using the value defined in ErrorKey as key.

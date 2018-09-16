@@ -8,10 +8,9 @@ import (
 	"hash/crc32"
 	"io"
 	"net"
-	"sync/atomic"
 	"time"
 
-	metrics "github.com/armon/go-metrics"
+	"github.com/armon/go-metrics"
 	"github.com/hashicorp/go-msgpack/codec"
 )
 
@@ -56,7 +55,6 @@ const (
 	encryptMsg
 	nackRespMsg
 	hasCrcMsg
-	errMsg
 )
 
 // compressionType is used to specify the compression algorithm
@@ -72,8 +70,7 @@ const (
 	compoundOverhead       = 2   // Assumed overhead per entry in compoundHeader
 	userMsgOverhead        = 1
 	blockingWarning        = 10 * time.Millisecond // Warn if a UDP packet takes this long to process
-	maxPushStateBytes      = 20 * 1024 * 1024
-	maxPushPullRequests    = 128 // Maximum number of concurrent push/pull requests
+	maxPushStateBytes      = 10 * 1024 * 1024
 )
 
 // ping request sent directly to node
@@ -106,11 +103,6 @@ type ackResp struct {
 // that the indirect ping attempt happened but didn't succeed.
 type nackResp struct {
 	SeqNo uint32
-}
-
-// err response is sent to relay the error from the remote end
-type errResp struct {
-	Error string
 }
 
 // suspect is broadcast when we suspect a node is dead
@@ -217,19 +209,6 @@ func (m *Memberlist) handleConn(conn net.Conn) {
 	if err != nil {
 		if err != io.EOF {
 			m.logger.Printf("[ERR] memberlist: failed to receive: %s %s", err, LogConn(conn))
-
-			resp := errResp{err.Error()}
-			out, err := encode(errMsg, &resp)
-			if err != nil {
-				m.logger.Printf("[ERR] memberlist: Failed to encode error response: %s", err)
-				return
-			}
-
-			err = m.rawSendMsgStream(conn, out.Bytes())
-			if err != nil {
-				m.logger.Printf("[ERR] memberlist: Failed to send error: %s %s", err, LogConn(conn))
-				return
-			}
 		}
 		return
 	}
@@ -240,16 +219,6 @@ func (m *Memberlist) handleConn(conn net.Conn) {
 			m.logger.Printf("[ERR] memberlist: Failed to receive user message: %s %s", err, LogConn(conn))
 		}
 	case pushPullMsg:
-		// Increment counter of pending push/pulls
-		numConcurrent := atomic.AddUint32(&m.pushPullReq, 1)
-		defer atomic.AddUint32(&m.pushPullReq, ^uint32(0))
-
-		// Check if we have too many open push/pull requests
-		if numConcurrent >= maxPushPullRequests {
-			m.logger.Printf("[ERR] memberlist: Too many pending push/pull requests")
-			return
-		}
-
 		join, remoteNodes, userState, err := m.readRemoteState(bufConn, dec)
 		if err != nil {
 			m.logger.Printf("[ERR] memberlist: Failed to read remote state: %s %s", err, LogConn(conn))
@@ -314,13 +283,8 @@ func (m *Memberlist) ingestPacket(buf []byte, from net.Addr, timestamp time.Time
 		// Decrypt the payload
 		plain, err := decryptPayload(m.config.Keyring.GetKeys(), buf, nil)
 		if err != nil {
-			if !m.config.GossipVerifyIncoming {
-				// Treat the message as plaintext
-				plain = buf
-			} else {
-				m.logger.Printf("[ERR] memberlist: Decrypt packet failed: %v %s", err, LogAddress(from))
-				return
-			}
+			m.logger.Printf("[ERR] memberlist: Decrypt packet failed: %v %s", err, LogAddress(from))
+			return
 		}
 
 		// Continue processing the plaintext buffer
@@ -369,47 +333,15 @@ func (m *Memberlist) handleCommand(buf []byte, from net.Addr, timestamp time.Tim
 	case deadMsg:
 		fallthrough
 	case userMsg:
-		// Determine the message queue, prioritize alive
-		queue := m.lowPriorityMsgQueue
-		if msgType == aliveMsg {
-			queue = m.highPriorityMsgQueue
-		}
-
-		// Check for overflow and append if not full
-		m.msgQueueLock.Lock()
-		if queue.Len() >= m.config.HandoffQueueDepth {
-			m.logger.Printf("[WARN] memberlist: handler queue full, dropping message (%d) %s", msgType, LogAddress(from))
-		} else {
-			queue.PushBack(msgHandoff{msgType, buf, from})
-		}
-		m.msgQueueLock.Unlock()
-
-		// Notify of pending message
 		select {
-		case m.handoffCh <- struct{}{}:
+		case m.handoff <- msgHandoff{msgType, buf, from}:
 		default:
+			m.logger.Printf("[WARN] memberlist: handler queue full, dropping message (%d) %s", msgType, LogAddress(from))
 		}
 
 	default:
 		m.logger.Printf("[ERR] memberlist: msg type (%d) not supported %s", msgType, LogAddress(from))
 	}
-}
-
-// getNextMessage returns the next message to process in priority order, using LIFO
-func (m *Memberlist) getNextMessage() (msgHandoff, bool) {
-	m.msgQueueLock.Lock()
-	defer m.msgQueueLock.Unlock()
-
-	if el := m.highPriorityMsgQueue.Back(); el != nil {
-		m.highPriorityMsgQueue.Remove(el)
-		msg := el.Value.(msgHandoff)
-		return msg, true
-	} else if el := m.lowPriorityMsgQueue.Back(); el != nil {
-		m.lowPriorityMsgQueue.Remove(el)
-		msg := el.Value.(msgHandoff)
-		return msg, true
-	}
-	return msgHandoff{}, false
 }
 
 // packetHandler is a long running goroutine that processes messages received
@@ -418,28 +350,22 @@ func (m *Memberlist) getNextMessage() (msgHandoff, bool) {
 func (m *Memberlist) packetHandler() {
 	for {
 		select {
-		case <-m.handoffCh:
-			for {
-				msg, ok := m.getNextMessage()
-				if !ok {
-					break
-				}
-				msgType := msg.msgType
-				buf := msg.buf
-				from := msg.from
+		case msg := <-m.handoff:
+			msgType := msg.msgType
+			buf := msg.buf
+			from := msg.from
 
-				switch msgType {
-				case suspectMsg:
-					m.handleSuspect(buf, from)
-				case aliveMsg:
-					m.handleAlive(buf, from)
-				case deadMsg:
-					m.handleDead(buf, from)
-				case userMsg:
-					m.handleUser(buf, from)
-				default:
-					m.logger.Printf("[ERR] memberlist: Message type (%d) not supported %s (packet handler)", msgType, LogAddress(from))
-				}
+			switch msgType {
+			case suspectMsg:
+				m.handleSuspect(buf, from)
+			case aliveMsg:
+				m.handleAlive(buf, from)
+			case deadMsg:
+				m.handleDead(buf, from)
+			case userMsg:
+				m.handleUser(buf, from)
+			default:
+				m.logger.Printf("[ERR] memberlist: Message type (%d) not supported %s (packet handler)", msgType, LogAddress(from))
 			}
 
 		case <-m.shutdownCh:
@@ -631,7 +557,7 @@ func (m *Memberlist) encodeAndSendMsg(addr string, msgType messageType, msg inte
 func (m *Memberlist) sendMsg(addr string, msg []byte) error {
 	// Check if we can piggy back any messages
 	bytesAvail := m.config.UDPBufferSize - len(msg) - compoundHeaderOverhead
-	if m.config.EncryptionEnabled() && m.config.GossipVerifyOutgoing {
+	if m.config.EncryptionEnabled() {
 		bytesAvail -= encryptOverhead(m.encryptionVersion())
 	}
 	extra := m.getBroadcasts(compoundOverhead, bytesAvail)
@@ -695,7 +621,7 @@ func (m *Memberlist) rawSendMsgPacket(addr string, node *Node, msg []byte) error
 	}
 
 	// Check if we have encryption enabled
-	if m.config.EncryptionEnabled() && m.config.GossipVerifyOutgoing {
+	if m.config.EncryptionEnabled() {
 		// Encrypt the payload
 		var buf bytes.Buffer
 		primaryKey := m.config.Keyring.GetPrimaryKey()
@@ -726,7 +652,7 @@ func (m *Memberlist) rawSendMsgStream(conn net.Conn, sendBuf []byte) error {
 	}
 
 	// Check if encryption is enabled
-	if m.config.EncryptionEnabled() && m.config.GossipVerifyOutgoing {
+	if m.config.EncryptionEnabled() {
 		crypt, err := m.encryptLocalState(sendBuf)
 		if err != nil {
 			m.logger.Printf("[ERROR] memberlist: Failed to encrypt local state: %v", err)
@@ -793,14 +719,6 @@ func (m *Memberlist) sendAndReceiveState(addr string, join bool) ([]pushNodeStat
 	msgType, bufConn, dec, err := m.readStream(conn)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	if msgType == errMsg {
-		var resp errResp
-		if err := dec.Decode(&resp); err != nil {
-			return nil, nil, err
-		}
-		return nil, nil, fmt.Errorf("remote error: %v", resp.Error)
 	}
 
 	// Quit if not push/pull
@@ -958,7 +876,7 @@ func (m *Memberlist) readStream(conn net.Conn) (messageType, io.Reader, *codec.D
 		// Reset message type and bufConn
 		msgType = messageType(plain[0])
 		bufConn = bytes.NewReader(plain[1:])
-	} else if m.config.EncryptionEnabled() && m.config.GossipVerifyIncoming {
+	} else if m.config.EncryptionEnabled() {
 		return 0, nil, nil,
 			fmt.Errorf("Encryption is configured but remote state is not encrypted")
 	}
@@ -1109,7 +1027,7 @@ func (m *Memberlist) readUserMsg(bufConn io.Reader, dec *codec.Decoder) error {
 // operations, given the deadline. The bool return parameter is true if we
 // we able to round trip a ping to the other node.
 func (m *Memberlist) sendPingAndWaitForAck(addr string, ping ping, deadline time.Time) (bool, error) {
-	conn, err := m.transport.DialTimeout(addr, deadline.Sub(time.Now()))
+	conn, err := m.transport.DialTimeout(addr, m.config.TCPTimeout)
 	if err != nil {
 		// If the node is actually dead we expect this to fail, so we
 		// shouldn't spam the logs with it. After this point, errors
@@ -1144,7 +1062,7 @@ func (m *Memberlist) sendPingAndWaitForAck(addr string, ping ping, deadline time
 	}
 
 	if ack.SeqNo != ping.SeqNo {
-		return false, fmt.Errorf("Sequence number from ack (%d) doesn't match ping (%d)", ack.SeqNo, ping.SeqNo)
+		return false, fmt.Errorf("Sequence number from ack (%d) doesn't match ping (%d)", ack.SeqNo, ping.SeqNo, LogConn(conn))
 	}
 
 	return true, nil
