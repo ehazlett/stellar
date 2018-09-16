@@ -46,7 +46,6 @@ require (
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/mholt/caddy v0.0.0-20180907212407-13a54dbdda25
 	github.com/miekg/dns v1.0.9
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect

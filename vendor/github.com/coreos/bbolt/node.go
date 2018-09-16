@@ -1,4 +1,4 @@
-package bbolt
+package bolt
 
 import (
 	"bytes"
@@ -365,7 +365,7 @@ func (n *node) spill() error {
 		}
 
 		// Allocate contiguous space for the node.
-		p, err := tx.allocate((node.size() + tx.db.pageSize - 1) / tx.db.pageSize)
+		p, err := tx.allocate((node.size() / tx.db.pageSize) + 1)
 		if err != nil {
 			return err
 		}
