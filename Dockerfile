@@ -1,4 +1,4 @@
-FROM golang:1.10 AS build
+FROM golang:1.11 AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git make curl build-essential bash git autoconf automake libtool unzip file ca-certificates

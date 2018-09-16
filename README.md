@@ -36,7 +36,7 @@ case.  Enjoy :)
 # Building
 In order to build Stellar you will need the following:
 
-- A [working Go environment](https://golang.org/doc/code.html)
+- A [working Go environment](https://golang.org/doc/code.html) (1.11+)
 - Protoc 3.x compiler and headers (download at the [Google releases page](https://github.com/google/protobuf/releases))
 
 Once you have the requirements you can build.
