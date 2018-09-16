@@ -19,6 +19,7 @@ RUN go get -v github.com/golang/lint/golint
 RUN go get -v github.com/tebeka/go2xunit
 ENV APP stellar
 ENV REPO ehazlett/$APP
+ENV GO111MODULE on
 COPY . /go/src/github.com/$REPO
 WORKDIR /go/src/github.com/$REPO
 RUN make
