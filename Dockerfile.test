@@ -2,7 +2,7 @@ FROM golang:1.11-alpine AS build
 
 ARG GOOS
 ARG GOARCH
-RUN apk add -U git make curl build-base bash git autoconf automake libtool unzip file
+RUN apk add -U git make curl build-base bash git autoconf automake libtool unzip file bzr
 RUN git clone https://github.com/google/protobuf /tmp/protobuf && \
     cd /tmp/protobuf && \
     ./autogen.sh && \
@@ -21,4 +21,5 @@ ENV APP stellar
 ENV REPO ehazlett/$APP
 COPY . /go/src/github.com/$REPO
 WORKDIR /go/src/github.com/$REPO
+ENV GO111MODULE=on
 RUN make test
