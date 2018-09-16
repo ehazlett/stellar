@@ -96,6 +96,9 @@ test:
 test-buildkit:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.test --local context=. --local dockerfile=. --progress plain
 
+build-buildkit:
+	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./build
+
 install:
 	@install -D -m 755 cmd/$(APP)/$(APP) /usr/local/bin/
 
