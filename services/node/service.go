@@ -19,6 +19,7 @@ type service struct {
 	bridge         string
 	dataDir        string
 	stateDir       string
+	cniBinDir      string
 	agent          *element.Agent
 }
 
@@ -29,6 +30,7 @@ func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 		bridge:         cfg.Bridge,
 		dataDir:        cfg.DataDir,
 		stateDir:       cfg.StateDir,
+		cniBinDir:      cfg.CNIBinPath,
 		agent:          agent,
 	}, nil
 }

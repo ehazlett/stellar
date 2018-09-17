@@ -20,4 +20,5 @@ type Config struct {
 	ProxyHTTPSPort           int
 	ProxyTLSEmail            string
 	ProxyHealthcheckInterval time.Duration
+	CNIBinPath               string
 }
