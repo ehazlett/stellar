@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"strings"
 
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	ptypes "github.com/gogo/protobuf/types"
@@ -11,16 +12,20 @@ import (
 )
 
 func (s *service) Restart(ctx context.Context, req *api.RestartRequest) (*ptypes.Empty, error) {
-	containers, err := s.getApplicationContainers(req.Name)
+	appName := getAppName(req.Name)
+	containers, err := s.getApplicationContainers(appName)
 	if err != nil {
 		return empty, err
 	}
 
 	if len(containers) == 0 {
-		return empty, status.Errorf(codes.NotFound, "application %s not found", req.Name)
+		return empty, status.Errorf(codes.NotFound, "application %s not found", appName)
 	}
 
 	for _, cc := range containers {
+		if !strings.HasPrefix(cc.Container.ID, req.Name) {
+			continue
+		}
 		logrus.Debugf("restarting container %s on node %s", cc.Container.ID, cc.Node.Name)
 		nc, err := s.nodeClient(cc.Node.Name)
 		if err != nil {

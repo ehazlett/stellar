@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/containerd/typeurl"
 	"github.com/ehazlett/stellar"
@@ -53,4 +54,8 @@ func (s *service) getApplicationContainers(name string) ([]*clusterapi.Container
 	}
 
 	return containers, nil
+}
+
+func getAppName(name string) string {
+	return strings.Split(name, ".")[0]
 }

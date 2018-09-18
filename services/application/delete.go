@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"strings"
 
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	ptypes "github.com/gogo/protobuf/types"
@@ -22,17 +23,21 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 	}
 	defer c.Close()
 
-	containers, err := s.getApplicationContainers(req.Name)
+	appName := getAppName(req.Name)
+	containers, err := s.getApplicationContainers(appName)
 	if err != nil {
 		return empty, err
 	}
 
 	if len(containers) == 0 {
-		return empty, status.Errorf(codes.NotFound, "application %s not found", req.Name)
+		return empty, status.Errorf(codes.NotFound, "application %s not found", appName)
 	}
 
 	for _, cc := range containers {
 		id := cc.Container.ID
+		if !strings.HasPrefix(id, req.Name) {
+			continue
+		}
 		logrus.Debugf("app delete: deleting container %s", id)
 		nc, err := s.nodeClient(cc.Node.Name)
 		if err != nil {
