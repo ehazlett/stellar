@@ -1,0 +1,69 @@
+FROM golang:1.11-alpine AS build
+
+ARG GOOS
+ARG GOARCH
+RUN apk add -U git make curl build-base bash git autoconf automake libtool unzip file bzr
+RUN git clone https://github.com/google/protobuf /tmp/protobuf && \
+    cd /tmp/protobuf && \
+    ./autogen.sh && \
+    ./configure && make install
+RUN go get -v github.com/LK4D4/vndr
+RUN go get -v github.com/golang/protobuf/protoc-gen-go
+RUN go get -v github.com/gogo/protobuf/protoc-gen-gofast
+RUN go get -v github.com/gogo/protobuf/proto
+RUN go get -v github.com/gogo/protobuf/gogoproto
+RUN go get -v github.com/gogo/protobuf/protoc-gen-gogo
+RUN go get -v github.com/gogo/protobuf/protoc-gen-gogofast
+RUN go get -v github.com/stevvooe/protobuild
+RUN go get -v github.com/golang/lint/golint
+RUN go get -v github.com/tebeka/go2xunit
+
+FROM build as stellar
+ENV APP stellar
+ENV REPO ehazlett/$APP
+ENV GO111MODULE on
+COPY . /go/src/github.com/$REPO
+WORKDIR /go/src/github.com/$REPO
+RUN make
+RUN date > /release.txt
+RUN git rev-parse HEAD >> /release.txt
+
+FROM build as runc
+RUN apk add -U libseccomp-dev
+RUN git clone https://github.com/opencontainers/runc /go/src/github.com/opencontainers/runc
+WORKDIR /go/src/github.com/opencontainers/runc
+RUN git reset --hard 20aff4f0488c6d4b8df4d85b4f63f1f704c11abd
+RUN make
+
+FROM build as containerd
+RUN apk add -U btrfs-progs-dev libseccomp-dev
+RUN git clone https://github.com/containerd/containerd /go/src/github.com/containerd/containerd
+WORKDIR /go/src/github.com/containerd/containerd
+RUN make
+
+FROM golang:1.11 as cni
+RUN apt-get update && apt-get install -y build-essential
+RUN git clone https://github.com/containernetworking/plugins /go/src/github.com/containernetworking/plugins
+WORKDIR /go/src/github.com/containernetworking/plugins
+RUN ./build.sh
+
+FROM scratch as rootfs
+COPY --from=stellar /release.txt /
+COPY --from=stellar /go/src/github.com/ehazlett/stellar/bin/sctl /usr/local/bin/
+COPY --from=stellar /go/src/github.com/ehazlett/stellar/bin/stellar /usr/local/bin/
+COPY --from=stellar /go/src/github.com/ehazlett/stellar/bin/stellar-cni-ipam /opt/containerd/bin/
+COPY --from=stellar /go/src/github.com/ehazlett/stellar/contrib/stellar.service /etc/systemd/system/
+COPY --from=runc /go/src/github.com/opencontainers/runc/runc /usr/local/bin/
+COPY --from=containerd /go/src/github.com/containerd/containerd/bin/containerd /usr/local/bin/
+COPY --from=containerd /go/src/github.com/containerd/containerd/bin/containerd-shim /usr/local/bin/
+COPY --from=containerd /go/src/github.com/containerd/containerd/bin/containerd-shim-runc-v1 /usr/local/bin/
+COPY --from=cni /go/src/github.com/containernetworking/plugins/bin/bridge /opt/containerd/bin/
+COPY --from=cni /go/src/github.com/containernetworking/plugins/bin/loopback /opt/containerd/bin/
+
+FROM alpine as release
+COPY --from=rootfs / /package
+WORKDIR /package
+RUN tar czvf /stellar.tar.gz .
+
+FROM scratch
+COPY --from=release /stellar.tar.gz /
