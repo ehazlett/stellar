@@ -1,13 +1,14 @@
 package main
 
 import (
-	"net"
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/ehazlett/element"
-	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/server"
+)
+
+const (
+	localhost = "127.0.0.1"
 )
 
 var serverCommand = cli.Command{
@@ -15,6 +16,11 @@ var serverCommand = cli.Command{
 	Usage:  "run the stellar daemon",
 	Action: serverAction,
 	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "config, c",
+			Usage: "path to config file (overrides all other options)",
+			Value: "",
+		},
 		cli.StringFlag{
 			Name:  "node-name, n",
 			Usage: "agent node name",
@@ -45,7 +51,7 @@ var serverCommand = cli.Command{
 			Value: 9000,
 		},
 		cli.StringFlag{
-			Name:  "containerd-addr, c",
+			Name:  "containerd-addr",
 			Usage: "containerd socket address",
 			Value: "/run/containerd/containerd.sock",
 		},
@@ -117,45 +123,13 @@ var serverCommand = cli.Command{
 	},
 }
 
-func serverAction(c *cli.Context) error {
-	agentAddr := c.String("agent-addr")
-	bindAddr := c.String("bind-addr")
-	if agentAddr == "" {
-		agentAddr = bindAddr
-	}
-	agentConfig := &element.Config{
-		NodeName:       c.String("node-name"),
-		AgentAddr:      agentAddr,
-		AgentPort:      c.Int("agent-port"),
-		ConnectionType: c.String("connection-type"),
-		BindAddr:       bindAddr,
-		BindPort:       c.Int("bind-port"),
-		AdvertiseAddr:  c.String("advertise-addr"),
-		AdvertisePort:  c.Int("advertise-port"),
-		Peers:          c.StringSlice("peer"),
-	}
-
-	containerdAddr := c.String("containerd-addr")
-	namespace := c.String("namespace")
-
-	_, subnet, err := net.ParseCIDR(c.String("subnet"))
+func serverAction(ctx *cli.Context) error {
+	cfg, err := getConfig(ctx)
 	if err != nil {
 		return err
 	}
-	srv, err := server.NewServer(&stellar.Config{
-		AgentConfig:              agentConfig,
-		ContainerdAddr:           containerdAddr,
-		Namespace:                namespace,
-		Subnet:                   subnet,
-		DataDir:                  c.String("data-dir"),
-		StateDir:                 c.String("state-dir"),
-		Bridge:                   c.String("bridge"),
-		UpstreamDNSAddr:          c.String("upstream-dns-addr"),
-		ProxyHTTPPort:            c.Int("proxy-http-port"),
-		ProxyHTTPSPort:           c.Int("proxy-https-port"),
-		ProxyTLSEmail:            c.String("proxy-tls-email"),
-		ProxyHealthcheckInterval: c.Duration("proxy-healthcheck-interval"),
-	})
+
+	srv, err := server.NewServer(cfg)
 	if err != nil {
 		return err
 	}

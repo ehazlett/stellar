@@ -1,0 +1,13 @@
+[Unit]
+Description=stellar
+Documentation=https://github.com/ehazlett/stellar
+After=network.target containerd.service
+
+[Service]
+ExecStart=/usr/local/bin/stellar server -c /etc/stellar.conf
+LimitNOFILE=1048576
+LimitNPROC=infinity
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target

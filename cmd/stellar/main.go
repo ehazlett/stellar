@@ -23,6 +23,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		serverCommand,
+		configCommand,
 		networkCommand,
 	}
 	app.Before = func(c *cli.Context) error {
