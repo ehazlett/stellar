@@ -98,9 +98,14 @@ test-buildkit:
 
 build-buildkit:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./build
+	@chmod -R 775 ./build
+
+release:
+	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=image --exporter-opt name=docker.io/$(REPO):latest
 
 package:
-	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.package --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./
+	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.package --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./build
+	@chmod -R 775 ./build
 
 install:
 	@install -D -m 755 cmd/$(APP)/$(APP) /usr/local/bin/
@@ -111,4 +116,4 @@ vendor:
 clean:
 	@rm -rf bin/
 
-.PHONY: generate clean docs docker-build docker-generate check test install vendor daemon cli binaries
+.PHONY: generate clean docs docker-build docker-generate check test install vendor daemon cli binaries release test-buildkit build-buildkit package
