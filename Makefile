@@ -93,8 +93,11 @@ check: vet lint
 test:
 	@go test -short -v -cover $(TEST_ARGS) ${PACKAGES}
 
+test-xunit:
+	@2>&1 go test -short -v -cover $(TEST_ARGS) ${PACKAGES} | go2xunit -output tests.xml
+
 test-buildkit:
-	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.test --local context=. --local dockerfile=. --progress plain
+	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.test --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./
 
 build-buildkit:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./build

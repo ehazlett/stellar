@@ -23,3 +23,6 @@ COPY . /go/src/github.com/$REPO
 WORKDIR /go/src/github.com/$REPO
 ENV GO111MODULE=on
 RUN make test
+
+FROM scratch
+COPY --from=build /go/src/github.com/ehazlett/stellar/tests.xml /
