@@ -72,6 +72,7 @@ COPY --from=stellar /go/src/github.com/ehazlett/stellar/bin/stellar-cni-ipam /op
 COPY --from=stellar /go/src/github.com/ehazlett/stellar/contrib/containerd.service /etc/systemd/system/
 COPY --from=stellar /go/src/github.com/ehazlett/stellar/contrib/buildkit.service /etc/systemd/system/
 COPY --from=stellar /go/src/github.com/ehazlett/stellar/contrib/stellar.service /etc/systemd/system/
+COPY --from=stellar /go/src/github.com/ehazlett/stellar/contrib/stellar.conf /etc/stellar.conf
 COPY --from=runc /go/src/github.com/opencontainers/runc/runc /usr/local/bin/
 COPY --from=containerd /go/src/github.com/containerd/containerd/bin/ctr /usr/local/bin/
 COPY --from=containerd /go/src/github.com/containerd/containerd/bin/containerd /usr/local/bin/
