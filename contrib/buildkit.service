@@ -1,0 +1,13 @@
+[Unit]
+Description=buildkit
+Documentation=https://github.com/moby/buildkit
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/buildkitd --containerd-worker=true --oci-worker=false
+LimitNOFILE=1048576
+LimitNPROC=infinity
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target
