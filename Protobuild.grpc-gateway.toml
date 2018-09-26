@@ -1,11 +1,11 @@
 version = "unstable"
 
-generator = "gogo"
+generator = "grpc-gateway"
 
 # Plugins allows one to specify one or more plugins for use in generation.
 #
 # The common example grpc is provided below.
-plugins = ["grpc"]
+plugins = []
 
 # Control protoc include paths. Below are usually some good defaults, but feel
 # free to try it without them if it works for your project.

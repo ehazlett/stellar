@@ -37,6 +37,10 @@ type Config struct {
 	ProxyTLSEmail string
 	// ProxyHealthcheckInterval is the interval used by the proxy service to check upstreams
 	ProxyHealthcheckInterval time.Duration
+	// GatewayAddr is the http addr to use for the http/json API
+	GatewayAddr string
+	// GatewayPort is the http port to use for the http/json API
+	GatewayPort int
 }
 
 // MarshalJSON is a custom json marshaller for better ux

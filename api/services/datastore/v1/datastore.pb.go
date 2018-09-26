@@ -8,10 +8,8 @@ import fmt "fmt"
 import math "math"
 import types "github.com/gogo/protobuf/types"
 
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -810,9 +808,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// DatastoreClient is the client API for Datastore service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for Datastore service
+
 type DatastoreClient interface {
 	AcquireLock(ctx context.Context, in *AcquireLockRequest, opts ...grpc.CallOption) (*types.Empty, error)
 	ReleaseLock(ctx context.Context, in *ReleaseLockRequest, opts ...grpc.CallOption) (*types.Empty, error)
@@ -967,7 +964,8 @@ func (c *datastoreClient) PeerSync(ctx context.Context, in *PeerSyncRequest, opt
 	return out, nil
 }
 
-// DatastoreServer is the server API for Datastore service.
+// Server API for Datastore service
+
 type DatastoreServer interface {
 	AcquireLock(context.Context, *AcquireLockRequest) (*types.Empty, error)
 	ReleaseLock(context.Context, *ReleaseLockRequest) (*types.Empty, error)

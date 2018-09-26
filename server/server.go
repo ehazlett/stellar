@@ -17,6 +17,7 @@ import (
 	applicationservice "github.com/ehazlett/stellar/services/application"
 	clusterservice "github.com/ehazlett/stellar/services/cluster"
 	datastoreservice "github.com/ehazlett/stellar/services/datastore"
+	gatewayservice "github.com/ehazlett/stellar/services/gateway"
 	healthservice "github.com/ehazlett/stellar/services/health"
 	nameserverservice "github.com/ehazlett/stellar/services/nameserver"
 	networkservice "github.com/ehazlett/stellar/services/network"
@@ -71,6 +72,11 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		return nil, err
 	}
 
+	gs, err := gatewayservice.New(cfg, a)
+	if err != nil {
+		return nil, err
+	}
+
 	netSvc, err := networkservice.New(cfg, a, ds)
 	if err != nil {
 		return nil, err
@@ -95,7 +101,7 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		return nil, err
 	}
 	// register with agent
-	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, netSvc, appSvc, nsSvc, proxySvc}
+	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc}
 	for _, svc := range svcs {
 		if err := a.Register(svc); err != nil {
 			return nil, err

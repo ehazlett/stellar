@@ -10,10 +10,8 @@ import math "math"
 // skipping weak import gogoproto "github.com/gogo/protobuf/gogoproto"
 import types "github.com/gogo/protobuf/types"
 
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -386,9 +384,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// NameserverClient is the client API for Nameserver service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for Nameserver service
+
 type NameserverClient interface {
 	Lookup(ctx context.Context, in *LookupRequest, opts ...grpc.CallOption) (*LookupResponse, error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
@@ -440,7 +437,8 @@ func (c *nameserverClient) Delete(ctx context.Context, in *DeleteRequest, opts .
 	return out, nil
 }
 
-// NameserverServer is the server API for Nameserver service.
+// Server API for Nameserver service
+
 type NameserverServer interface {
 	Lookup(context.Context, *LookupRequest) (*LookupResponse, error)
 	List(context.Context, *ListRequest) (*ListResponse, error)

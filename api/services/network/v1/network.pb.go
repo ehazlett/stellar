@@ -10,10 +10,8 @@ import math "math"
 // skipping weak import gogoproto "github.com/gogo/protobuf/gogoproto"
 import types "github.com/gogo/protobuf/types"
 
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -796,9 +794,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// NetworkClient is the client API for Network service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for Network service
+
 type NetworkClient interface {
 	AllocateSubnet(ctx context.Context, in *AllocateSubnetRequest, opts ...grpc.CallOption) (*AllocateSubnetResponse, error)
 	GetSubnet(ctx context.Context, in *GetSubnetRequest, opts ...grpc.CallOption) (*GetSubnetResponse, error)
@@ -920,7 +917,8 @@ func (c *networkClient) Routes(ctx context.Context, in *types.Empty, opts ...grp
 	return out, nil
 }
 
-// NetworkServer is the server API for Network service.
+// Server API for Network service
+
 type NetworkServer interface {
 	AllocateSubnet(context.Context, *AllocateSubnetRequest) (*AllocateSubnetResponse, error)
 	GetSubnet(context.Context, *GetSubnetRequest) (*GetSubnetResponse, error)
