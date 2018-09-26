@@ -35,13 +35,13 @@ generate:
 	@echo ${PACKAGES} | xargs protobuild -quiet
 
 docker-generate:
-	@echo "** This uses a separate Dockerfile (Dockerfile.build) **"
-	@docker build -t $(APP)-dev -f Dockerfile.build .
+	@echo "** This uses a separate Dockerfile (Dockerfile.dev) **"
+	@docker build -t $(APP)-dev -f Dockerfile.dev .
 	@docker run --rm -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make generate; find api -name \"*.pb.go\" | tar -T - -cf -" | tar -xvf -
 
 docker-build: bindir
-	@echo "** This uses a separate Dockerfile (Dockerfile.build) **"
-	@docker build -t $(APP)-dev -f Dockerfile.build .
+	@echo "** This uses a separate Dockerfile (Dockerfile.dev) **"
+	@docker build -t $(APP)-dev -f Dockerfile.dev .
 	@docker run --rm -e GOOS=${GOOS} -e GOARCH=${GOARCH} -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make cli daemon cni-ipam; tar -C ./bin -cf - ." | tar -C ./bin -xf -
 	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
