@@ -27,12 +27,13 @@ require (
 	github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d
 	github.com/ehazlett/blackbird v0.0.0-20180916032155-929d2a896eed
 	github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55
-	github.com/go-ini/ini v1.38.2 // indirect
 	github.com/godbus/dbus v4.1.0+incompatible // indirect
-	github.com/gogo/googleapis v1.1.0 // indirect
+	github.com/gogo/googleapis v1.1.0
 	github.com/gogo/protobuf v1.1.1
+	github.com/golang/protobuf v1.2.0
 	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.5.0
 	github.com/hashicorp/consul v1.2.3 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
@@ -43,7 +44,7 @@ require (
 	github.com/hashicorp/memberlist v0.1.0 // indirect
 	github.com/hashicorp/serf v0.8.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180826203732-cc6d2ea263b2 // indirect
-	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/miekg/dns v1.0.9
@@ -69,7 +70,6 @@ require (
 	go.etcd.io/bbolt v1.3.0 // indirect
 	golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3
 	golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
-	golang.org/x/tools v0.0.0-20180911133044-677d2ff680c1 // indirect
 	google.golang.org/grpc v1.15.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect

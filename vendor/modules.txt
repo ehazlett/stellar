@@ -109,13 +109,14 @@ github.com/ehazlett/element
 # github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 github.com/flynn/go-shlex
 # github.com/gogo/googleapis v1.1.0
+github.com/gogo/googleapis/google/api
 github.com/gogo/googleapis/google/rpc
 # github.com/gogo/protobuf v1.1.1
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/types
 github.com/gogo/protobuf/gogoproto
-github.com/gogo/protobuf/sortkeys
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
+github.com/gogo/protobuf/sortkeys
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
