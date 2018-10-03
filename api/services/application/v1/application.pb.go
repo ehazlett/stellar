@@ -9,10 +9,8 @@ import math "math"
 import v1 "github.com/ehazlett/stellar/api/services/node/v1"
 import types "github.com/gogo/protobuf/types"
 
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -364,9 +362,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// ApplicationClient is the client API for Application service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for Application service
+
 type ApplicationClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*types.Empty, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*types.Empty, error)
@@ -428,7 +425,8 @@ func (c *applicationClient) Restart(ctx context.Context, in *RestartRequest, opt
 	return out, nil
 }
 
-// ApplicationServer is the server API for Application service.
+// Server API for Application service
+
 type ApplicationServer interface {
 	Create(context.Context, *CreateRequest) (*types.Empty, error)
 	Delete(context.Context, *DeleteRequest) (*types.Empty, error)

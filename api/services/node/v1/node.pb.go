@@ -9,10 +9,8 @@ import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 import types "github.com/gogo/protobuf/types"
 
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -964,9 +962,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// NodeClient is the client API for Node service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for Node service
+
 type NodeClient interface {
 	Containers(ctx context.Context, in *ContainersRequest, opts ...grpc.CallOption) (*ContainersResponse, error)
 	Container(ctx context.Context, in *ContainerRequest, opts ...grpc.CallOption) (*ContainerResponse, error)
@@ -1048,7 +1045,8 @@ func (c *nodeClient) RestartContainer(ctx context.Context, in *RestartContainerR
 	return out, nil
 }
 
-// NodeServer is the server API for Node service.
+// Server API for Node service
+
 type NodeServer interface {
 	Containers(context.Context, *ContainersRequest) (*ContainersResponse, error)
 	Container(context.Context, *ContainerRequest) (*ContainerResponse, error)

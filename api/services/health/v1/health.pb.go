@@ -9,10 +9,8 @@ import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 import types "github.com/gogo/protobuf/types"
 
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -218,9 +216,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// HealthClient is the client API for Health service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for Health service
+
 type HealthClient interface {
 	Health(ctx context.Context, in *types.Empty, opts ...grpc.CallOption) (*HealthResponse, error)
 }
@@ -242,7 +239,8 @@ func (c *healthClient) Health(ctx context.Context, in *types.Empty, opts ...grpc
 	return out, nil
 }
 
-// HealthServer is the server API for Health service.
+// Server API for Health service
+
 type HealthServer interface {
 	Health(context.Context, *types.Empty) (*HealthResponse, error)
 }

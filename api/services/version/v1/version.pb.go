@@ -10,10 +10,8 @@ import math "math"
 // skipping weak import gogoproto "github.com/gogo/protobuf/gogoproto"
 import types "github.com/gogo/protobuf/types"
 
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import context "golang.org/x/net/context"
+import grpc "google.golang.org/grpc"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -100,9 +98,8 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// VersionClient is the client API for Version service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+// Client API for Version service
+
 type VersionClient interface {
 	Version(ctx context.Context, in *types.Empty, opts ...grpc.CallOption) (*VersionResponse, error)
 }
@@ -124,7 +121,8 @@ func (c *versionClient) Version(ctx context.Context, in *types.Empty, opts ...gr
 	return out, nil
 }
 
-// VersionServer is the server API for Version service.
+// Server API for Version service
+
 type VersionServer interface {
 	Version(context.Context, *types.Empty) (*VersionResponse, error)
 }

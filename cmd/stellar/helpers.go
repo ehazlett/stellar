@@ -64,6 +64,7 @@ func getConfig(ctx *cli.Context) (*stellar.Config, error) {
 
 	agentAddr := ctx.String("agent-addr")
 	bindAddr := ctx.String("bind-addr")
+	gatewayAddr := ctx.String("gateway-addr")
 	if agentAddr == "" {
 		agentAddr = bindAddr
 	}
@@ -98,5 +99,7 @@ func getConfig(ctx *cli.Context) (*stellar.Config, error) {
 		ProxyHTTPSPort:           ctx.Int("proxy-https-port"),
 		ProxyTLSEmail:            ctx.String("proxy-tls-email"),
 		ProxyHealthcheckInterval: ctx.Duration("proxy-healthcheck-interval"),
+		GatewayAddr:              gatewayAddr,
+		GatewayPort:              ctx.Int("gateway-port"),
 	}, nil
 }

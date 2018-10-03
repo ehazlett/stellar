@@ -2,15 +2,19 @@ syntax = "proto3";
 
 package stellar.services.cluster.v1;
 
+import weak "google/api/annotations.proto";
+
 import "api/services/node/v1/node.proto";
-import "github.com/ehazlett/stellar/api/services/health/v1/health.proto";
+import "api/services/health/v1/health.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/cluster/v1;cluster";
 
 service Cluster {
   rpc Containers(ContainersRequest) returns (ContainersResponse);
   rpc Images(ImagesRequest) returns (ImagesResponse);
-  rpc Nodes(NodesRequest) returns (NodesResponse);
+  rpc Nodes(NodesRequest) returns (NodesResponse) {
+    option (google.api.http).get = "/v1/cluster/nodes";
+  };
   rpc Health(HealthRequest) returns (HealthResponse);
 }
 

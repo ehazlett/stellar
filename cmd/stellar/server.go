@@ -51,6 +51,15 @@ var serverCommand = cli.Command{
 			Value: 9000,
 		},
 		cli.StringFlag{
+			Name:  "gateway-addr",
+			Usage: "gateway addr",
+		},
+		cli.IntFlag{
+			Name:  "gateway-port",
+			Usage: "gateway port",
+			Value: 9001,
+		},
+		cli.StringFlag{
 			Name:  "containerd-addr",
 			Usage: "containerd socket address",
 			Value: "/run/containerd/containerd.sock",

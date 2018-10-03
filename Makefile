@@ -32,7 +32,10 @@ deps-init:
 	@rm -rf vendor/gopkg.in/square/.git
 
 generate:
+	@echo " -> building protobufs for grpc"
 	@echo ${PACKAGES} | xargs protobuild -quiet
+	@echo " -> building protobufs for grpc-gateway"
+	@echo ${PACKAGES} | xargs protobuild -f Protobuild.grpc-gateway.toml -quiet
 
 docker-generate:
 	@echo "** This uses a separate Dockerfile (Dockerfile.dev) **"
