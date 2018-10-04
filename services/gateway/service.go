@@ -26,7 +26,7 @@ type service struct {
 
 func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
 	return &service{
-		grpcHost:    fmt.Sprintf("localhost:%d", cfg.AgentConfig.AgentPort),
+		grpcHost:    fmt.Sprintf("%s:%d", cfg.AgentConfig.AgentAddr, cfg.AgentConfig.AgentPort),
 		gatewayAddr: cfg.GatewayAddr,
 		gatewayPort: cfg.GatewayPort,
 	}, nil
@@ -59,5 +59,11 @@ func (s *service) Start() error {
 		"gatewayPort": s.gatewayPort,
 	}).Info("starting http gateway")
 
-	return http.ListenAndServe(fmt.Sprintf("%s:%d", s.gatewayAddr, s.gatewayPort), mux)
+	go func() {
+		if err := http.ListenAndServe(fmt.Sprintf("%s:%d", s.gatewayAddr, s.gatewayPort), mux); err != nil {
+			logrus.Error(err)
+		}
+	}()
+
+	return nil
 }

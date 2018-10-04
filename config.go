@@ -41,6 +41,8 @@ type Config struct {
 	GatewayAddr string
 	// GatewayPort is the http port to use for the http/json API
 	GatewayPort int
+	// CNIBinPaths are paths to search for CNI plugin binaries
+	CNIBinPaths []string
 }
 
 // MarshalJSON is a custom json marshaller for better ux

@@ -575,8 +575,7 @@ func (s *service) getNetworkConf() ([]byte, error) {
 }
 
 func (s *service) getNetwork(opts ...gocni.CNIOpt) (gocni.CNI, error) {
-	network, err := gocni.New(
-		gocni.WithPluginDir([]string{"/opt/containerd/bin", "/opt/cni/bin"}))
+	network, err := gocni.New(gocni.WithPluginDir(s.cniBinPaths))
 	if err != nil {
 		return nil, err
 	}
