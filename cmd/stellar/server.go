@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/codegangsta/cli"
@@ -144,7 +143,6 @@ func serverAction(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Println(cfg)
 	srv, err := server.NewServer(cfg)
 	if err != nil {
 		return err

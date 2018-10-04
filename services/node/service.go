@@ -6,7 +6,6 @@ import (
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/node/v1"
 	"github.com/ehazlett/stellar/client"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -46,9 +45,6 @@ func (s *service) ID() string {
 }
 
 func (s *service) Start() error {
-	logrus.WithFields(logrus.Fields{
-		"cni-paths": s.cniBinPaths,
-	}).Debug("configuring cni paths")
 	return nil
 }
 

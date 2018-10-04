@@ -42,11 +42,11 @@ func (s *service) ID() string {
 
 func (s *service) Start() error {
 	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	mux := runtime.NewServeMux()
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(),
+		grpc.WithWaitForHandshake(),
+	}
 
 	err := cluster.RegisterClusterHandlerFromEndpoint(ctx, mux, s.grpcHost, opts)
 	if err != nil {

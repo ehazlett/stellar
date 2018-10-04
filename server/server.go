@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -34,6 +35,7 @@ var (
 	reconcileInterval = time.Second * 10
 	// TODO: make configurable
 	datastoreSyncInterval = time.Second * 300
+	serviceStartTimeout   = time.Second * 5
 )
 
 type Server struct {
@@ -289,11 +291,34 @@ func (s *Server) Run() error {
 	}()
 
 	// start services
+	wg := &sync.WaitGroup{}
+	start := time.Now()
 	for _, svc := range s.services {
-		if err := svc.Start(); err != nil {
-			errCh <- err
-		}
+		wg.Add(1)
+		go func(s services.Service) {
+			defer wg.Done()
+			logrus.WithFields(logrus.Fields{
+				"service": s.ID(),
+			}).Debug("starting service")
+			doneCh := make(chan bool, 1)
+			go func() {
+				if err := s.Start(); err != nil {
+					errCh <- err
+				}
+				doneCh <- true
+			}()
+			select {
+			case <-doneCh:
+				return
+			case <-time.After(serviceStartTimeout):
+				errCh <- fmt.Errorf("timeout starting service %s", s.ID())
+			}
+		}(svc)
 	}
+	wg.Wait()
+	logrus.WithFields(logrus.Fields{
+		"duration": time.Since(start),
+	}).Debug("services started")
 
 	for {
 		select {
