@@ -43,7 +43,6 @@ func (s *service) ID() string {
 func (s *service) Start() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
@@ -60,6 +59,7 @@ func (s *service) Start() error {
 	}).Info("starting http gateway")
 
 	go func() {
+		defer cancel()
 		if err := http.ListenAndServe(fmt.Sprintf("%s:%d", s.gatewayAddr, s.gatewayPort), mux); err != nil {
 			logrus.Error(err)
 		}
