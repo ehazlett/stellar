@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/pprof"
 	"sync"
 	"syscall"
 	"time"
@@ -254,7 +257,7 @@ func (s *Server) init() error {
 
 func (s *Server) Run() error {
 	signals := make(chan os.Signal, 32)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
 
 	if err := s.agent.Start(); err != nil {
 		return err
@@ -326,6 +329,22 @@ func (s *Server) Run() error {
 			logrus.Error(err)
 		case sig := <-signals:
 			switch sig {
+			case syscall.SIGUSR1:
+				logrus.Debug("generating memory profile")
+				tmpfile, err := ioutil.TempFile("", "stellar-profile-")
+				if err != nil {
+					logrus.Error(err)
+					continue
+				}
+				runtime.GC()
+				if err := pprof.WriteHeapProfile(tmpfile); err != nil {
+					logrus.Error(err)
+					continue
+				}
+				tmpfile.Close()
+				logrus.WithFields(logrus.Fields{
+					"profile": tmpfile.Name(),
+				}).Info("generated memory profile")
 			case syscall.SIGTERM, syscall.SIGINT:
 				logrus.Info("shutting down")
 
