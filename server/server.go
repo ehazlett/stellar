@@ -7,12 +7,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"os"
-	"os/signal"
 	"runtime"
 	"runtime/pprof"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/ehazlett/element"
@@ -23,6 +20,7 @@ import (
 	applicationservice "github.com/ehazlett/stellar/services/application"
 	clusterservice "github.com/ehazlett/stellar/services/cluster"
 	datastoreservice "github.com/ehazlett/stellar/services/datastore"
+	eventsservice "github.com/ehazlett/stellar/services/events"
 	gatewayservice "github.com/ehazlett/stellar/services/gateway"
 	healthservice "github.com/ehazlett/stellar/services/health"
 	nameserverservice "github.com/ehazlett/stellar/services/nameserver"
@@ -43,15 +41,19 @@ var (
 	// TODO: make configurable
 	datastoreSyncInterval = time.Second * 300
 	serviceStartTimeout   = time.Second * 5
+	serviceStopTimeout    = time.Second * 5
 )
 
 type Server struct {
-	agent       *element.Agent
-	grpcServer  *grpc.Server
-	config      *stellar.Config
-	synced      bool
-	nodeEventCh chan *element.NodeEvent
-	services    []services.Service
+	agent               *element.Agent
+	grpcServer          *grpc.Server
+	config              *stellar.Config
+	synced              bool
+	nodeEventCh         chan *element.NodeEvent
+	services            []services.Service
+	tickerReconcile     *time.Ticker
+	tickerDatastoreSync *time.Ticker
+	errCh               chan error
 }
 
 func NewServer(cfg *stellar.Config) (*Server, error) {
@@ -113,6 +115,10 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	eventsSvc, err := eventsservice.New(cfg, a)
+	if err != nil {
+		return nil, err
+	}
 
 	grpcOpts := []grpc.ServerOption{}
 	if cfg.TLSServerCertificate != "" && cfg.TLSServerKey != "" {
@@ -134,7 +140,7 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	// register with agent
-	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc}
+	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc, eventsSvc}
 	for _, svc := range svcs {
 		if err := svc.Register(grpcServer); err != nil {
 			return nil, err
@@ -152,6 +158,7 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		config:      cfg,
 		nodeEventCh: nodeEventCh,
 		services:    svcs,
+		errCh:       make(chan error),
 	}
 
 	go srv.eventHandler(nodeEventCh)
@@ -282,9 +289,6 @@ func (s *Server) init() error {
 }
 
 func (s *Server) Run() error {
-	signals := make(chan os.Signal, 32)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
-
 	l, err := net.Listen("tcp", s.config.GRPCAddress)
 	if err != nil {
 		return err
@@ -306,22 +310,28 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	errCh := make(chan error)
-	tickerReconcile := time.NewTicker(reconcileInterval)
-	tickerDatastoreSync := time.NewTicker(datastoreSyncInterval)
+	go func() {
+		for {
+			err := <-s.errCh
+			logrus.Error(err)
+		}
+	}()
+
+	s.tickerReconcile = time.NewTicker(reconcileInterval)
+	s.tickerDatastoreSync = time.NewTicker(datastoreSyncInterval)
 
 	go func() {
-		for range tickerReconcile.C {
+		for range s.tickerReconcile.C {
 			if err := s.reconcile(); err != nil {
-				errCh <- err
+				s.errCh <- err
 			}
 		}
 	}()
 
 	go func() {
-		for range tickerDatastoreSync.C {
+		for range s.tickerDatastoreSync.C {
 			if err := s.syncPeerDatastores(); err != nil {
-				errCh <- err
+				s.errCh <- err
 			}
 		}
 	}()
@@ -331,15 +341,15 @@ func (s *Server) Run() error {
 	start := time.Now()
 	for _, svc := range s.services {
 		wg.Add(1)
-		go func(s services.Service) {
+		go func(svc services.Service) {
 			defer wg.Done()
 			logrus.WithFields(logrus.Fields{
-				"service": s.ID(),
+				"service": svc.ID(),
 			}).Debug("starting service")
 			doneCh := make(chan bool, 1)
 			go func() {
-				if err := s.Start(); err != nil {
-					errCh <- err
+				if err := svc.Start(); err != nil {
+					s.errCh <- err
 				}
 				doneCh <- true
 			}()
@@ -347,57 +357,15 @@ func (s *Server) Run() error {
 			case <-doneCh:
 				return
 			case <-time.After(serviceStartTimeout):
-				errCh <- fmt.Errorf("timeout starting service %s", s.ID())
+				s.errCh <- fmt.Errorf("timeout starting service %s", svc.ID())
 			}
 		}(svc)
 	}
 	wg.Wait()
+
 	logrus.WithFields(logrus.Fields{
 		"duration": time.Since(start),
 	}).Debug("services started")
-
-	for {
-		select {
-		case err := <-errCh:
-			logrus.Error(err)
-		case sig := <-signals:
-			switch sig {
-			case syscall.SIGUSR1:
-				logrus.Debug("generating memory profile")
-				tmpfile, err := ioutil.TempFile("", "stellar-profile-")
-				if err != nil {
-					logrus.Error(err)
-					continue
-				}
-				runtime.GC()
-				if err := pprof.WriteHeapProfile(tmpfile); err != nil {
-					logrus.Error(err)
-					continue
-				}
-				tmpfile.Close()
-				logrus.WithFields(logrus.Fields{
-					"profile": tmpfile.Name(),
-				}).Info("generated memory profile")
-			case syscall.SIGTERM, syscall.SIGINT:
-				logrus.Info("shutting down")
-
-				tickerReconcile.Stop()
-				tickerDatastoreSync.Stop()
-
-				// shutdown server
-				if err := s.shutdown(); err != nil {
-					logrus.Error(err)
-				}
-
-				// shutdown element agent
-				if err := s.agent.Shutdown(); err != nil {
-					return err
-				}
-
-				return nil
-			}
-		}
-	}
 
 	return nil
 }
@@ -462,18 +430,33 @@ func (s *Server) syncPeerDatastores() error {
 	return nil
 }
 
-func (s *Server) shutdown() error {
-	// signal datastore to shutdown
-	lc, err := s.client(s.agent.Self().Address)
+func (s *Server) GenerateProfile() (string, error) {
+	tmpfile, err := ioutil.TempFile("", "stellar-profile-")
 	if err != nil {
+		return "", err
+	}
+	runtime.GC()
+	if err := pprof.WriteHeapProfile(tmpfile); err != nil {
+		return "", err
+	}
+	tmpfile.Close()
+	return tmpfile.Name(), nil
+}
+
+func (s *Server) Stop() error {
+	logrus.Debug("stopping server")
+	s.tickerReconcile.Stop()
+	s.tickerDatastoreSync.Stop()
+
+	// shutdown server
+	if err := s.shutdown(); err != nil {
 		return err
 	}
-	defer lc.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancel()
+	logrus.Debug("shutting down agent")
 
-	if _, err := lc.DatastoreService().Shutdown(ctx, &datastoreapi.ShutdownRequest{}); err != nil {
+	// shutdown element agent
+	if err := s.agent.Shutdown(); err != nil {
 		return err
 	}
 
@@ -486,4 +469,38 @@ func (s *Server) client(address string) (*client.Client, error) {
 		return nil, err
 	}
 	return client.NewClient(address, opts...)
+}
+
+func (s *Server) shutdown() error {
+	// shutdown services
+	wg := &sync.WaitGroup{}
+	start := time.Now()
+	for _, svc := range s.services {
+		wg.Add(1)
+		go func(svc services.Service) {
+			defer wg.Done()
+			logrus.WithFields(logrus.Fields{
+				"service": svc.ID(),
+			}).Debug("shutting down service")
+			doneCh := make(chan bool, 1)
+			go func() {
+				if err := svc.Stop(); err != nil {
+					s.errCh <- err
+				}
+				doneCh <- true
+			}()
+			select {
+			case <-doneCh:
+				return
+			case <-time.After(serviceStopTimeout):
+				s.errCh <- fmt.Errorf("timeout stopping service %s", svc.ID())
+			}
+		}(svc)
+	}
+	wg.Wait()
+	logrus.WithFields(logrus.Fields{
+		"duration": time.Since(start),
+	}).Debug("services stopped")
+
+	return nil
 }

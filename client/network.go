@@ -14,6 +14,16 @@ type network struct {
 	client networkapi.NetworkClient
 }
 
+func (n *network) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := n.client.Info(ctx, &networkapi.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (n *network) Subnets() ([]*networkapi.Subnet, error) {
 	ctx := context.Background()
 	resp, err := n.client.Subnets(ctx, &ptypes.Empty{})

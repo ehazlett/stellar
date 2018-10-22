@@ -2,48 +2,55 @@ syntax = "proto3";
 
 package stellar.services.application.v1;
 
+import "gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "github.com/ehazlett/stellar/api/services/node/v1/node.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/application/v1;application";
 
 service Application {
-  rpc Create(CreateRequest) returns (google.protobuf.Empty);
-  rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
-  rpc List(ListRequest) returns (ListResponse);
-  rpc Get(GetRequest) returns (GetResponse);
-  rpc Restart(RestartRequest) returns (google.protobuf.Empty);
+        rpc Info(InfoRequest) returns (InfoResponse);
+        rpc Create(CreateRequest) returns (google.protobuf.Empty);
+        rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
+        rpc List(ListRequest) returns (ListResponse);
+        rpc Get(GetRequest) returns (GetResponse);
+        rpc Restart(RestartRequest) returns (google.protobuf.Empty);
+}
+
+message InfoRequest {}
+message InfoResponse {
+        string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message CreateRequest {
-  string name = 1;
-  repeated string labels = 2;
-  repeated stellar.services.node.v1.Service services = 3;
+        string name = 1;
+        repeated string labels = 2;
+        repeated stellar.services.node.v1.Service services = 3;
 }
 
 message DeleteRequest {
-  string name = 1;
+        string name = 1;
 }
 
 message ListRequest {}
 
 message App {
-  string name = 1;
-  repeated stellar.services.node.v1.Service services = 2;
+        string name = 1;
+        repeated stellar.services.node.v1.Service services = 2;
 }
 
 message ListResponse {
-  repeated App applications = 1;
+        repeated App applications = 1;
 }
 
 message GetRequest {
-  string name = 1;
+        string name = 1;
 }
 
 message GetResponse {
-  App application = 1;
+        App application = 1;
 }
 
 message RestartRequest {
-  string name = 1;
+        string name = 1;
 }

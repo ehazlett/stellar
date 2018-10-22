@@ -11,6 +11,16 @@ type health struct {
 	client healthapi.HealthClient
 }
 
+func (h *health) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := h.client.Info(ctx, &healthapi.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (h *health) Peers() ([]*healthapi.Peer, error) {
 	ctx := context.Background()
 	resp, err := h.client.Health(ctx, &ptypes.Empty{})

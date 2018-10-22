@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sync"
@@ -71,6 +72,12 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error) {
+	return &api.InfoResponse{
+		ID: serviceID,
+	}, nil
+}
+
 func (s *service) Start() error {
 	s.lock.Lock()
 	if err := s.db.Update(func(tx *bolt.Tx) error {
@@ -105,6 +112,16 @@ func (s *service) Start() error {
 			}
 		}
 	}()
+
+	return nil
+}
+
+func (s *service) Stop() error {
+	logrus.Debug("performing shutdown sync with peers")
+	ctx := context.Background()
+	if err := s.replicateToPeers(ctx); err != nil {
+		return err
+	}
 
 	return nil
 }

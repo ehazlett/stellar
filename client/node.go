@@ -11,6 +11,16 @@ type node struct {
 	client nodeapi.NodeClient
 }
 
+func (n *node) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := n.client.Info(ctx, &nodeapi.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (n *node) Containers(filters ...string) ([]*nodeapi.Container, error) {
 	ctx := context.Background()
 	resp, err := n.client.Containers(ctx, &nodeapi.ContainersRequest{

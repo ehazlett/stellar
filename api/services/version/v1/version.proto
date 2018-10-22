@@ -8,7 +8,7 @@ import weak "gogoproto/gogo.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/version/v1;version";
 
 service Version {
-  rpc Version(google.protobuf.Empty) returns (VersionResponse);
+        rpc Version(google.protobuf.Empty) returns (VersionResponse);
 }
 
 message VersionResponse {

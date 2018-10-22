@@ -10,6 +10,16 @@ type cluster struct {
 	client clusterapi.ClusterClient
 }
 
+func (c *cluster) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := c.client.Info(ctx, &clusterapi.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (c *cluster) Nodes() ([]*clusterapi.Node, error) {
 	ctx := context.Background()
 	resp, err := c.client.Nodes(ctx, &clusterapi.NodesRequest{})

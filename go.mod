@@ -48,6 +48,9 @@ require (
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/miekg/dns v1.0.9
+	github.com/nats-io/gnatsd v1.3.0
+	github.com/nats-io/go-nats v1.6.0
+	github.com/nats-io/nuid v1.0.0 // indirect
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect

@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"net"
 
 	"github.com/ehazlett/element"
@@ -49,6 +50,12 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error) {
+	return &api.InfoResponse{
+		ID: serviceID,
+	}, nil
+}
+
 func (s *service) Start() error {
 	return nil
 }
@@ -59,4 +66,8 @@ func (s *service) client(address string) (*client.Client, error) {
 		return nil, err
 	}
 	return client.NewClient(address, opts...)
+}
+
+func (s *service) Stop() error {
+	return nil
 }

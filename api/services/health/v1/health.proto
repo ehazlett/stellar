@@ -9,26 +9,32 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/health/v1;health";
 
 service Health {
-  rpc Health(google.protobuf.Empty) returns (HealthResponse);
+        rpc Info(InfoRequest) returns (InfoResponse);
+        rpc Health(google.protobuf.Empty) returns (HealthResponse);
+}
+
+message InfoRequest {}
+message InfoResponse {
+        string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message NodeHealth {
-  string os_name = 1 [(gogoproto.customname) = "OSName"];
-  string os_version = 2 [(gogoproto.customname) = "OSVersion"];
-  // TODO: use gogoproto.stdtime (returning panic: message/group field time.Time:bytes without pointer when trying to use)
-  google.protobuf.Timestamp started_at = 3;
-  int64 cpus = 4;
-  int64 memory_total = 5;
-  int64 memory_free = 6;
-  int64 memory_used = 7;
-  repeated Peer peers = 8;
+        string os_name = 1 [(gogoproto.customname) = "OSName"];
+        string os_version = 2 [(gogoproto.customname) = "OSVersion"];
+        // TODO: use gogoproto.stdtime (returning panic: message/group field time.Time:bytes without pointer when trying to use)
+        google.protobuf.Timestamp started_at = 3;
+        int64 cpus = 4;
+        int64 memory_total = 5;
+        int64 memory_free = 6;
+        int64 memory_used = 7;
+        repeated Peer peers = 8;
 }
 
 message HealthResponse {
-  NodeHealth health = 1;
+        NodeHealth health = 1;
 }
 
 message Peer {
-    string id = 1 [(gogoproto.customname) = "ID"];
-    string address = 2;
+        string id = 1 [(gogoproto.customname) = "ID"];
+        string address = 2;
 }

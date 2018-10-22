@@ -9,6 +9,7 @@ import (
 	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
+	eventsapi "github.com/ehazlett/stellar/api/services/events/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
 	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
@@ -36,6 +37,7 @@ type Client struct {
 	applicationService applicationapi.ApplicationClient
 	nameserverService  nameserverapi.NameserverClient
 	proxyService       proxyapi.ProxyClient
+	eventsService      eventsapi.EventsClient
 }
 
 func NewClient(addr string, opts ...grpc.DialOption) (*Client, error) {
@@ -68,6 +70,7 @@ func NewClient(addr string, opts ...grpc.DialOption) (*Client, error) {
 		applicationService: applicationapi.NewApplicationClient(c),
 		nameserverService:  nameserverapi.NewNameserverClient(c),
 		proxyService:       proxyapi.NewProxyClient(c),
+		eventsService:      eventsapi.NewEventsClient(c),
 	}
 
 	return client, nil
@@ -104,6 +107,12 @@ func (c *Client) Datastore() *datastore {
 func (c *Client) Network() *network {
 	return &network{
 		client: c.networkService,
+	}
+}
+
+func (c *Client) Events() *events {
+	return &events{
+		client: c.eventsService,
 	}
 }
 
@@ -157,6 +166,10 @@ func (c *Client) NetworkService() networkapi.NetworkClient {
 
 func (c *Client) NameserverService() nameserverapi.NameserverClient {
 	return c.nameserverService
+}
+
+func (c *Client) EventsService() eventsapi.EventsClient {
+	return c.eventsService
 }
 
 func DialOptionsFromConfig(cfg *stellar.Config) ([]grpc.DialOption, error) {
