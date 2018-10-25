@@ -16,7 +16,7 @@ RUN go get -v github.com/gogo/protobuf/gogoproto
 RUN go get -v github.com/gogo/protobuf/protoc-gen-gogo
 RUN go get -v github.com/gogo/protobuf/protoc-gen-gogofast
 RUN go get -v github.com/stevvooe/protobuild
-RUN go get -v github.com/golang/lint/golint
+RUN go get -v golang.org/x/lint/golint
 WORKDIR /go/src/github.com/ehazlett/stellar
 COPY . /go/src/github.com/ehazlett/stellar
 RUN make
