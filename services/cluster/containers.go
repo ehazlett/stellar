@@ -16,7 +16,7 @@ func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*
 	}
 
 	for _, node := range resp.Nodes {
-		c, err := client.NewClient(node.Addr)
+		c, err := client.NewClient(node.Address)
 		if err != nil {
 			return nil, err
 		}
@@ -28,8 +28,8 @@ func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*
 			containers = append(containers, &api.Container{
 				Container: container,
 				Node: &api.Node{
-					Name: node.Name,
-					Addr: node.Addr,
+					ID:      node.ID,
+					Address: node.Address,
 				},
 			})
 		}

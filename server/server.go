@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/signal"
 	"runtime"
@@ -30,6 +31,7 @@ import (
 	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -43,6 +45,7 @@ var (
 
 type Server struct {
 	agent       *element.Agent
+	grpcServer  *grpc.Server
 	config      *stellar.Config
 	synced      bool
 	nodeEventCh chan *element.NodeEvent
@@ -50,7 +53,10 @@ type Server struct {
 }
 
 func NewServer(cfg *stellar.Config) (*Server, error) {
-	a, err := element.NewAgent(cfg.AgentConfig)
+	a, err := element.NewAgent(&element.Peer{
+		ID:      cfg.NodeID,
+		Address: cfg.GRPCAddress,
+	}, cfg.AgentConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -105,10 +111,13 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	grpcServer := grpc.NewServer()
+	// TODO: tls for grpc
+
 	// register with agent
 	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc}
 	for _, svc := range svcs {
-		if err := a.Register(svc); err != nil {
+		if err := svc.Register(grpcServer); err != nil {
 			return nil, err
 		}
 		logrus.WithFields(logrus.Fields{
@@ -116,11 +125,11 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		}).Info("registered service")
 	}
 
-	nodeEventCh := make(chan *element.NodeEvent)
-	a.Subscribe(nodeEventCh)
+	nodeEventCh := a.Subscribe()
 
 	srv := &Server{
 		agent:       a,
+		grpcServer:  grpcServer,
 		config:      cfg,
 		nodeEventCh: nodeEventCh,
 		services:    svcs,
@@ -131,8 +140,8 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	return srv, nil
 }
 
-func (s *Server) NodeName() string {
-	return s.config.AgentConfig.NodeName
+func (s *Server) NodeID() string {
+	return s.config.NodeID
 }
 
 func (s *Server) eventHandler(ch chan *element.NodeEvent) {
@@ -148,10 +157,7 @@ func (s *Server) waitForPeers() error {
 	doneChan := make(chan bool)
 	errChan := make(chan error)
 
-	localNode, err := s.agent.LocalNode()
-	if err != nil {
-		return err
-	}
+	localNode := s.agent.Self()
 
 	go func() {
 		for {
@@ -162,7 +168,7 @@ func (s *Server) waitForPeers() error {
 
 			if len(peers) > 0 {
 				peer := peers[0]
-				ac, err := client.NewClient(peer.Addr)
+				ac, err := client.NewClient(peer.Address)
 				if err != nil {
 					errChan <- err
 					break
@@ -174,7 +180,7 @@ func (s *Server) waitForPeers() error {
 				}
 				ac.Close()
 
-				lc, err := client.NewClient(localNode.Addr)
+				lc, err := client.NewClient(localNode.Address)
 				if err != nil {
 					errChan <- err
 					break
@@ -219,7 +225,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 	peer := peers[0]
-	c, err := client.NewClient(peer.Addr)
+	c, err := client.NewClient(peer.Address)
 	if err != nil {
 		return err
 	}
@@ -230,7 +236,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 
-	lc, err := client.NewClient(fmt.Sprintf("%s:%d", s.config.AgentConfig.AgentAddr, s.config.AgentConfig.AgentPort))
+	lc, err := client.NewClient(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -258,6 +264,13 @@ func (s *Server) init() error {
 func (s *Server) Run() error {
 	signals := make(chan os.Signal, 32)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
+
+	l, err := net.Listen("tcp", s.config.GRPCAddress)
+	if err != nil {
+		return err
+	}
+
+	go s.grpcServer.Serve(l)
 
 	if err := s.agent.Start(); err != nil {
 		return err
@@ -370,12 +383,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) syncPeerDatastores() error {
-	localNode, err := s.agent.LocalNode()
-	if err != nil {
-		return err
-	}
-
-	lc, err := client.NewClient(localNode.Addr)
+	lc, err := client.NewClient(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -388,10 +396,10 @@ func (s *Server) syncPeerDatastores() error {
 
 	for _, peer := range peers {
 		logrus.WithFields(logrus.Fields{
-			"peer": peer.Name,
-			"addr": peer.Addr,
+			"peer": peer.ID,
+			"addr": peer.Address,
 		}).Debug("syncing peer datastore")
-		c, err := client.NewClient(peer.Addr)
+		c, err := client.NewClient(peer.Address)
 		if err != nil {
 			return err
 		}
@@ -427,7 +435,7 @@ func (s *Server) syncPeerDatastores() error {
 			count++
 		}
 
-		logrus.Debugf("synchronized %d operations from peer %s", count, peer.Name)
+		logrus.Debugf("synchronized %d operations from peer %s", count, peer.ID)
 
 	}
 
@@ -436,11 +444,7 @@ func (s *Server) syncPeerDatastores() error {
 
 func (s *Server) shutdown() error {
 	// signal datastore to shutdown
-	localNode, err := s.agent.LocalNode()
-	if err != nil {
-		return err
-	}
-	lc, err := client.NewClient(localNode.Addr)
+	lc, err := client.NewClient(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -457,10 +461,5 @@ func (s *Server) shutdown() error {
 }
 
 func (s *Server) client() (*client.Client, error) {
-	localNode, err := s.agent.LocalNode()
-	if err != nil {
-		return nil, err
-	}
-
-	return client.NewClient(localNode.Addr)
+	return client.NewClient(s.agent.Self().Address)
 }

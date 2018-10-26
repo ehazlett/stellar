@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -21,14 +20,12 @@ const (
 type service struct {
 	grpcHost    string
 	gatewayAddr string
-	gatewayPort int
 }
 
 func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
 	return &service{
-		grpcHost:    fmt.Sprintf("%s:%d", cfg.AgentConfig.AgentAddr, cfg.AgentConfig.AgentPort),
-		gatewayAddr: cfg.GatewayAddr,
-		gatewayPort: cfg.GatewayPort,
+		grpcHost:    cfg.AgentConfig.ClusterAddress,
+		gatewayAddr: cfg.GatewayAddress,
 	}, nil
 }
 
@@ -56,11 +53,10 @@ func (s *service) Start() error {
 	logrus.WithFields(logrus.Fields{
 		"grpcHost":    s.grpcHost,
 		"gatewayAddr": s.gatewayAddr,
-		"gatewayPort": s.gatewayPort,
 	}).Info("starting http gateway")
 
 	go func() {
-		if err := http.ListenAndServe(fmt.Sprintf("%s:%d", s.gatewayAddr, s.gatewayPort), mux); err != nil {
+		if err := http.ListenAndServe(s.gatewayAddr, mux); err != nil {
 			logrus.Error(err)
 		}
 	}()

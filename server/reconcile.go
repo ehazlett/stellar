@@ -5,11 +5,7 @@ import (
 )
 
 func (s *Server) reconcile() error {
-	localNode, err := s.agent.LocalNode()
-	if err != nil {
-		return err
-	}
-	c, err := client.NewClient(localNode.Addr)
+	c, err := client.NewClient(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}

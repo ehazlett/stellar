@@ -42,7 +42,7 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 			if err != nil {
 				return err
 			}
-			key := fmt.Sprintf("%s.%s", s.agent.Config().NodeName, time.Now().Format(time.RFC3339Nano))
+			key := fmt.Sprintf("%s.%s", s.agent.Self().ID, time.Now().Format(time.RFC3339Nano))
 			if err := tb.Put([]byte(key), data); err != nil {
 				return err
 			}

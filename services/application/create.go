@@ -48,7 +48,7 @@ func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.E
 	for _, service := range services {
 		// get random peer for deploy
 		node := nodes[nodeIdx]
-		nc, err := s.nodeClient(node.Name)
+		nc, err := s.nodeClient(node.ID)
 		if err != nil {
 			return empty, err
 		}

@@ -13,6 +13,10 @@ import (
 // there is a custom marshal/unmarshal below.  Those must be updated if fields are
 // added or removed from `Config`.
 type Config struct {
+	// NodeID is the id of the node
+	NodeID string
+	// GRPCAddress is the address for the grpc server
+	GRPCAddress string
 	// AgentConfig is the element config for the server
 	AgentConfig *element.Config `json:"-"`
 	// ContainerdAddr is the address to the containerd socket
@@ -37,10 +41,8 @@ type Config struct {
 	ProxyTLSEmail string
 	// ProxyHealthcheckInterval is the interval used by the proxy service to check upstreams
 	ProxyHealthcheckInterval time.Duration
-	// GatewayAddr is the http addr to use for the http/json API
-	GatewayAddr string
-	// GatewayPort is the http port to use for the http/json API
-	GatewayPort int
+	// GatewayAddress is the http addr to use for the http/json API
+	GatewayAddress string
 	// CNIBinPaths are paths to search for CNI plugin binaries
 	CNIBinPaths []string
 }
@@ -83,15 +85,10 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 	}
 
 	c.AgentConfig = &element.Config{
-		NodeName:       tmp.NodeName,
-		AgentAddr:      tmp.AgentAddr,
-		AgentPort:      tmp.AgentPort,
-		ConnectionType: tmp.ConnectionType,
-		BindAddr:       tmp.BindAddr,
-		BindPort:       tmp.BindPort,
-		AdvertiseAddr:  tmp.AdvertiseAddr,
-		AdvertisePort:  tmp.AdvertisePort,
-		Peers:          tmp.Peers,
+		ClusterAddress:   tmp.ClusterAddress,
+		AdvertiseAddress: tmp.AdvertiseAddress,
+		ConnectionType:   tmp.ConnectionType,
+		Peers:            tmp.Peers,
 	}
 
 	_, subnet, err := net.ParseCIDR(tmp.Subnet)

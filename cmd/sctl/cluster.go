@@ -40,7 +40,7 @@ var clusterContainersCommand = cli.Command{
 		w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
 		fmt.Fprintf(w, "ID\tIMAGE\tRUNTIME\tNODE\n")
 		for _, c := range resp.Containers {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Container.ID, c.Container.Image, c.Container.Runtime, c.Node.Name)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", c.Container.ID, c.Container.Image, c.Container.Runtime, c.Node.ID)
 		}
 		w.Flush()
 
@@ -74,8 +74,8 @@ var clusterNodesCommand = cli.Command{
 				continue
 			}
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n",
-				node.Name,
-				node.Addr,
+				node.ID,
+				node.Address,
 				health.OSName+" ("+health.OSVersion+")",
 				humanize.RelTime(started, time.Now(), "", ""),
 				health.Cpus,

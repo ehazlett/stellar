@@ -82,3 +82,5 @@ require (
 )
 
 replace github.com/mholt/caddy => github.com/ehazlett/caddy v0.11.1-0.20180916020559-62aca929934e
+
+replace github.com/ehazlett/element => github.com/ehazlett/element v0.0.0-20181026123607-f8763a7a1632

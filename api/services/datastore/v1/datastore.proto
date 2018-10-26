@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package stellar.services.datastore.v1;
 
+import "gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/duration.proto";
 
@@ -98,6 +99,6 @@ message SyncOperation {
 }
 
 message PeerSyncRequest {
-  string name = 1;
-  string addr = 2;
+  string id = 1 [(gogoproto.customname) = "ID"];
+  string address = 2;
 }

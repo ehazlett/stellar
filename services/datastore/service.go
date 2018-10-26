@@ -47,7 +47,7 @@ func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
 		dir:                   cfg.DataDir,
 		lock:                  &sync.Mutex{},
 		lockChan:              make(chan bool),
-		dsTombstoneBucketName: "stellar." + stellar.APIVersion + "." + a.Config().NodeName + ".services.datastore.tombstone",
+		dsTombstoneBucketName: "stellar." + stellar.APIVersion + "." + a.Self().ID + ".services.datastore.tombstone",
 	}
 
 	db, err := svc.openDB()
@@ -144,9 +144,6 @@ func (s *service) openDB() (*bolt.DB, error) {
 }
 
 func (s *service) client() (*client.Client, error) {
-	peer, err := s.agent.LocalNode()
-	if err != nil {
-		return nil, err
-	}
-	return client.NewClient(peer.Addr)
+	peer := s.agent.Self()
+	return client.NewClient(peer.Address)
 }

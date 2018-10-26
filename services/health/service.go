@@ -67,8 +67,8 @@ func (s *service) Health(ctx context.Context, _ *ptypes.Empty) (*api.HealthRespo
 	peers := []*api.Peer{}
 	for _, peer := range p {
 		peers = append(peers, &api.Peer{
-			Name: peer.Name,
-			Addr: peer.Addr,
+			ID:      peer.ID,
+			Address: peer.Address,
 		})
 	}
 
