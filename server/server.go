@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -32,6 +33,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var (
@@ -111,8 +113,25 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	grpcServer := grpc.NewServer()
-	// TODO: tls for grpc
+
+	grpcOpts := []grpc.ServerOption{}
+	if cfg.TLSServerCertificate != "" && cfg.TLSServerKey != "" {
+		logrus.WithFields(logrus.Fields{
+			"cert": cfg.TLSServerCertificate,
+			"key":  cfg.TLSServerKey,
+		}).Debug("configuring TLS for GRPC")
+		cert, err := tls.LoadX509KeyPair(cfg.TLSServerCertificate, cfg.TLSServerKey)
+		if err != nil {
+			return nil, err
+		}
+		creds := credentials.NewTLS(&tls.Config{
+			Certificates:       []tls.Certificate{cert},
+			ClientAuth:         tls.RequestClientCert,
+			InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
+		})
+		grpcOpts = append(grpcOpts, grpc.Creds(creds))
+	}
+	grpcServer := grpc.NewServer(grpcOpts...)
 
 	// register with agent
 	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc}
@@ -168,7 +187,7 @@ func (s *Server) waitForPeers() error {
 
 			if len(peers) > 0 {
 				peer := peers[0]
-				ac, err := client.NewClient(peer.Address)
+				ac, err := s.client(peer.Address)
 				if err != nil {
 					errChan <- err
 					break
@@ -180,7 +199,7 @@ func (s *Server) waitForPeers() error {
 				}
 				ac.Close()
 
-				lc, err := client.NewClient(localNode.Address)
+				lc, err := s.client(localNode.Address)
 				if err != nil {
 					errChan <- err
 					break
@@ -225,7 +244,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 	peer := peers[0]
-	c, err := client.NewClient(peer.Address)
+	c, err := s.client(peer.Address)
 	if err != nil {
 		return err
 	}
@@ -236,7 +255,7 @@ func (s *Server) syncDatastore() error {
 		return err
 	}
 
-	lc, err := client.NewClient(s.agent.Self().Address)
+	lc, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -249,6 +268,7 @@ func (s *Server) syncDatastore() error {
 }
 
 func (s *Server) init() error {
+	logrus.Debug("initializing server")
 	started := time.Now()
 
 	// initialize local networking
@@ -269,9 +289,9 @@ func (s *Server) Run() error {
 	if err != nil {
 		return err
 	}
-
 	go s.grpcServer.Serve(l)
 
+	logrus.Debug("starting server agent")
 	if err := s.agent.Start(); err != nil {
 		return err
 	}
@@ -383,7 +403,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) syncPeerDatastores() error {
-	lc, err := client.NewClient(s.agent.Self().Address)
+	lc, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -399,7 +419,7 @@ func (s *Server) syncPeerDatastores() error {
 			"peer": peer.ID,
 			"addr": peer.Address,
 		}).Debug("syncing peer datastore")
-		c, err := client.NewClient(peer.Address)
+		c, err := s.client(peer.Address)
 		if err != nil {
 			return err
 		}
@@ -444,7 +464,7 @@ func (s *Server) syncPeerDatastores() error {
 
 func (s *Server) shutdown() error {
 	// signal datastore to shutdown
-	lc, err := client.NewClient(s.agent.Self().Address)
+	lc, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -460,6 +480,10 @@ func (s *Server) shutdown() error {
 	return nil
 }
 
-func (s *Server) client() (*client.Client, error) {
-	return client.NewClient(s.agent.Self().Address)
+func (s *Server) client(address string) (*client.Client, error) {
+	opts, err := client.DialOptionsFromConfig(s.config)
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(address, opts...)
 }

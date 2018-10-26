@@ -2,8 +2,10 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"time"
 
+	"github.com/ehazlett/stellar"
 	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
@@ -14,7 +16,9 @@ import (
 	proxyapi "github.com/ehazlett/stellar/api/services/proxy/v1"
 	versionapi "github.com/ehazlett/stellar/api/services/version/v1"
 	ptypes "github.com/gogo/protobuf/types"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 var (
@@ -34,13 +38,20 @@ type Client struct {
 	proxyService       proxyapi.ProxyClient
 }
 
-func NewClient(addr string) (*Client, error) {
+func NewClient(addr string, opts ...grpc.DialOption) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
+
+	if len(opts) == 0 {
+		opts = []grpc.DialOption{
+			grpc.WithInsecure(),
+		}
+	}
+
+	opts = append(opts, grpc.WithWaitForHandshake())
 	c, err := grpc.DialContext(ctx,
 		addr,
-		grpc.WithInsecure(),
-		grpc.WithWaitForHandshake(),
+		opts...,
 	)
 	if err != nil {
 		return nil, err
@@ -146,4 +157,34 @@ func (c *Client) NetworkService() networkapi.NetworkClient {
 
 func (c *Client) NameserverService() nameserverapi.NameserverClient {
 	return c.nameserverService
+}
+
+func DialOptionsFromConfig(cfg *stellar.Config) ([]grpc.DialOption, error) {
+	opts := []grpc.DialOption{}
+	if cfg.TLSClientCertificate != "" {
+		logrus.WithField("cert", cfg.TLSClientCertificate)
+		var creds credentials.TransportCredentials
+		if cfg.TLSClientKey != "" {
+			logrus.WithField("key", cfg.TLSClientKey)
+			cert, err := tls.LoadX509KeyPair(cfg.TLSClientCertificate, cfg.TLSClientKey)
+			if err != nil {
+				return nil, err
+			}
+			creds = credentials.NewTLS(&tls.Config{
+				Certificates:       []tls.Certificate{cert},
+				InsecureSkipVerify: cfg.TLSInsecureSkipVerify,
+			})
+		} else {
+			c, err := credentials.NewClientTLSFromFile(cfg.TLSClientCertificate, "")
+			if err != nil {
+				return nil, err
+			}
+			creds = c
+		}
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	return opts, nil
 }

@@ -1,8 +1,6 @@
 package application
 
 import (
-	"fmt"
-
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
@@ -25,14 +23,17 @@ type service struct {
 	namespace      string
 	dataDir        string
 	agent          *element.Agent
+	config         *stellar.Config
 }
 
 func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 	return &service{
+		// TODO: simplify config access
 		containerdAddr: cfg.ContainerdAddr,
 		namespace:      cfg.Namespace,
 		dataDir:        cfg.DataDir,
 		agent:          agent,
+		config:         cfg,
 	}, nil
 }
 
@@ -53,9 +54,12 @@ func (s *service) containerd() (*containerd.Client, error) {
 	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }
 
-func (s *service) client() (*client.Client, error) {
-	peer := s.agent.Self()
-	return client.NewClient(peer.Address)
+func (s *service) client(address string) (*client.Client, error) {
+	opts, err := client.DialOptionsFromConfig(s.config)
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(address, opts...)
 }
 
 func (s *service) peerAddr() (string, error) {
@@ -65,25 +69,4 @@ func (s *service) peerAddr() (string, error) {
 
 func (s *service) nodeName() string {
 	return s.agent.Self().ID
-}
-
-func (s *service) nodeClient(id string) (*client.Client, error) {
-	c, err := s.client()
-	if err != nil {
-		return nil, err
-	}
-	defer c.Close()
-
-	nodes, err := c.Cluster().Nodes()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, node := range nodes {
-		if node.ID == id {
-			return client.NewClient(node.Address)
-		}
-	}
-
-	return nil, fmt.Errorf("node %s not found in cluster", id)
 }

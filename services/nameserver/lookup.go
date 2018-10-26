@@ -9,7 +9,7 @@ import (
 )
 
 func (s *service) Lookup(ctx context.Context, req *api.LookupRequest) (*api.LookupResponse, error) {
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return nil, err
 	}

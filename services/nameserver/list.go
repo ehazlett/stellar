@@ -9,7 +9,7 @@ import (
 )
 
 func (s *service) List(ctx context.Context, req *api.ListRequest) (*api.ListResponse, error) {
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return nil, err
 	}

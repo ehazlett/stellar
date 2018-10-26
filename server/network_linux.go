@@ -21,18 +21,23 @@ ndots 0
 )
 
 func (s *Server) initNetworking() error {
-	c, err := s.client()
+	logrus.Debug("network init")
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
 	defer c.Close()
 
+	logrus.Debugf("allocating network subnet for node %s", s.NodeID())
 	subnetCIDR, err := c.Network().AllocateSubnet(s.NodeID())
-	logrus.Debugf("setting up subnet %s", subnetCIDR)
+	if err != nil {
+		return err
+	}
 	ip, ipnet, err := net.ParseCIDR(subnetCIDR)
 	if err != nil {
 		return err
 	}
+	logrus.Debugf("setting up subnet %s", subnetCIDR)
 
 	gw := ip.Mask(ipnet.Mask)
 	gw[3]++
@@ -78,7 +83,7 @@ func (s *Server) generateResolvConf(gw string) error {
 }
 
 func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
-	client, err := s.client()
+	client, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -151,7 +156,8 @@ func (s *Server) getBindDeviceName() (string, error) {
 }
 
 func (s *Server) setupGateway(ip net.IP, mask int) error {
-	c, err := s.client()
+	logrus.Debug("setting up gateway")
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}
@@ -223,7 +229,7 @@ func (s *Server) getBindIP() (net.IP, error) {
 }
 
 func (s *Server) setupRoutes() error {
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return err
 	}

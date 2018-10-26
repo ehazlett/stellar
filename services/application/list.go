@@ -18,7 +18,7 @@ func (a AppSorter) Less(i, j int) bool { return a[i].Name < a[j].Name }
 
 func (s *service) List(ctx context.Context, req *api.ListRequest) (*api.ListResponse, error) {
 	// filter containers for application label
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ import (
 func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.Empty, error) {
 	appName := getAppName(req.Name)
 	logrus.Debugf("creating application %s", appName)
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return empty, err
 	}
@@ -48,7 +48,7 @@ func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.E
 	for _, service := range services {
 		// get random peer for deploy
 		node := nodes[nodeIdx]
-		nc, err := s.nodeClient(node.ID)
+		nc, err := s.client(node.Address)
 		if err != nil {
 			return empty, err
 		}

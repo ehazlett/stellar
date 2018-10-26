@@ -21,6 +21,7 @@ type service struct {
 	stateDir       string
 	cniBinPaths    []string
 	agent          *element.Agent
+	config         *stellar.Config
 }
 
 func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
@@ -32,6 +33,7 @@ func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
 		stateDir:       cfg.StateDir,
 		cniBinPaths:    cfg.CNIBinPaths,
 		agent:          agent,
+		config:         cfg,
 	}, nil
 }
 
@@ -52,9 +54,12 @@ func (s *service) containerd() (*containerd.Client, error) {
 	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }
 
-func (s *service) client() (*client.Client, error) {
-	peer := s.agent.Self()
-	return client.NewClient(peer.Address)
+func (s *service) client(address string) (*client.Client, error) {
+	opts, err := client.DialOptionsFromConfig(s.config)
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(address, opts...)
 }
 
 func (s *service) peerAddr() (string, error) {

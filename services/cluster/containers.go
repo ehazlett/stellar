@@ -4,7 +4,6 @@ import (
 	"context"
 
 	api "github.com/ehazlett/stellar/api/services/cluster/v1"
-	"github.com/ehazlett/stellar/client"
 )
 
 func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*api.ContainersResponse, error) {
@@ -16,7 +15,7 @@ func (s *service) Containers(ctx context.Context, req *api.ContainersRequest) (*
 	}
 
 	for _, node := range resp.Nodes {
-		c, err := client.NewClient(node.Address)
+		c, err := s.client(node.Address)
 		if err != nil {
 			return nil, err
 		}

@@ -4,9 +4,11 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
+	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/version"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -26,6 +28,20 @@ func main() {
 			Usage:  "stellar daemon address",
 			Value:  "127.0.0.1:9000",
 			EnvVar: "STELLAR_ADDR",
+		},
+		cli.StringFlag{
+			Name:  "cert, c",
+			Usage: "stellar client certificate",
+			Value: "",
+		},
+		cli.StringFlag{
+			Name:  "key, k",
+			Usage: "stellar client key",
+			Value: "",
+		},
+		cli.BoolFlag{
+			Name:  "skip-verify",
+			Usage: "skip TLS verification",
 		},
 	}
 	app.Before = func(c *cli.Context) error {
@@ -49,5 +65,20 @@ func main() {
 }
 
 func getClient(c *cli.Context) (*client.Client, error) {
-	return client.NewClient(c.GlobalString("addr"))
+	opts := []grpc.DialOption{}
+	cert := c.GlobalString("cert")
+	key := c.GlobalString("key")
+	skipVerification := c.GlobalBool("skip-verify")
+
+	cfg := &stellar.Config{
+		TLSClientCertificate:  cert,
+		TLSClientKey:          key,
+		TLSInsecureSkipVerify: skipVerification,
+	}
+
+	opts, err := client.DialOptionsFromConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(c.GlobalString("addr"), opts...)
 }

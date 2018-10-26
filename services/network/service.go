@@ -28,12 +28,14 @@ type service struct {
 	network *net.IPNet
 	agent   *element.Agent
 	ds      datastoreapi.DatastoreServer
+	config  *stellar.Config
 }
 
 func New(cfg *stellar.Config, agent *element.Agent, ds datastoreapi.DatastoreServer) (*service, error) {
 	return &service{
 		network: cfg.Subnet,
 		agent:   agent,
+		config:  cfg,
 		ds:      ds,
 	}, nil
 }
@@ -51,7 +53,10 @@ func (s *service) Start() error {
 	return nil
 }
 
-func (s *service) client() (*client.Client, error) {
-	peer := s.agent.Self()
-	return client.NewClient(peer.Address)
+func (s *service) client(address string) (*client.Client, error) {
+	opts, err := client.DialOptionsFromConfig(s.config)
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(address, opts...)
 }

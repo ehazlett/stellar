@@ -27,6 +27,7 @@ var (
 
 type service struct {
 	agent                 *element.Agent
+	config                *stellar.Config
 	dir                   string
 	lock                  *sync.Mutex
 	lockChan              chan bool
@@ -44,6 +45,7 @@ type tombstone struct {
 func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
 	svc := &service{
 		agent:                 a,
+		config:                cfg,
 		dir:                   cfg.DataDir,
 		lock:                  &sync.Mutex{},
 		lockChan:              make(chan bool),
@@ -143,7 +145,10 @@ func (s *service) openDB() (*bolt.DB, error) {
 	return db, nil
 }
 
-func (s *service) client() (*client.Client, error) {
-	peer := s.agent.Self()
-	return client.NewClient(peer.Address)
+func (s *service) client(address string) (*client.Client, error) {
+	opts, err := client.DialOptionsFromConfig(s.config)
+	if err != nil {
+		return nil, err
+	}
+	return client.NewClient(address, opts...)
 }

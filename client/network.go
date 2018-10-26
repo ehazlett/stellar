@@ -7,6 +7,7 @@ import (
 
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	ptypes "github.com/gogo/protobuf/types"
+	"github.com/pkg/errors"
 )
 
 type network struct {
@@ -29,7 +30,7 @@ func (n *network) AllocateSubnet(node string) (string, error) {
 		Node: node,
 	})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "error making request")
 	}
 
 	return resp.SubnetCIDR, nil
