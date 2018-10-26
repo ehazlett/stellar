@@ -29,6 +29,6 @@ message HealthResponse {
 }
 
 message Peer {
-    string name = 1;
-    string addr = 2;
+    string id = 1 [(gogoproto.customname) = "ID"];
+    string address = 2;
 }

@@ -19,42 +19,33 @@ const (
 // NodeEvent stores the event type and node information
 type NodeEvent struct {
 	// EventType is the type of event fired
-	EventType NodeEventType
+	Type NodeEventType
 	// Node is the internal cluster node
 	Node *memberlist.Node
 }
 
-// EventHandler is used for event handling
-type EventHandler struct {
-	ch chan *NodeEvent
-}
-
-// NewEventHandler returns an EventHandler that is used to perform actions for the specified event
-func NewEventHandler(ch chan *NodeEvent) *EventHandler {
-	return &EventHandler{
-		ch: ch,
-	}
-}
-
 // NotifyJoin notifies when a node joins the cluster
-func (h *EventHandler) NotifyJoin(n *memberlist.Node) {
-	go h.notify(NodeJoin, n)
+func (a *Agent) NotifyJoin(n *memberlist.Node) {
+	a.send(&NodeEvent{
+		Type: NodeJoin,
+		Node: n,
+	})
 }
 
 // NotifyLeave notifies when a node leaves the cluster
-func (h *EventHandler) NotifyLeave(n *memberlist.Node) {
-	go h.notify(NodeLeave, n)
+func (a *Agent) NotifyLeave(n *memberlist.Node) {
+	delete(a.state.Peers, n.Name)
+	a.peerUpdateChan <- true
+	a.send(&NodeEvent{
+		Type: NodeLeave,
+		Node: n,
+	})
 }
 
 // NotifyUpdate notifies when a node is updated in the cluster
-func (h *EventHandler) NotifyUpdate(n *memberlist.Node) {
-	go h.notify(NodeUpdate, n)
-}
-
-func (h *EventHandler) notify(t NodeEventType, n *memberlist.Node) {
-	// TODO: use context WithTimeout to enable cancel
-	h.ch <- &NodeEvent{
-		EventType: t,
-		Node:      n,
-	}
+func (a *Agent) NotifyUpdate(n *memberlist.Node) {
+	a.send(&NodeEvent{
+		Type: NodeUpdate,
+		Node: n,
+	})
 }

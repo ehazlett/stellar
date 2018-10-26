@@ -88,6 +88,10 @@ github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55 h1:UVtaSj3wH1BKPQ
 github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55/go.mod h1:bT8SuOEipp7gifZpiOrL3jQAH+o4spi3g0/vbo6+Cfw=
 github.com/ehazlett/element v0.0.0-20180914210321-f4f89765ea2a h1:P9d55sjdVVSB0YqtuH+0AmTkm4lao7M1n2KBOSEZPFk=
 github.com/ehazlett/element v0.0.0-20180914210321-f4f89765ea2a/go.mod h1:bT8SuOEipp7gifZpiOrL3jQAH+o4spi3g0/vbo6+Cfw=
+github.com/ehazlett/element v0.0.0-20180920153646-27fd24a1817e h1:QzOcBPczo2HOhlpJAzTkDcb64qiX9YJnIDRWSxKKNf0=
+github.com/ehazlett/element v0.0.0-20180920153646-27fd24a1817e/go.mod h1:bT8SuOEipp7gifZpiOrL3jQAH+o4spi3g0/vbo6+Cfw=
+github.com/ehazlett/element v0.0.0-20181026123607-f8763a7a1632 h1:oxRjFcnqubYXppAXsb5B5f5kHx9OnCJi9Wh946lW0Vc=
+github.com/ehazlett/element v0.0.0-20181026123607-f8763a7a1632/go.mod h1:bT8SuOEipp7gifZpiOrL3jQAH+o4spi3g0/vbo6+Cfw=
 github.com/exoscale/egoscale v0.11.4 h1:BeLplhMzvNSMAJnob1InpnsEw+iUzQ0HkmcokuPAWiw=
 github.com/exoscale/egoscale v0.11.4/go.mod h1:Ee3U4ZjSDpbbEc9VkQ/jttUU8USE8Nv7L3YzVi03Y1U=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 h1:BHsljHzVlRcyQhjrss6TZTdY2VfCqZPbv5k3iBFa2ZQ=

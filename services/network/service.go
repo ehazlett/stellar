@@ -52,9 +52,6 @@ func (s *service) Start() error {
 }
 
 func (s *service) client() (*client.Client, error) {
-	peer, err := s.agent.LocalNode()
-	if err != nil {
-		return nil, err
-	}
-	return client.NewClient(peer.Addr)
+	peer := s.agent.Self()
+	return client.NewClient(peer.Address)
 }

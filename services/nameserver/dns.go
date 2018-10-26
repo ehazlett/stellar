@@ -48,7 +48,7 @@ func (s *service) gateway() (net.IP, error) {
 	}
 	defer c.Close()
 
-	subnetCIDR, err := c.Network().AllocateSubnet(s.agent.Config().NodeName)
+	subnetCIDR, err := c.Network().AllocateSubnet(s.agent.Self().ID)
 	if err != nil {
 		return nil, err
 	}

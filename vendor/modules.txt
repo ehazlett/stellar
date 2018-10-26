@@ -104,7 +104,7 @@ github.com/ehazlett/blackbird/server
 github.com/ehazlett/blackbird/ds
 github.com/ehazlett/blackbird/ds/memory
 github.com/ehazlett/blackbird/version
-# github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55
+# github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55 => github.com/ehazlett/element v0.0.0-20181026123607-f8763a7a1632
 github.com/ehazlett/element
 # github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 github.com/flynn/go-shlex
@@ -119,14 +119,20 @@ github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/proto
-github.com/golang/protobuf/ptypes
+github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+github.com/golang/protobuf/ptypes
+github.com/golang/protobuf/ptypes/struct
 # github.com/google/uuid v1.0.0
 github.com/google/uuid
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
+# github.com/grpc-ecosystem/grpc-gateway v1.5.0
+github.com/grpc-ecosystem/grpc-gateway/runtime
+github.com/grpc-ecosystem/grpc-gateway/utilities
+github.com/grpc-ecosystem/grpc-gateway/runtime/internal
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-immutable-radix v1.0.0
@@ -276,6 +282,7 @@ google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.15.0
 google.golang.org/grpc
 google.golang.org/grpc/codes
+google.golang.org/grpc/grpclog
 google.golang.org/grpc/status
 google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/balancer
@@ -284,7 +291,6 @@ google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
-google.golang.org/grpc/grpclog
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/channelz

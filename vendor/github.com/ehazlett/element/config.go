@@ -1,9 +1,10 @@
 package element
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
+	"strconv"
 
 	"github.com/hashicorp/memberlist"
 )
@@ -22,31 +23,23 @@ const (
 
 // Config is the agent config
 type Config struct {
-	// NodeName is the name of the node.  Each node must have a unique name in the cluster.
-	NodeName string
-	// AgentAddr is the address on which the agent will serve the GRPC services
-	AgentAddr string
-	// AgentPort is the port on which the agent will serve the GRPC services
-	AgentPort int
 	// ConnectionType is the connection type the agent will use
 	ConnectionType string
-	// BindAddr is the cluster bind address
-	BindAddr string
-	// BindPort is the cluster bind port
-	BindPort int
-	// AdvertiseAddr is the cluster address that will be used for membership communication
-	AdvertiseAddr string
-	// AdvertisePort is the cluster port that will be used for membership communication
-	AdvertisePort int
+	// ClusterAddress bind address
+	ClusterAddress string
+	// AdvertiseAddress for nat traversal
+	AdvertiseAddress string
 	// Peers is a local cache of peer members
 	Peers []string
+	// Debug output for memberlist
+	Debug bool
 }
 
 func (a *Agent) Config() *Config {
 	return a.config
 }
 
-func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool, nodeEventChan chan *NodeEvent) (*memberlist.Config, error) {
+func (cfg *Config) memberListConfig(a *Agent) (*memberlist.Config, error) {
 	var mc *memberlist.Config
 	switch cfg.ConnectionType {
 	case string(Local):
@@ -59,27 +52,33 @@ func setupMemberlistConfig(cfg *Config, peerUpdateChan chan bool, nodeEventChan 
 		return nil, ErrUnknownConnectionType
 	}
 
-	mc.Name = cfg.NodeName
-	mc.Delegate = NewAgentDelegate(cfg.NodeName, fmt.Sprintf("%s:%d", cfg.AgentAddr, cfg.AgentPort), peerUpdateChan, nodeEventChan)
-	mc.Events = NewEventHandler(nodeEventChan)
+	mc.Name = a.state.Self.ID
+	mc.Delegate = a
+	mc.Events = a
 
-	// disable logging for memberlist
-	// TODO: enable if debug
-	mc.Logger = log.New(ioutil.Discard, "", 0)
+	if !cfg.Debug {
+		mc.Logger = log.New(ioutil.Discard, "", 0)
+	}
 
+	host, port, err := net.SplitHostPort(cfg.ClusterAddress)
+	if err != nil {
+		return nil, err
+	}
 	// ml overrides for connection
-	if v := cfg.BindAddr; v != "" {
-		mc.BindAddr = v
+	if v := host; v != "" {
+		mc.BindAddr = host
 	}
-	if v := cfg.BindPort; v > 0 {
-		mc.BindPort = v
+	if v := port; v != "" {
+		mc.BindPort, _ = strconv.Atoi(port)
 	}
-	if v := cfg.AdvertiseAddr; v != "" {
-		mc.AdvertiseAddr = v
+	if host, port, err = net.SplitHostPort(cfg.ClusterAddress); err != nil {
+		return nil, err
 	}
-	if v := cfg.AdvertisePort; v > 0 {
-		mc.AdvertisePort = v
+	if v := host; v != "" {
+		mc.AdvertiseAddr = host
 	}
-
+	if v := port; v != "" {
+		mc.AdvertisePort, _ = strconv.Atoi(port)
+	}
 	return mc, nil
 }

@@ -17,7 +17,7 @@ func (s *service) Health(ctx context.Context, req *api.HealthRequest) (*api.Heal
 
 	status := map[*api.Node]*healthapi.HealthResponse{}
 	for _, node := range nodes {
-		nc, err := client.NewClient(node.Addr)
+		nc, err := client.NewClient(node.Address)
 		if err != nil {
 			return nil, err
 		}

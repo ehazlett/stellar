@@ -53,22 +53,15 @@ func (s *service) containerd() (*containerd.Client, error) {
 }
 
 func (s *service) client() (*client.Client, error) {
-	peer, err := s.agent.LocalNode()
-	if err != nil {
-		return nil, err
-	}
-	return client.NewClient(peer.Addr)
+	peer := s.agent.Self()
+	return client.NewClient(peer.Address)
 }
 
 func (s *service) peerAddr() (string, error) {
-	peer, err := s.agent.LocalNode()
-	if err != nil {
-		return "", err
-	}
-
-	return peer.Addr, nil
+	peer := s.agent.Self()
+	return peer.Address, nil
 }
 
 func (s *service) nodeName() string {
-	return s.agent.Config().NodeName
+	return s.agent.Self().ID
 }

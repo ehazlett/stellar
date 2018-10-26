@@ -3,7 +3,7 @@ syntax = "proto3";
 package stellar.services.cluster.v1;
 
 import weak "google/api/annotations.proto";
-
+import "gogoproto/gogo.proto";
 import "api/services/node/v1/node.proto";
 import "api/services/health/v1/health.proto";
 
@@ -35,8 +35,8 @@ message ImagesResponse {
 }
 
 message Node {
-    string name = 1;
-    string addr = 2;
+    string id = 1 [(gogoproto.customname) = "ID"];
+    string address = 2;
 }
 
 message NodesResponse {

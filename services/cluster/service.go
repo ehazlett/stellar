@@ -44,14 +44,11 @@ func (s *service) containerd() (*containerd.Client, error) {
 }
 
 func (s *service) nodes() ([]*api.Node, error) {
-	peer, err := s.agent.LocalNode()
-	if err != nil {
-		return nil, err
-	}
+	peer := s.agent.Self()
 	nodes := []*api.Node{
 		{
-			Name: peer.Name,
-			Addr: peer.Addr,
+			ID:      peer.ID,
+			Address: peer.Address,
 		},
 	}
 
@@ -62,8 +59,8 @@ func (s *service) nodes() ([]*api.Node, error) {
 
 	for _, peer := range peers {
 		nodes = append(nodes, &api.Node{
-			Name: peer.Name,
-			Addr: peer.Addr,
+			ID:      peer.ID,
+			Address: peer.Address,
 		})
 	}
 

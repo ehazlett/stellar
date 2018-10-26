@@ -27,7 +27,7 @@ func (s *Server) initNetworking() error {
 	}
 	defer c.Close()
 
-	subnetCIDR, err := c.Network().AllocateSubnet(s.NodeName())
+	subnetCIDR, err := c.Network().AllocateSubnet(s.NodeID())
 	logrus.Debugf("setting up subnet %s", subnetCIDR)
 	ip, ipnet, err := net.ParseCIDR(subnetCIDR)
 	if err != nil {
@@ -104,7 +104,7 @@ func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
 			"pid":    container.Task.Pid,
 		}).Debug("configuring container network")
 		// allocate IP from network service
-		ip, err := client.Network().AllocateIP(container.ID, s.NodeName(), subnetCIDR)
+		ip, err := client.Network().AllocateIP(container.ID, s.NodeID(), subnetCIDR)
 		if err != nil {
 			logrus.Errorf("error allocating IP for container %s: %s", container.ID, err)
 			continue
@@ -119,8 +119,11 @@ func (s *Server) initContainerNetworking(subnetCIDR string, gw net.IP) error {
 }
 
 func (s *Server) getBindDeviceName() (string, error) {
-	bindAddr := s.config.AgentConfig.BindAddr
-	bindIP := net.ParseIP(bindAddr)
+	bindHost, _, err := net.SplitHostPort(s.config.AgentConfig.ClusterAddress)
+	if err != nil {
+		return "", err
+	}
+	bindIP := net.ParseIP(bindHost)
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return "", err
@@ -144,7 +147,7 @@ func (s *Server) getBindDeviceName() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("unable to find interface for bind addr %s", bindAddr)
+	return "", fmt.Errorf("unable to find interface for bind addr %s", bindHost)
 }
 
 func (s *Server) setupGateway(ip net.IP, mask int) error {
@@ -191,7 +194,10 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 		return err
 	}
 
-	bindIP := s.getBindIP()
+	bindIP, err := s.getBindIP()
+	if err != nil {
+		return err
+	}
 
 	// add route
 	_, ipnet, err := net.ParseCIDR(target)
@@ -206,11 +212,14 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 	return nil
 }
 
-func (s *Server) getBindIP() net.IP {
-	bindAddr := s.config.AgentConfig.BindAddr
-	bindIP := net.ParseIP(bindAddr)
+func (s *Server) getBindIP() (net.IP, error) {
+	bindHost, _, err := net.SplitHostPort(s.config.AgentConfig.ClusterAddress)
+	if err != nil {
+		return nil, err
+	}
+	bindIP := net.ParseIP(bindHost)
 
-	return bindIP
+	return bindIP, nil
 }
 
 func (s *Server) setupRoutes() error {
@@ -230,7 +239,10 @@ func (s *Server) setupRoutes() error {
 		return err
 	}
 
-	bindIP := s.getBindIP()
+	bindIP, err := s.getBindIP()
+	if err != nil {
+		return err
+	}
 
 	routes, err := c.Network().Routes()
 	for _, r := range routes {

@@ -79,8 +79,8 @@ func (s *service) Sync(_ *api.SyncRequest, srv api.Datastore_SyncServer) error {
 
 // PeerSync issues the local node to sync with the requested peer
 func (s *service) PeerSync(ctx context.Context, req *api.PeerSyncRequest) (*ptypes.Empty, error) {
-	logrus.Debugf("performing datastore sync with peer %s", req.Name)
-	c, err := client.NewClient(req.Addr)
+	logrus.Debugf("performing datastore sync with peer %s", req.ID)
+	c, err := client.NewClient(req.Address)
 	if err != nil {
 		return empty, err
 	}
@@ -123,10 +123,7 @@ func (s *service) PeerSync(ctx context.Context, req *api.PeerSyncRequest) (*ptyp
 }
 
 func (s *service) replicateToPeers(ctx context.Context) error {
-	localNode, err := s.agent.LocalNode()
-	if err != nil {
-		return err
-	}
+	localNode := s.agent.Self()
 	peers, err := s.agent.Peers()
 	if err != nil {
 		return err
@@ -137,22 +134,22 @@ func (s *service) replicateToPeers(ctx context.Context) error {
 	}
 
 	for _, peer := range peers {
-		logrus.Debugf("performing sync with peer %s", peer.Name)
-		c, err := client.NewClient(peer.Addr)
+		logrus.Debugf("performing sync with peer %s", peer.ID)
+		c, err := client.NewClient(peer.Address)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
-				"peer": peer.Name,
+				"peer": peer.ID,
 			}).Errorf("error performing sync: %s", err)
 			continue
 		}
 		defer c.Close()
 
 		if _, err := c.DatastoreService().PeerSync(ctx, &api.PeerSyncRequest{
-			Name: localNode.Name,
-			Addr: localNode.Addr,
+			ID:      localNode.ID,
+			Address: localNode.Address,
 		}); err != nil {
 			logrus.WithFields(logrus.Fields{
-				"peer": peer.Name,
+				"peer": peer.ID,
 			}).Errorf("peer sync error: %s", err)
 			continue
 		}
