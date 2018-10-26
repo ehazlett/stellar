@@ -1,41 +1,22 @@
 package element
 
-import (
-	"encoding/json"
-	"fmt"
-	"time"
-)
-
-// PeerAgent is the peer information for an agent in the cluster including name and GRPC address
-type PeerAgent struct {
-	Name    string
-	Addr    string
-	Updated time.Time
-}
+import "github.com/gogo/protobuf/proto"
 
 // Peers returns all known peers in the cluster
-func (a *Agent) Peers() ([]*PeerAgent, error) {
+func (a *Agent) Peers() ([]*Peer, error) {
 	self := a.members.LocalNode()
-	var (
-		peerAgents map[string]*PeerAgent
-		peers      []*PeerAgent
-	)
-	if err := json.Unmarshal(self.Meta, &peerAgents); err != nil {
+	var state State
+	if err := proto.Unmarshal(self.Meta, &state); err != nil {
 		return nil, err
 	}
-
-	for _, p := range peerAgents {
+	var peers []*Peer
+	for _, p := range state.Peers {
 		peers = append(peers, p)
 	}
-
 	return peers, nil
 }
 
-// LocalNode returns local node peer info
-func (a *Agent) LocalNode() (*PeerAgent, error) {
-	return &PeerAgent{
-		Name:    a.config.NodeName,
-		Addr:    fmt.Sprintf("%s:%d", a.config.AgentAddr, a.config.AgentPort),
-		Updated: time.Now(),
-	}, nil
+// Self returns the local peer information
+func (a *Agent) Self() *Peer {
+	return a.state.Self
 }

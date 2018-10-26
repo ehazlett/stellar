@@ -2,10 +2,10 @@ package element
 
 import (
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/memberlist"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -20,37 +20,45 @@ var (
 
 // Agent represents the node agent
 type Agent struct {
+	*subscribers
+
 	config             *Config
 	members            *memberlist.Memberlist
 	peerUpdateChan     chan bool
 	nodeEventChan      chan *NodeEvent
-	grpcServer         *grpc.Server
 	registeredServices map[string]struct{}
 	memberConfig       *memberlist.Config
+	state              *State
 }
 
 // NewAgent returns a new node agent
-func NewAgent(cfg *Config) (*Agent, error) {
-	updateCh := make(chan bool)
-	nodeEventCh := make(chan *NodeEvent)
-	mc, err := setupMemberlistConfig(cfg, updateCh, nodeEventCh)
+func NewAgent(info *Peer, cfg *Config) (*Agent, error) {
+	var (
+		updateCh    = make(chan bool, 64)
+		nodeEventCh = make(chan *NodeEvent, 64)
+	)
+	a := &Agent{
+		subscribers:    newSubscribers(),
+		config:         cfg,
+		peerUpdateChan: updateCh,
+		nodeEventChan:  nodeEventCh,
+		state: &State{
+			Self:  info,
+			Peers: make(map[string]*Peer),
+		},
+	}
+	mc, err := cfg.memberListConfig(a)
 	if err != nil {
 		return nil, err
 	}
-
 	ml, err := memberlist.Create(mc)
 	if err != nil {
 		return nil, err
 	}
-	grpcServer := grpc.NewServer()
-	return &Agent{
-		config:         cfg,
-		members:        ml,
-		peerUpdateChan: updateCh,
-		nodeEventChan:  nodeEventCh,
-		grpcServer:     grpcServer,
-		memberConfig:   mc,
-	}, nil
+	a.members = ml
+	a.memberConfig = mc
+
+	return a, nil
 }
 
 // SyncInterval returns the cluster sync interval
@@ -58,14 +66,42 @@ func (a *Agent) SyncInterval() time.Duration {
 	return a.memberConfig.PushPullInterval
 }
 
+func newSubscribers() *subscribers {
+	return &subscribers{
+		subs: make(map[chan *NodeEvent]struct{}),
+	}
+}
+
+type subscribers struct {
+	mu sync.Mutex
+
+	subs map[chan *NodeEvent]struct{}
+}
+
 // Subscribe subscribes to the node event channel
-func (a *Agent) Subscribe(ch chan *NodeEvent) {
-	go func() {
-		for {
-			select {
-			case evt := <-a.nodeEventChan:
-				ch <- evt
-			}
+func (s *subscribers) Subscribe() chan *NodeEvent {
+	ch := make(chan *NodeEvent, 64)
+	s.mu.Lock()
+	s.subs[ch] = struct{}{}
+	s.mu.Unlock()
+	return ch
+}
+
+// Unsubscribe removes the channel from node events
+func (s *subscribers) Unsubscribe(ch chan *NodeEvent) {
+	s.mu.Lock()
+	delete(s.subs, ch)
+	s.mu.Unlock()
+}
+
+func (s *subscribers) send(e *NodeEvent) {
+	s.mu.Lock()
+	for ch := range s.subs {
+		// non-blocking send
+		select {
+		case ch <- e:
+		default:
 		}
-	}()
+	}
+	s.mu.Unlock()
 }
