@@ -69,17 +69,94 @@ To run Stellar, once you have a working containerd installation follow these ste
 - Copy `/bin/stellar` to `/usr/local/bin/`
 - Copy `/bin/stellar-cni-ipam` to `/opt/containerd/bin/` or `/opt/cni/bin`
 
-To start the initial node run `stellar -D server --bind-addr <node-ip> --advertise-addr <node-ip>`.
+First, we will generate a config:
+
+```
+$> stellar config > stellar.conf
+```
+
+This will produce a default configuration.  Edit the addresses to match your environment.  For
+this example we will use the IP `10.0.1.70`.
+
+```
+{
+    "ConnectionType": "local",
+    "ClusterAddress": "10.0.1.70:7946",
+    "AdvertiseAddress": "10.0.1.70:7946",
+    "Debug": false,
+    "NodeID": "dev",
+    "GRPCAddress": "10.0.1.70:9000",
+    "TLSServerCertificate": "",
+    "TLSServerKey": "",
+    "TLSClientCertificate": "",
+    "TLSClientKey": "",
+    "TLSInsecureSkipVerify": false,
+    "ContainerdAddr": "/run/containerd/containerd.sock",
+    "Namespace": "default",
+    "DataDir": "/var/lib/stellar",
+    "StateDir": "/run/stellar",
+    "Bridge": "stellar0",
+    "UpstreamDNSAddr": "8.8.8.8:53",
+    "ProxyHTTPPort": 80,
+    "ProxyHTTPSPort": 443,
+    "ProxyTLSEmail": "",
+    "GatewayAddress": "127.0.0.1:9001",
+    "EventsAddress": "10.0.1.70:4222",
+    "EventsClusterAddress": "10.0.1.70:5222",
+    "EventsHTTPAddress": "10.0.1.70:4322",
+    "CNIBinPaths": [
+        "/opt/containerd/bin",
+        "/opt/cni/bin"
+    ],
+    "Peers": [],
+    "Subnet": "172.16.0.0/12"
+}
+```
+
+To start the initial node run:
+
+```
+$> stellar -D server --config stellar.conf
+```
+
+To join additional nodes simply add the `AdvertiseAddress` of the first node to the `Peers`
+config option of the second node:
+
 For example:
 
 ```
-$> stellar -D server --bind-addr 10.0.1.70 --advertise-addr 10.0.1.70
-```
-
-To join additional nodes simply add the `--peer` flag.  For example:
-
-```
-$> stellar -D server --bind-addr 10.0.1.71 --advertise-addr 10.0.1.71 --peer 10.0.1.70:7946
+{
+    "ConnectionType": "local",
+    "ClusterAddress": "10.0.1.71:7946",
+    "AdvertiseAddress": "10.0.1.71:7946",
+    "Debug": false,
+    "NodeID": "dev",
+    "GRPCAddress": "10.0.1.71:9000",
+    "TLSServerCertificate": "",
+    "TLSServerKey": "",
+    "TLSClientCertificate": "",
+    "TLSClientKey": "",
+    "TLSInsecureSkipVerify": false,
+    "ContainerdAddr": "/run/containerd/containerd.sock",
+    "Namespace": "default",
+    "DataDir": "/var/lib/stellar",
+    "StateDir": "/run/stellar",
+    "Bridge": "stellar0",
+    "UpstreamDNSAddr": "8.8.8.8:53",
+    "ProxyHTTPPort": 80,
+    "ProxyHTTPSPort": 443,
+    "ProxyTLSEmail": "",
+    "GatewayAddress": "127.0.0.1:9001",
+    "EventsAddress": "10.0.1.71:4222",
+    "EventsClusterAddress": "10.0.1.71:5222",
+    "EventsHTTPAddress": "10.0.1.71:4322",
+    "CNIBinPaths": [
+        "/opt/containerd/bin",
+        "/opt/cni/bin"
+    ],
+    "Peers": ["10.0.1.70:7946"],
+    "Subnet": "172.16.0.0/12"
+}
 ```
 
 You will now have a two node cluster.  To see node information, use `sctl`.
