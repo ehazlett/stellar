@@ -270,7 +270,7 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 	}
 
 	// update dns
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return empty, err
 	}
@@ -371,7 +371,7 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 	}
 	defer c.Close()
 
-	client, err := s.client()
+	client, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return empty, err
 	}

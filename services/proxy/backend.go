@@ -34,7 +34,7 @@ func (s *service) Backends(ctx context.Context, req *api.BackendRequest) (*api.B
 
 func (s *service) loadUpstream(upstream string) *api.Upstream {
 	status := "up"
-	latency, err := checkConnection(upstream, s.cfg.ProxyHealthcheckInterval)
+	latency, err := checkConnection(upstream, s.config.ProxyHealthcheckInterval)
 	if err != nil {
 		latency = time.Millisecond * 0
 		status = err.Error()

@@ -23,7 +23,7 @@ func (s *service) Get(ctx context.Context, req *api.GetRequest) (*api.GetRespons
 }
 
 func (s *service) getApp(ctx context.Context, name string) (*api.App, error) {
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return nil, err
 	}

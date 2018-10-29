@@ -7,7 +7,6 @@ import (
 
 	bolt "github.com/coreos/bbolt"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
-	"github.com/ehazlett/stellar/client"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -80,7 +79,7 @@ func (s *service) Sync(_ *api.SyncRequest, srv api.Datastore_SyncServer) error {
 // PeerSync issues the local node to sync with the requested peer
 func (s *service) PeerSync(ctx context.Context, req *api.PeerSyncRequest) (*ptypes.Empty, error) {
 	logrus.Debugf("performing datastore sync with peer %s", req.ID)
-	c, err := client.NewClient(req.Address)
+	c, err := s.client(req.Address)
 	if err != nil {
 		return empty, err
 	}
@@ -135,7 +134,7 @@ func (s *service) replicateToPeers(ctx context.Context) error {
 
 	for _, peer := range peers {
 		logrus.Debugf("performing sync with peer %s", peer.ID)
-		c, err := client.NewClient(peer.Address)
+		c, err := s.client(peer.Address)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"peer": peer.ID,

@@ -42,7 +42,7 @@ func (s *service) startDNSServer() error {
 }
 
 func (s *service) gateway() (net.IP, error) {
-	c, err := s.client()
+	c, err := s.client(s.agent.Self().Address)
 	if err != nil {
 		return nil, err
 	}

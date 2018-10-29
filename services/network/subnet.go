@@ -24,6 +24,7 @@ var (
 )
 
 func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetRequest) (*api.AllocateSubnetResponse, error) {
+	logrus.Debug("service.network allocating subnet")
 	// check for existing assigned subnet; if not, allocate
 	localSubnetKey := fmt.Sprintf(dsSubnetsKey, req.Node)
 

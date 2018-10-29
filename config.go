@@ -17,6 +17,16 @@ type Config struct {
 	NodeID string
 	// GRPCAddress is the address for the grpc server
 	GRPCAddress string
+	// TLSCertificate is the certificate used for grpc communication
+	TLSServerCertificate string
+	// TLSKey is the key used for grpc communication
+	TLSServerKey string
+	// TLSClientCertificate is the client certificate used for communication
+	TLSClientCertificate string
+	// TLSClientKey is the client key used for communication
+	TLSClientKey string
+	// TLSInsecureSkipVerify disables certificate verification
+	TLSInsecureSkipVerify bool
 	// AgentConfig is the element config for the server
 	AgentConfig *element.Config `json:"-"`
 	// ContainerdAddr is the address to the containerd socket

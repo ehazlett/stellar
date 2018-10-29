@@ -5,7 +5,6 @@ import (
 
 	api "github.com/ehazlett/stellar/api/services/cluster/v1"
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
-	"github.com/ehazlett/stellar/client"
 	ptypes "github.com/gogo/protobuf/types"
 )
 
@@ -17,7 +16,7 @@ func (s *service) Health(ctx context.Context, req *api.HealthRequest) (*api.Heal
 
 	status := map[*api.Node]*healthapi.HealthResponse{}
 	for _, node := range nodes {
-		nc, err := client.NewClient(node.Address)
+		nc, err := s.client(node.Address)
 		if err != nil {
 			return nil, err
 		}
