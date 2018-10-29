@@ -53,6 +53,12 @@ type Config struct {
 	ProxyHealthcheckInterval time.Duration
 	// GatewayAddress is the http addr to use for the http/json API
 	GatewayAddress string
+	// EventsAddress is the address for the events service
+	EventsAddress string
+	// EventsClusterAddress is the address for the events cluster service
+	EventsClusterAddress string
+	// EventsHTTPAddress is the management address for the events service
+	EventsHTTPAddress string
 	// CNIBinPaths are paths to search for CNI plugin binaries
 	CNIBinPaths []string
 }

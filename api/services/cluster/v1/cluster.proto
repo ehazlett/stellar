@@ -10,16 +10,22 @@ import "api/services/health/v1/health.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/cluster/v1;cluster";
 
 service Cluster {
-  rpc Containers(ContainersRequest) returns (ContainersResponse);
-  rpc Images(ImagesRequest) returns (ImagesResponse);
-  rpc Nodes(NodesRequest) returns (NodesResponse) {
-    option (google.api.http).get = "/v1/cluster/nodes";
-  };
-  rpc Health(HealthRequest) returns (HealthResponse);
+        rpc Info(InfoRequest) returns (InfoResponse);
+        rpc Containers(ContainersRequest) returns (ContainersResponse);
+        rpc Images(ImagesRequest) returns (ImagesResponse);
+        rpc Nodes(NodesRequest) returns (NodesResponse) {
+                option (google.api.http).get = "/v1/cluster/nodes";
+        };
+        rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+message InfoRequest {}
+message InfoResponse {
+        string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message ContainersRequest {
-  repeated string filters = 1;
+        repeated string filters = 1;
 }
 
 message ImagesRequest {}
@@ -27,32 +33,32 @@ message ImagesRequest {}
 message NodesRequest {}
 
 message ContainersResponse {
-  repeated Container containers = 1;
+        repeated Container containers = 1;
 }
 
 message ImagesResponse {
-  repeated stellar.services.node.v1.Image images = 1;
+        repeated stellar.services.node.v1.Image images = 1;
 }
 
 message Node {
-    string id = 1 [(gogoproto.customname) = "ID"];
-    string address = 2;
+        string id = 1 [(gogoproto.customname) = "ID"];
+        string address = 2;
 }
 
 message NodesResponse {
-    repeated Node nodes = 1;
+        repeated Node nodes = 1;
 }
 
 message Container {
-    stellar.services.node.v1.Container container = 1;
-    Node node = 2;
+        stellar.services.node.v1.Container container = 1;
+        Node node = 2;
 }
 
 message HealthRequest {}
 message NodeHealth {
-  Node node = 1;
-  stellar.services.health.v1.NodeHealth health = 2;
+        Node node = 1;
+        stellar.services.health.v1.NodeHealth health = 2;
 }
 message HealthResponse {
-  repeated NodeHealth nodes = 1;
+        repeated NodeHealth nodes = 1;
 }

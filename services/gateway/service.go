@@ -37,6 +37,12 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Info(ctx context.Context, req *cluster.InfoRequest) (*cluster.InfoResponse, error) {
+	return &cluster.InfoResponse{
+		ID: serviceID,
+	}, nil
+}
+
 func (s *service) Start() error {
 	ctx := context.Background()
 	mux := runtime.NewServeMux()
@@ -61,5 +67,9 @@ func (s *service) Start() error {
 		}
 	}()
 
+	return nil
+}
+
+func (s *service) Stop() error {
 	return nil
 }

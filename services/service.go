@@ -11,4 +11,6 @@ type Service interface {
 	Register(*grpc.Server) error
 	// Start provides a mechanism to start service specific actions
 	Start() error
+	// stop provides a mechanism to stop the service
+	Stop() error
 }

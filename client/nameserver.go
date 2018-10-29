@@ -14,6 +14,16 @@ type nameserver struct {
 	client nameserverapi.NameserverClient
 }
 
+func (n *nameserver) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := n.client.Info(ctx, &nameserverapi.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (n *nameserver) Create(rtype, name, value string, options interface{}) error {
 	ctx := context.Background()
 	t, err := recordType(rtype)

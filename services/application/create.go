@@ -70,5 +70,12 @@ func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.E
 			nodeIdx = 0
 		}
 	}
+
+	if err := s.publish(&UpdateEvent{
+		Application: req.Name,
+		Action:      "create",
+	}); err != nil {
+		return empty, err
+	}
 	return empty, nil
 }

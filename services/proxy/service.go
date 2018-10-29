@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"time"
+	"context"
 
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/blackbird"
@@ -9,8 +9,11 @@ import (
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
+	eventsapi "github.com/ehazlett/stellar/api/services/events/v1"
 	api "github.com/ehazlett/stellar/api/services/proxy/v1"
 	"github.com/ehazlett/stellar/client"
+	"github.com/ehazlett/stellar/events"
+	appsvc "github.com/ehazlett/stellar/services/application"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -65,6 +68,12 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error) {
+	return &api.InfoResponse{
+		ID: serviceID,
+	}, nil
+}
+
 func (s *service) Start() error {
 	client, err := s.client(s.agent.Self().Address)
 	if err != nil {
@@ -94,15 +103,46 @@ func (s *service) Start() error {
 	}
 	s.bclient = bc
 
-	t := time.NewTicker(5 * time.Second)
+	// initial reload
+	if err := s.reload(); err != nil {
+		return err
+	}
+
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return err
+	}
+
+	// start listener for application events
 	go func() {
-		for range t.C {
-			logrus.Debug("proxy reload")
-			// we do a periodic reload.  this might be better at scale
-			// if we check for application updates before trying to reload
-			if err := s.reload(); err != nil {
-				logrus.Error(err)
-				continue
+		defer c.Close()
+
+		subject, err := c.Application().ID()
+		if err != nil {
+			logrus.WithError(err).Error("error getting application subject for events")
+			return
+		}
+		stream, err := c.EventsService().Subscribe(context.Background(), &eventsapi.SubscribeRequest{
+			Subject: subject,
+		})
+		if err != nil {
+			logrus.WithError(err).Error("error subscribing to application events")
+			return
+		}
+
+		for {
+			evt, err := stream.Recv()
+			if err != nil {
+				logrus.WithError(err).Error("error subscribing to application events")
+				return
+			}
+
+			if events.IsEvent(evt, &appsvc.UpdateEvent{}) {
+				logrus.Debug("reloading proxy")
+				if err := s.reload(); err != nil {
+					logrus.Error(err)
+					continue
+				}
 			}
 		}
 	}()
@@ -110,13 +150,12 @@ func (s *service) Start() error {
 	return nil
 }
 
-func (s *service) containerd() (*containerd.Client, error) {
-	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
+func (s *service) Stop() error {
+	return nil
 }
 
-func (s *service) peerAddr() (string, error) {
-	peer := s.agent.Self()
-	return peer.Address, nil
+func (s *service) containerd() (*containerd.Client, error) {
+	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
 }
 
 func (s *service) nodeName() string {

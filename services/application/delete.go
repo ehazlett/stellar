@@ -58,5 +58,12 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 		nc.Close()
 	}
 
+	if err := s.publish(&UpdateEvent{
+		Application: req.Name,
+		Action:      "delete",
+	}); err != nil {
+		return empty, err
+	}
+
 	return empty, nil
 }

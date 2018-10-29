@@ -15,6 +15,16 @@ func (d *datastore) Client() datastoreapi.DatastoreClient {
 	return d.client
 }
 
+func (d *datastore) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := d.client.Info(ctx, &datastoreapi.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (d *datastore) Get(bucket, key string) ([]byte, error) {
 	ctx := context.Background()
 	resp, err := d.client.Get(ctx, &datastoreapi.GetRequest{

@@ -9,116 +9,122 @@ import "google/protobuf/empty.proto";
 option go_package = "github.com/ehazlett/stellar/api/services/node/v1;node";
 
 service Node {
-  rpc Containers(ContainersRequest) returns (ContainersResponse);
-  rpc Container(ContainerRequest) returns (ContainerResponse);
-  rpc Images(ImagesRequest) returns (ImagesResponse);
-  rpc SetupContainerNetwork(ContainerNetworkRequest) returns (google.protobuf.Empty);
-  rpc CreateContainer(CreateContainerRequest) returns (google.protobuf.Empty);
-  rpc DeleteContainer(DeleteContainerRequest) returns (google.protobuf.Empty);
-  rpc RestartContainer(RestartContainerRequest) returns (google.protobuf.Empty);
+        rpc Info(InfoRequest) returns (InfoResponse);
+        rpc Containers(ContainersRequest) returns (ContainersResponse);
+        rpc Container(ContainerRequest) returns (ContainerResponse);
+        rpc Images(ImagesRequest) returns (ImagesResponse);
+        rpc SetupContainerNetwork(ContainerNetworkRequest) returns (google.protobuf.Empty);
+        rpc CreateContainer(CreateContainerRequest) returns (google.protobuf.Empty);
+        rpc DeleteContainer(DeleteContainerRequest) returns (google.protobuf.Empty);
+        rpc RestartContainer(RestartContainerRequest) returns (google.protobuf.Empty);
+}
+
+message InfoRequest {}
+message InfoResponse {
+        string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message ContainersRequest {
-  repeated string filters = 1;
+        repeated string filters = 1;
 }
 
 message Container {
-  string id = 1 [(gogoproto.customname) = "ID"];
-  string image = 2;
-  map<string,string> labels = 3;
-  google.protobuf.Any spec = 4;
-  string snapshotter = 5;
+        string id = 1 [(gogoproto.customname) = "ID"];
+        string image = 2;
+        map<string,string> labels = 3;
+        google.protobuf.Any spec = 4;
+        string snapshotter = 5;
 
-  message Task {
-    uint32 pid = 1;
-  }
+        message Task {
+                uint32 pid = 1;
+        }
 
-  Task task = 6;
-  string runtime = 7;
-  map<string,google.protobuf.Any> extensions = 8;
+        Task task = 6;
+        string runtime = 7;
+        map<string,google.protobuf.Any> extensions = 8;
 }
 
 message ContainersResponse {
-  repeated Container containers = 1;
+        repeated Container containers = 1;
 }
 
 message ContainerRequest {
-  string id = 1 [(gogoproto.customname) = "ID"];
+        string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message ContainerResponse {
-  Container container = 1;
+        Container container = 1;
 }
 
 message ImagesRequest {}
 
 message Image {
-  string id = 1 [(gogoproto.customname) = "ID"];
+        string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message ImagesResponse {
-  repeated Image images = 1;
+        repeated Image images = 1;
 }
 
 message ContainerNetworkRequest {
-  string id = 1 [(gogoproto.customname) = "ID"];
-  string ip = 2 [(gogoproto.customname) = "IP"];
-  string network = 3;
-  string gateway = 4;
+        string id = 1 [(gogoproto.customname) = "ID"];
+        string ip = 2 [(gogoproto.customname) = "IP"];
+        string network = 3;
+        string gateway = 4;
 }
 
 message Process {
-  uint32 uid = 1;
-  uint32 gid = 2;
-  repeated string args = 3;
-  repeated string env = 4;
+        uint32 uid = 1;
+        uint32 gid = 2;
+        repeated string args = 3;
+        repeated string env = 4;
 }
 
 message Mount {
-  string type = 1;
-  string source = 2;
-  string destination = 4;
-  repeated string options = 5;
+        string type = 1;
+        string source = 2;
+        string destination = 4;
+        repeated string options = 5;
 }
 
 enum Protocol {
-  UNKNOWN = 0;
-  TCP = 1;
-  UDP = 2;
-  HTTP = 3;
+        UNKNOWN = 0;
+        TCP = 1;
+        UDP = 2;
+        HTTP = 3;
 }
 
 // NOTE: this uses a custom json unmarshaller (utils.go); update if fields are changed
 message Endpoint {
-  string service = 1;
-  Protocol protocol = 2;
-  string host = 3;
-  uint32 port = 4;
-  bool tls = 5 [(gogoproto.customname) = "TLS"];
+        string service = 1;
+        Protocol protocol = 2;
+        string host = 3;
+        uint32 port = 4;
+        bool tls = 5 [(gogoproto.customname) = "TLS"];
 }
 
 message Service {
-  string name = 1;
-  string image = 2;
-  string runtime = 3;
-  string snapshotter = 4;
-  string node = 5;
-  Process process = 6;
-  repeated string labels = 7;
-  bool network = 8;
-  repeated Mount mounts = 9;
-  repeated Endpoint endpoints = 10;
+        string name = 1;
+        string image = 2;
+        string runtime = 3;
+        string snapshotter = 4;
+        string node = 5;
+        Process process = 6;
+        repeated string labels = 7;
+        bool network = 8;
+        repeated Mount mounts = 9;
+        repeated Endpoint endpoints = 10;
 }
 
 message CreateContainerRequest {
-  string application = 1;
-  Service service = 2;
+        string application = 1;
+        Service service = 2;
 }
 
 message DeleteContainerRequest {
-  string id = 1 [(gogoproto.customname) = "ID"];
+        string id = 1 [(gogoproto.customname) = "ID"];
 }
 
 message RestartContainerRequest {
-  string id = 1 [(gogoproto.customname) = "ID"];
+        string id = 1 [(gogoproto.customname) = "ID"];
 }

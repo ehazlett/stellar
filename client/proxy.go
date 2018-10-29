@@ -10,6 +10,16 @@ type proxy struct {
 	client proxyapi.ProxyClient
 }
 
+func (p *proxy) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := p.client.Info(ctx, &proxyapi.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (p *proxy) Reload() error {
 	ctx := context.Background()
 	if _, err := p.client.Reload(ctx, &proxyapi.ReloadRequest{}); err != nil {

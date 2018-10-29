@@ -38,6 +38,9 @@ func defaultConfig() (*stellar.Config, error) {
 		ProxyTLSEmail:            "",
 		ProxyHealthcheckInterval: time.Second * 5,
 		GatewayAddress:           fmt.Sprintf("%s:%d", localhost, 9001),
+		EventsAddress:            fmt.Sprintf("%s:%d", localhost, 4222),
+		EventsHTTPAddress:        fmt.Sprintf("%s:%d", localhost, 4322),
+		EventsClusterAddress:     fmt.Sprintf("%s:%d", localhost, 5222),
 		CNIBinPaths:              []string{"/opt/containerd/bin", "/opt/cni/bin"},
 	}, nil
 }
@@ -53,6 +56,5 @@ func loadConfigFromFile(path string) (*stellar.Config, error) {
 		return nil, err
 	}
 
-	fmt.Printf("%+v\n", cfg)
 	return cfg, nil
 }

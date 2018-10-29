@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package stellar.services.events.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/ehazlett/stellar/api/services/events/v1;events";
+
+service Events {
+        rpc Info(InfoRequest) returns (InfoResponse);
+        rpc Endpoint(EndpointRequest) returns (EndpointResponse);
+        rpc Subscribe(SubscribeRequest) returns (stream Message);
+        rpc Publish(Message) returns (google.protobuf.Empty);
+}
+
+message InfoRequest {}
+message InfoResponse {
+        string id = 1 [(gogoproto.customname) = "ID"];
+}
+
+message EndpointRequest {}
+
+message Endpoint {
+        string address = 1;
+}
+
+message EndpointResponse{
+        Endpoint endpoint = 1;
+}
+
+message SubscribeRequest {
+        string subject = 1;
+}
+
+message Message {
+        string subject = 1;
+        google.protobuf.Any data = 2;
+}

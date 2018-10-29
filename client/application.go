@@ -10,6 +10,16 @@ type application struct {
 	client api.ApplicationClient
 }
 
+func (a *application) ID() (string, error) {
+	ctx := context.Background()
+	resp, err := a.client.Info(ctx, &api.InfoRequest{})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
+}
+
 func (a *application) Create(req *api.CreateRequest) error {
 	ctx := context.Background()
 	if _, err := a.client.Create(ctx, req); err != nil {
