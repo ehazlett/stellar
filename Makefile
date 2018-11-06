@@ -112,7 +112,8 @@ build-buildkit:
 	@chmod -R 775 ./build
 
 release:
-	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=image --exporter-opt name=docker.io/$(REPO):latest
+	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=build
+	@cd build && tar czf ../stellar-$(COMMIT)-$(GOOS)-$(GOARCH).tar.gz .
 
 package:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.package --frontend-opt build-arg:BUILD=${BUILD} --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./build
