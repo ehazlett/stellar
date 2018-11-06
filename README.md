@@ -15,8 +15,6 @@ is eventually consistent making it ideal for transient workloads or edge
 computing where nodes are not always guaranteed to have high bandwidth, low
 latency connectivity.
 
-[![Download](https://img.shields.io/badge/downloads-master-green.svg)](https://s3.us-east-2.amazonaws.com/stellar-release/latest/stellar-linux-amd64.tar.gz)
-
 # Why
 There are several container platforms and container orchestrators out there.
 However, they are too complex for my use.  I like simple infrastructure that
@@ -35,6 +33,11 @@ case.  Enjoy :)
 - Masterless design
 - Efficient use of system resources
 - Simple daemon deployment
+
+# Downloads
+For official releases, see the [Releases](https://github.com/ehazlett/stellar/releases)
+
+You can also grab the latest [Master Build](https://s3.us-east-2.amazonaws.com/stellar-release/latest/stellar-linux-amd64.tar.gz)
 
 # Building
 In order to build Stellar you will need the following:
