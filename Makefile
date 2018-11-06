@@ -14,22 +14,9 @@ PACKAGES=$(shell go list ./... | grep -v -e /vendor/)
 EXTENSIONS=$(wildcard extensions/*)
 CYCLO_PACKAGES=$(shell go list ./... | grep -v /vendor/ | sed "s/github.com\/$(NAMESPACE)\/$(APP)\///g" | tail -n +2)
 CWD=$(PWD)
-VNDR_ARGS=-whitelist github.com/gogo/protobuf -whitelist github.com/xenolf/lego -whitelist gopkg.in/square -whitelist github.com/ehazlett/blackbird -whitelist github.com/mholt/caddy
+RELEASE_NAME?=$(COMMIT)
 
 all: binaries
-
-deps:
-	@vndr $(VNDR_ARGS)
-deps-init:
-	@vndr $(VNDR_ARGS) init
-	@# perform fixups
-	@rm -rf vendor/github.com/gogo/protobuf/.git
-	@rm -rf vendor/github.com/containerd/containerd/.git
-	@rm -rf vendor/github.com/containerd/containerd/vendor
-	@rm -rf vendor/github.com/xenolf/lego/.git
-	@rm -rf vendor/github.com/mholt/caddy/.git
-	@rm -rf vendor/github.com/ehazlett/blackbird/.git
-	@rm -rf vendor/gopkg.in/square/.git
 
 generate:
 	@echo " -> building protobufs for grpc"
@@ -113,7 +100,7 @@ build-buildkit:
 
 release:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=build
-	@cd build && tar czf ../stellar-$(COMMIT)-$(GOOS)-$(GOARCH).tar.gz .
+	@cd build && tar czf ../stellar-$(RELEASE_NAME)-$(GOOS)-$(GOARCH).tar.gz .
 
 package:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.package --frontend-opt build-arg:BUILD=${BUILD} --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./build
