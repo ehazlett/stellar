@@ -1,6 +1,6 @@
 # Stellar Proxy Service
 The Stellar Proxy Service provides layer 7 load balancing to applications in the cluster.
-It uses the [Blackbird](https://github.com/ehazlett/blackbird) Server as the foundation and automatically
+It uses the [Blackbird](https://github.com/stellarproject/radiant) Server as the foundation and automatically
 configures the proxy based upon endpoints specified in the application definition.  For example,
 given the following configuration, the application will be available at the specified domain:
 

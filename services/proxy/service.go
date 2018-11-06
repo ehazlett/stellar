@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/ehazlett/blackbird"
-	blackbirdserver "github.com/ehazlett/blackbird/server"
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
@@ -16,12 +14,14 @@ import (
 	appsvc "github.com/ehazlett/stellar/services/application"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
+	"github.com/stellarproject/radiant"
+	radiantserver "github.com/stellarproject/radiant/server"
 	"google.golang.org/grpc"
 )
 
 const (
 	serviceID         = "stellar.services.proxy.v1"
-	blackbirdGRPCAddr = "unix:///run/blackbird.sock"
+	radiantGRPCAddr   = "unix:///run/radiant.sock"
 	dsProxyBucketName = "stellar." + stellar.APIVersion + ".services.proxy"
 )
 
@@ -37,8 +37,8 @@ type service struct {
 	errCh          chan error
 
 	// set on start
-	server  *blackbirdserver.Server
-	bclient *blackbird.Client
+	server  *radiantserver.Server
+	bclient *radiant.Client
 }
 
 func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
@@ -79,8 +79,8 @@ func (s *service) Start() error {
 	if err != nil {
 		return err
 	}
-	config := &blackbird.Config{
-		GRPCAddr:  blackbirdGRPCAddr,
+	config := &radiant.Config{
+		GRPCAddr:  radiantGRPCAddr,
 		HTTPPort:  s.config.ProxyHTTPPort,
 		HTTPSPort: s.config.ProxyHTTPSPort,
 		Debug:     false,
@@ -89,7 +89,7 @@ func (s *service) Start() error {
 	if err != nil {
 		return err
 	}
-	srv, err := blackbirdserver.NewServer(config, ds)
+	srv, err := radiantserver.NewServer(config, ds)
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func (s *service) Start() error {
 		return err
 	}
 
-	bc, err := blackbird.NewClient(blackbirdGRPCAddr)
+	bc, err := radiant.NewClient(radiantGRPCAddr)
 	if err != nil {
 		return err
 	}

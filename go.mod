@@ -25,7 +25,6 @@ require (
 	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d
-	github.com/ehazlett/blackbird v0.0.0-20180916032155-929d2a896eed
 	github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55
 	github.com/godbus/dbus v4.1.0+incompatible // indirect
 	github.com/gogo/googleapis v1.1.0
@@ -64,6 +63,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sirupsen/logrus v1.0.6
+	github.com/stellarproject/radiant v0.0.0-20181106140528-8bef5975a48a
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
@@ -71,6 +71,7 @@ require (
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc
 	github.com/xenolf/lego v1.0.1 // indirect
 	go.etcd.io/bbolt v1.3.0 // indirect
+	golang.org/x/crypto v0.0.0-20181030102418-4d3f4d9ffa16 // indirect
 	golang.org/x/net v0.0.0-20180911220305-26e67e76b6c3
 	golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
 	google.golang.org/grpc v1.15.0

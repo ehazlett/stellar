@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	blackbirdapi "github.com/ehazlett/blackbird/api/v1"
 	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/sirupsen/logrus"
+	radiantapi "github.com/stellarproject/radiant/api/v1"
 )
 
 type datastore struct {
@@ -27,7 +27,7 @@ func (d *datastore) Name() string {
 	return "stellar"
 }
 
-func (d *datastore) Add(host string, srv *blackbirdapi.Server) error {
+func (d *datastore) Add(host string, srv *radiantapi.Server) error {
 	// since we grab the servers from the application service direct this is a noop
 	return nil
 }
@@ -37,15 +37,15 @@ func (d *datastore) Remove(host string) error {
 	return nil
 }
 
-func (d *datastore) Servers() ([]*blackbirdapi.Server, error) {
+func (d *datastore) Servers() ([]*radiantapi.Server, error) {
 	apps, err := d.client.Application().List()
 	if err != nil {
 		return nil, err
 	}
 
-	servers := []*blackbirdapi.Server{}
+	servers := []*radiantapi.Server{}
 
-	hostServers := map[string]*blackbirdapi.Server{}
+	hostServers := map[string]*radiantapi.Server{}
 	hostUpstreams := map[string][]string{}
 	for _, app := range apps {
 		for _, svc := range app.Services {
@@ -66,11 +66,11 @@ func (d *datastore) Servers() ([]*blackbirdapi.Server, error) {
 				}
 				v, exists := hostServers[ep.Host]
 				if !exists {
-					v = &blackbirdapi.Server{
+					v = &radiantapi.Server{
 						Host:   ep.Host,
 						Path:   "/",
 						TLS:    ep.TLS,
-						Policy: blackbirdapi.Policy_RANDOM,
+						Policy: radiantapi.Policy_RANDOM,
 						Preset: "transparent",
 					}
 					hostServers[ep.Host] = v
