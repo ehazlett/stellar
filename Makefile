@@ -14,7 +14,6 @@ PACKAGES=$(shell go list ./... | grep -v -e /vendor/)
 EXTENSIONS=$(wildcard extensions/*)
 CYCLO_PACKAGES=$(shell go list ./... | grep -v /vendor/ | sed "s/github.com\/$(NAMESPACE)\/$(APP)\///g" | tail -n +2)
 CWD=$(PWD)
-RELEASE_NAME?=$(COMMIT)
 
 all: binaries
 
@@ -100,7 +99,7 @@ build-buildkit:
 
 release:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.build --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=build
-	@cd build && tar czf ../stellar-$(RELEASE_NAME)-$(GOOS)-$(GOARCH).tar.gz .
+	@cd build && tar czf ../stellar-$(GOOS)-$(GOARCH).tar.gz .
 
 package:
 	@buildctl build --frontend=dockerfile.v0 --frontend-opt filename=Dockerfile.package --frontend-opt build-arg:BUILD=${BUILD} --local context=. --local dockerfile=. --progress plain --exporter=local --exporter-opt output=./build
