@@ -29,7 +29,7 @@ case.  Enjoy :)
 - Multihost Networking via [CNI](https://github.com/containernetworking/cni)
 - Service Discovery via DNS
 - Cluster event system via [NATS](https://github.com/nats-io/gnatsd)
-- Builtin Proxy using [Blackbird](https://github.com/ehazlett/blackbird) (zero downtime reloads, canary deploys, health checks, automatic HTTPS)
+- Builtin Proxy using [Radiant](https://github.com/stellarproject/radiant) (zero downtime reloads, canary deploys, health checks, automatic HTTPS)
 - Masterless design
 - Efficient use of system resources
 - Simple daemon deployment
