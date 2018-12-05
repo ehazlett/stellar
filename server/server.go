@@ -178,12 +178,13 @@ func (s *Server) eventHandler(ch chan *element.NodeEvent) {
 }
 
 func (s *Server) waitForPeers() error {
+	if len(s.config.AgentConfig.Peers) == 0 {
+		return nil
+	}
 	logrus.Infof("waiting on initial cluster sync (could take up to %s)", s.agent.SyncInterval()*2)
 
 	doneChan := make(chan bool)
 	errChan := make(chan error)
-
-	localNode := s.agent.Self()
 
 	go func() {
 		for {
@@ -206,23 +207,14 @@ func (s *Server) waitForPeers() error {
 				}
 				ac.Close()
 
-				lc, err := s.client(localNode.Address)
-				if err != nil {
-					errChan <- err
-					break
-				}
-
-				localClusterNodes, err := lc.Cluster().Nodes()
-				if err != nil {
-					errChan <- err
-					break
-				}
-
-				if len(localClusterNodes) == len(clusterNodes) {
-					logrus.Debugf("discovered %d cluster nodes (%s); cluster membership in sync", len(localClusterNodes), localClusterNodes)
+				// check if list of peers plus self equal the reported number
+				// of cluster nodes from the peer
+				if len(peers)+1 == len(clusterNodes) {
+					logrus.Debugf("discovered %d cluster nodes (%s); cluster membership in sync", len(peers), peers)
 					doneChan <- true
 					return
 				}
+				logrus.Debugf("waiting on peers; detected %d of %d nodes", len(peers)+1, len(clusterNodes))
 			}
 
 			time.Sleep(time.Millisecond * 500)
@@ -240,11 +232,6 @@ func (s *Server) waitForPeers() error {
 }
 
 func (s *Server) syncDatastore() error {
-	// check if joining; if so, clear current datastore and sync from peer
-	logrus.Debug("joining cluster; clearing current datastore")
-	if err := s.waitForPeers(); err != nil {
-		return err
-	}
 	// sync entire datastore with peer
 	peers, err := s.agent.Peers()
 	if err != nil {
@@ -255,6 +242,7 @@ func (s *Server) syncDatastore() error {
 	if err != nil {
 		return err
 	}
+
 	ctx := context.Background()
 	logrus.Debugf("getting backup from peer %s", peer)
 	bResp, err := c.DatastoreService().Backup(ctx, &datastoreapi.BackupRequest{})
@@ -269,6 +257,7 @@ func (s *Server) syncDatastore() error {
 	if _, err := lc.DatastoreService().Restore(ctx, &datastoreapi.RestoreRequest{Data: bResp.Data}); err != nil {
 		return err
 	}
+
 	logrus.Debugf("restored %d bytes", len(bResp.Data))
 
 	return nil
@@ -293,14 +282,21 @@ func (s *Server) Run() error {
 	if err != nil {
 		return err
 	}
-	go s.grpcServer.Serve(l)
-
 	logrus.Debug("starting server agent")
 	if err := s.agent.Start(); err != nil {
 		return err
 	}
 
+	if err := s.waitForPeers(); err != nil {
+		return err
+	}
+
+	logrus.WithField("addr", s.config.GRPCAddress).Debug("starting grpc server")
+	go s.grpcServer.Serve(l)
+
 	if len(s.config.AgentConfig.Peers) > 0 {
+		// check if joining; if so, clear current datastore and sync from peer
+		logrus.Debug("joining cluster; clearing current datastore")
 		if err := s.syncDatastore(); err != nil {
 			return err
 		}

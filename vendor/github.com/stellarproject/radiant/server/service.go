@@ -116,7 +116,7 @@ func (s *Server) defaultLoader(serverType string) (caddy.Input, error) {
 }
 
 func (s *Server) getCaddyConfig() (caddy.Input, error) {
-	data, err := s.generateConfig()
+	data, err := s.generateServerConfig()
 	if err != nil {
 		return nil, err
 

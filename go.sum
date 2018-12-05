@@ -250,6 +250,8 @@ github.com/sirupsen/logrus v1.0.6 h1:hcP1GmhGigz/O7h1WVUM5KklBp1JoNS9FggWKdj/j3s
 github.com/sirupsen/logrus v1.0.6/go.mod h1:pMByvHTf9Beacp5x1UXfOR9xyW/9antXMhjMPG0dEzc=
 github.com/stellarproject/radiant v0.0.0-20181106140528-8bef5975a48a h1:7vEhpMOnEutkASPcqQOF/Tf7+QCvjk+TMpV/bkwvjdo=
 github.com/stellarproject/radiant v0.0.0-20181106140528-8bef5975a48a/go.mod h1:dL8xWHQMcHKoAq9OKA3uvQdZdh9NSMDWxDIwW2GMMj8=
+github.com/stellarproject/radiant v0.0.0-20181205032446-55171a938c07 h1:7c0a1df7z7HA96AzCXuYaFTsJuTTx3LC0uwfhe1ZcSU=
+github.com/stellarproject/radiant v0.0.0-20181205032446-55171a938c07/go.mod h1:dL8xWHQMcHKoAq9OKA3uvQdZdh9NSMDWxDIwW2GMMj8=
 github.com/stretchr/objx v0.1.1 h1:2vfRuCMp5sSVIDSqO8oNnWJq7mPa6KVP3iPIwFBuy8A=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1w=

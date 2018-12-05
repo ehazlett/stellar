@@ -4,6 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/containerd/typeurl"
+	"github.com/gogo/protobuf/types"
+	radiantapi "github.com/stellarproject/radiant/api/v1"
 )
 
 func (m *Endpoint) UnmarshalJSON(data []byte) error {
@@ -20,8 +25,6 @@ func (m *Endpoint) UnmarshalJSON(data []byte) error {
 			m.Host = v.(string)
 		case "port":
 			m.Port = uint32(v.(float64))
-		case "tls":
-			m.TLS = v.(bool)
 		case "protocol":
 			p, err := parseProtocol(v)
 			if err != nil {
@@ -29,6 +32,51 @@ func (m *Endpoint) UnmarshalJSON(data []byte) error {
 			}
 
 			m.Protocol = p
+		case "config":
+			x := v.(map[string]interface{})
+			switch m.Protocol {
+			case Protocol_HTTP:
+				// build any
+				d := &radiantapi.Server{
+					TLS: x["tls"].(bool),
+				}
+				if t, ok := x["timeouts"]; ok {
+					tt, err := time.ParseDuration(t.(string))
+					if err != nil {
+						return err
+					}
+					d.Timeouts = types.DurationProto(tt)
+				}
+				if t, ok := x["proxy_try_duration"]; ok {
+					tt, err := time.ParseDuration(t.(string))
+					if err != nil {
+						return err
+					}
+					d.ProxyTryDuration = types.DurationProto(tt)
+				}
+				if t, ok := x["proxy_fail_timeout"]; ok {
+					tt, err := time.ParseDuration(t.(string))
+					if err != nil {
+						return err
+					}
+					d.ProxyFailTimeout = types.DurationProto(tt)
+				}
+				if t, ok := x["limits"]; ok {
+					d.Limits = t.(string)
+				}
+				if t, ok := x["proxy_upstream_headers"]; ok {
+					hdrs := map[string]string{}
+					for kk, vv := range t.(map[string]interface{}) {
+						hdrs[kk] = vv.(string)
+					}
+					d.ProxyUpstreamHeaders = hdrs
+				}
+				any, err := typeurl.MarshalAny(d)
+				if err != nil {
+					return err
+				}
+				m.EndpointConfig = any
+			}
 		}
 	}
 

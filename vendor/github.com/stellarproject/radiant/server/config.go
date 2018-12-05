@@ -22,9 +22,11 @@ const (
 {{ if $server.TLS }}https{{ else }}http{{ end }}://{{ $server.Host }}:{{ if $server.TLS }}{{ $.HTTPSPort }}{{ else }}{{ $.HTTPPort }}{{ end }} {
     proxy {{ $server.Path }} { {{ if ne $server.Preset "" }}
 	{{ $server.Preset }}{{ end }}
-	policy {{policyname $server.Policy }}
-	try_duration 5s
-	fail_timeout 2s
+	policy {{policyname $server.Policy }} {{ if $t := $server.ProxyTryDuration }}
+	try_duration {{duration $t }}{{ end }} {{ if $t := $server.ProxyFailTimeout }}
+	fail_timeout {{duration $t }}{{ end }} {{if $server.ProxyUpstreamHeaders}}
+	{{ range $k, $v := $server.ProxyUpstreamHeaders }}header_upstream {{ $k }} "{{ $v }}"
+	{{ end }}{{ end }}
 	{{ range $upstream := $server.Upstreams }}upstream {{ $upstream }}
 	{{ end }}
     }
@@ -58,16 +60,7 @@ func duration(v *types.Duration) time.Duration {
 	return d
 }
 
-func (s *Server) generateConfig() ([]byte, error) {
-	t := template.New("radiant").Funcs(template.FuncMap{
-		"policyname": policyName,
-		"duration":   duration,
-	})
-	tmpl, err := t.Parse(configTemplate)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *Server) generateServerConfig() ([]byte, error) {
 	servers, err := s.datastore.Servers()
 	if err != nil {
 		return nil, err
@@ -77,10 +70,28 @@ func (s *Server) generateConfig() ([]byte, error) {
 		srvs = append(srvs, srv)
 	}
 
+	b, err := generateConfig(s.config.HTTPPort, s.config.HTTPSPort, srvs)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func generateConfig(httpPort, httpsPort int, servers []*api.Server) ([]byte, error) {
+	t := template.New("radiant").Funcs(template.FuncMap{
+		"policyname": policyName,
+		"duration":   duration,
+	})
+	tmpl, err := t.Parse(configTemplate)
+	if err != nil {
+		return nil, err
+	}
+
 	config := &proxyConfig{
-		HTTPPort:  s.config.HTTPPort,
-		HTTPSPort: s.config.HTTPSPort,
-		Servers:   srvs,
+		HTTPPort:  httpPort,
+		HTTPSPort: httpsPort,
+		Servers:   servers,
 	}
 
 	var c bytes.Buffer

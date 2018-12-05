@@ -239,7 +239,7 @@ github.com/russross/blackfriday
 github.com/sean-/seed
 # github.com/sirupsen/logrus v1.0.6
 github.com/sirupsen/logrus
-# github.com/stellarproject/radiant v0.0.0-20181106140528-8bef5975a48a
+# github.com/stellarproject/radiant v0.0.0-20181205032446-55171a938c07
 github.com/stellarproject/radiant
 github.com/stellarproject/radiant/api/v1
 github.com/stellarproject/radiant/server

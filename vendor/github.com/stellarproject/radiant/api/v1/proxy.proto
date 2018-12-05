@@ -42,6 +42,10 @@ message Server {
     HealthCheck health_check = 7;
     bool insecure_skip_verify = 8;
     string preset = 9;
+    map<string, string> proxy_upstream_headers = 10;
+    string limits = 11;
+    google.protobuf.Duration proxy_try_duration = 12;
+    google.protobuf.Duration proxy_fail_timeout = 13;
 }
 
 message AddServerRequest {

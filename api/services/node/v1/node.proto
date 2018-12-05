@@ -41,7 +41,7 @@ message Container {
 
         Task task = 6;
         string runtime = 7;
-        map<string,google.protobuf.Any> extensions = 8;
+        map<string, google.protobuf.Any> extensions = 8;
 }
 
 message ContainersResponse {
@@ -100,7 +100,9 @@ message Endpoint {
         Protocol protocol = 2;
         string host = 3;
         uint32 port = 4;
-        bool tls = 5 [(gogoproto.customname) = "TLS"];
+	// config is a generic map that is parsed upon unmarshal that is used to generate the Any
+	map<string, string> config = 5;
+	google.protobuf.Any endpoint_config = 6;
 }
 
 message Service {

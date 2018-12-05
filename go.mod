@@ -63,7 +63,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sirupsen/logrus v1.0.6
-	github.com/stellarproject/radiant v0.0.0-20181106140528-8bef5975a48a
+	github.com/stellarproject/radiant v0.0.0-20181205032446-55171a938c07
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/containerd/typeurl"
 	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/sirupsen/logrus"
@@ -66,18 +67,43 @@ func (d *datastore) Servers() ([]*radiantapi.Server, error) {
 				}
 				v, exists := hostServers[ep.Host]
 				if !exists {
+					// TODO: refactor to be generic and handle different types (i.e. radiant, tcp/udp)
 					v = &radiantapi.Server{
-						Host:   ep.Host,
-						Path:   "/",
-						TLS:    ep.TLS,
-						Policy: radiantapi.Policy_RANDOM,
-						Preset: "transparent",
+						Host: ep.Host,
+						Path: "/",
+					}
+					if ep.EndpointConfig != nil {
+						config, err := typeurl.UnmarshalAny(ep.EndpointConfig)
+						if err != nil {
+							logrus.WithError(err).Warn("proxy: unable to unmarshal endpoint config")
+							continue
+						}
+						switch t := config.(type) {
+						case *radiantapi.Server:
+							v.Policy = radiantapi.Policy_RANDOM
+							v.Preset = "transparent"
+							v.TLS = t.TLS
+							v.Timeouts = t.Timeouts
+							v.Limits = t.Limits
+							v.ProxyUpstreamHeaders = t.ProxyUpstreamHeaders
+							v.ProxyTryDuration = t.ProxyTryDuration
+							v.ProxyFailTimeout = t.ProxyFailTimeout
+							logrus.WithFields(logrus.Fields{
+								"tls":                    t.TLS,
+								"policy":                 t.Policy,
+								"timeouts":               t.Timeouts,
+								"limits":                 t.Limits,
+								"proxy_upstream_headers": t.ProxyUpstreamHeaders,
+								"proxy_try_duration":     t.ProxyTryDuration,
+								"proxy_fail_timeout":     t.ProxyFailTimeout,
+							}).Debug("endpoint")
+							// check for conflicting values in host
+							if t.TLS != v.TLS {
+								logrus.Warnf("conflicting TLS setting for %s", ep.Host)
+							}
+						}
 					}
 					hostServers[ep.Host] = v
-				}
-				// check for conflicting values in host
-				if ep.TLS != v.TLS {
-					logrus.Warnf("conflicting TLS setting for %s", ep.Host)
 				}
 
 				// build upstreams
