@@ -163,7 +163,7 @@ github.com/lucas-clemente/quic-go/internal/handshake
 github.com/lucas-clemente/quic-go/internal/wire
 # github.com/lucas-clemente/quic-go-certificates v0.0.0-20160823095156-d2f86524cced
 github.com/lucas-clemente/quic-go-certificates
-# github.com/mholt/caddy v0.0.0-20180907212407-13a54dbdda25 => github.com/ehazlett/caddy v0.11.1-0.20180916020559-62aca929934e
+# github.com/mholt/caddy v0.0.0-20180907212407-13a54dbdda25 => github.com/ehazlett/caddy v0.0.0
 github.com/mholt/caddy
 github.com/mholt/caddy/caddyhttp
 github.com/mholt/caddy/caddytls
@@ -240,8 +240,8 @@ github.com/sean-/seed
 # github.com/sirupsen/logrus v1.0.6
 github.com/sirupsen/logrus
 # github.com/stellarproject/radiant v0.0.0-20181205032446-55171a938c07
-github.com/stellarproject/radiant
 github.com/stellarproject/radiant/api/v1
+github.com/stellarproject/radiant
 github.com/stellarproject/radiant/server
 github.com/stellarproject/radiant/ds
 github.com/stellarproject/radiant/ds/memory

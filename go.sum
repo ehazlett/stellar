@@ -82,6 +82,8 @@ github.com/ehazlett/blackbird v0.0.0-20180915174957-2cfb72cffc94 h1:FlWgUcQl+l/g
 github.com/ehazlett/blackbird v0.0.0-20180915174957-2cfb72cffc94/go.mod h1:+r3PhIaIlvrC+BbeiSQDaIoluLBn9IRGZ21w/GhP3zg=
 github.com/ehazlett/blackbird v0.0.0-20180916032155-929d2a896eed h1:XV0IqqA1W4QNe9x1bQaETS5HByrQ2PJU6zWA6YnDToc=
 github.com/ehazlett/blackbird v0.0.0-20180916032155-929d2a896eed/go.mod h1:bKaDF7mDlEiU+I+3C46QnxUI504w/paa8gYfT3dbCsI=
+github.com/ehazlett/caddy v0.0.0 h1:KZfvIJXmYq8YPoiKljtlyDqbhlKLaXFWERNlJHCvhCo=
+github.com/ehazlett/caddy v0.0.0/go.mod h1:Fw5aFxRtGgP3nYP8vNPUhu8T/pttdFLPrcVR5TFxPM0=
 github.com/ehazlett/caddy v0.11.1-0.20180916020559-62aca929934e h1:x+D4YEsleN5CEp2vYawkxsT7bGoUk1b+QQpYVVbRuu4=
 github.com/ehazlett/caddy v0.11.1-0.20180916020559-62aca929934e/go.mod h1:Fw5aFxRtGgP3nYP8vNPUhu8T/pttdFLPrcVR5TFxPM0=
 github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55 h1:UVtaSj3wH1BKPQxcyTYZpuFftlxxrJQONmZMT37xz1E=
