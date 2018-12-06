@@ -10,8 +10,14 @@ import (
 var configCommand = cli.Command{
 	Name:  "config",
 	Usage: "output default config",
+	Flags: []cli.Flag{
+		cli.StringFlag{
+			Name:  "nic, n",
+			Usage: "network interface to use for detecting IP (default: first non-local)",
+		},
+	},
 	Action: func(ctx *cli.Context) error {
-		cfg, err := defaultConfig()
+		cfg, err := defaultConfig(ctx)
 		if err != nil {
 			return err
 		}
