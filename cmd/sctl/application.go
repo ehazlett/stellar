@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var appInspectTemplate = `Name: {{ .Name }}
+var appInspectTemplate = `Application: {{ .Name }}
 Services:{{ range .Services }}
   - Name: {{ .Name }}
     Image: {{ .Image }}
@@ -24,8 +24,8 @@ Services:{{ range .Services }}
       - Service: {{.Service}}
         Protocol: {{.Protocol}}
         Host: {{.Host}}
-        Port: {{.Port}}
-        TLS:  {{.TLS}}{{ end }}{{ end }}{{ end }}
+        Port: {{.Port}}{{ end }}{{ end }}
+	{{ end }}
 `
 
 var appCommand = cli.Command{
