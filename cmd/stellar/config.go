@@ -12,8 +12,21 @@ var configCommand = cli.Command{
 	Usage: "output default config",
 	Flags: []cli.Flag{
 		cli.StringFlag{
-			Name:  "nic, n",
-			Usage: "network interface to use for detecting IP (default: first non-local)",
+			Name:   "node-id",
+			Usage:  "node id",
+			Value:  getHostname(),
+			EnvVar: "STELLAR_CONFIG_NODE_ID",
+		},
+		cli.StringFlag{
+			Name:   "nic, n",
+			Usage:  "network interface to use for detecting IP (default: first non-local)",
+			EnvVar: "STELLAR_CONFIG_NIC",
+		},
+		cli.StringSliceFlag{
+			Name:   "peer, p",
+			Usage:  "peer(s) to configure for joining",
+			Value:  &cli.StringSlice{},
+			EnvVar: "STELLAR_CONFIG_PEERS",
 		},
 	},
 	Action: func(ctx *cli.Context) error {

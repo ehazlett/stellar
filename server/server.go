@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"sync"
@@ -42,6 +43,10 @@ var (
 	datastoreSyncInterval = time.Second * 300
 	serviceStartTimeout   = time.Second * 5
 	serviceStopTimeout    = time.Second * 5
+
+	// local server state db
+	localDBFilename       = "local.db"
+	dsLocalPeerBucketName = "peers"
 )
 
 type Server struct {
@@ -51,12 +56,32 @@ type Server struct {
 	synced              bool
 	nodeEventCh         chan *element.NodeEvent
 	services            []services.Service
+	db                  *localDB
 	tickerReconcile     *time.Ticker
 	tickerDatastoreSync *time.Ticker
 	errCh               chan error
 }
 
 func NewServer(cfg *stellar.Config) (*Server, error) {
+	db, err := NewLocalDB(filepath.Join(cfg.DataDir, localDBFilename))
+	if err != nil {
+		return nil, err
+	}
+
+	logrus.WithField("seedPeers", cfg.AgentConfig.Peers).Debug("seed peers")
+	// check if there are cached peers
+	peers, err := getPeersFromCache(db, cfg.AgentConfig.Peers)
+	if err != nil {
+		return nil, err
+	}
+
+	// override agent config peers with available
+	cfg.AgentConfig.Peers = peers
+	logrus.WithFields(logrus.Fields{
+		"peers":      peers,
+		"seed_peers": cfg.AgentConfig.Peers,
+	}).Debug("cluster peers")
+
 	a, err := element.NewAgent(&element.Peer{
 		ID:      cfg.NodeID,
 		Address: cfg.GRPCAddress,
@@ -156,6 +181,7 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		agent:       a,
 		grpcServer:  grpcServer,
 		config:      cfg,
+		db:          db,
 		nodeEventCh: nodeEventCh,
 		services:    svcs,
 		errCh:       make(chan error),
@@ -174,13 +200,26 @@ func (s *Server) eventHandler(ch chan *element.NodeEvent) {
 	for {
 		evt := <-ch
 		logrus.Debugf("event: %+v", evt)
+		switch evt.Type {
+		case element.NodeUpdate:
+			s.eventHandlerNodeUpdate(evt)
+		}
+	}
+}
+
+func (s *Server) eventHandlerNodeUpdate(evt *element.NodeEvent) {
+	node := evt.Node
+	peer := &Peer{
+		ID:      node.Name,
+		Address: node.Address(),
+	}
+
+	if err := s.cachePeer(peer); err != nil {
+		logrus.WithError(err).Error("error caching cluster peer")
 	}
 }
 
 func (s *Server) waitForPeers() error {
-	if len(s.config.AgentConfig.Peers) == 0 {
-		return nil
-	}
 	logrus.Infof("waiting on initial cluster sync (could take up to %s)", s.agent.SyncInterval()*2)
 
 	doneChan := make(chan bool)
@@ -287,14 +326,18 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	if err := s.waitForPeers(); err != nil {
-		return err
+	isPeer := len(s.config.AgentConfig.Peers) > 0
+
+	if isPeer {
+		if err := s.waitForPeers(); err != nil {
+			return err
+		}
 	}
 
 	logrus.WithField("addr", s.config.GRPCAddress).Debug("starting grpc server")
 	go s.grpcServer.Serve(l)
 
-	if len(s.config.AgentConfig.Peers) > 0 {
+	if isPeer {
 		// check if joining; if so, clear current datastore and sync from peer
 		logrus.Debug("joining cluster; clearing current datastore")
 		if err := s.syncDatastore(); err != nil {

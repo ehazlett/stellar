@@ -68,16 +68,16 @@ func (c *Config) MarshalJSON() ([]byte, error) {
 	type Alias Config
 	type Agent element.Config
 	return json.Marshal(&struct {
-		*Agent
 		*Alias
+		*Agent
 		Peers                    []string
 		Subnet                   string
 		ProxyHealthcheckInterval string
 	}{
-		Alias:  (*Alias)(c),
-		Agent:  (*Agent)(c.AgentConfig),
-		Peers:  c.AgentConfig.Peers,
-		Subnet: c.Subnet.String(),
+		Alias:                    (*Alias)(c),
+		Agent:                    (*Agent)(c.AgentConfig),
+		Peers:                    c.AgentConfig.Peers,
+		Subnet:                   c.Subnet.String(),
 		ProxyHealthcheckInterval: c.ProxyHealthcheckInterval.String(),
 	})
 }

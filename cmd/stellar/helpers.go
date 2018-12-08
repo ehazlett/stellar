@@ -21,8 +21,6 @@ func getIP(ctx *cli.Context) string {
 		logrus.Warnf("unable to detect network interfaces")
 		return ip
 	}
-	fmt.Println(ifaces)
-
 	for _, i := range ifaces {
 		if devName == "" || i.Name == devName {
 			a := getInterfaceIP(i)
@@ -56,19 +54,21 @@ func getInterfaceIP(iface net.Interface) string {
 }
 
 func defaultConfig(ctx *cli.Context) (*stellar.Config, error) {
+	nodeID := ctx.String("node-id")
 	ip := getIP(ctx)
+	peers := ctx.StringSlice("peer")
 	agentConfig := &element.Config{
 		ConnectionType:   "local",
 		ClusterAddress:   fmt.Sprintf("%s:%d", ip, 7946),
 		AdvertiseAddress: fmt.Sprintf("%s:%d", ip, 7946),
-		Peers:            []string{},
+		Peers:            peers,
 	}
 	_, subnet, err := net.ParseCIDR("172.16.0.0/12")
 	if err != nil {
 		return nil, err
 	}
 	return &stellar.Config{
-		NodeID:                   getHostname(),
+		NodeID:                   nodeID,
 		GRPCAddress:              fmt.Sprintf("%s:%d", ip, 9000),
 		AgentConfig:              agentConfig,
 		ContainerdAddr:           "/run/containerd/containerd.sock",

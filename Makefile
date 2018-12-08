@@ -13,6 +13,7 @@ BUILD_ARGS?=
 PACKAGES=$(shell go list ./... | grep -v -e /vendor/)
 EXTENSIONS=$(wildcard extensions/*)
 CYCLO_PACKAGES=$(shell go list ./... | grep -v /vendor/ | sed "s/github.com\/$(NAMESPACE)\/$(APP)\///g" | tail -n +2)
+VAB_ARGS?=
 CWD=$(PWD)
 
 all: binaries
