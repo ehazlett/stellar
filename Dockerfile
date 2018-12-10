@@ -15,6 +15,7 @@ RUN go get -v github.com/gogo/protobuf/proto
 RUN go get -v github.com/gogo/protobuf/gogoproto
 RUN go get -v github.com/gogo/protobuf/protoc-gen-gogo
 RUN go get -v github.com/gogo/protobuf/protoc-gen-gogofast
+RUN go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 RUN go get -v github.com/stevvooe/protobuild
 RUN go get -v golang.org/x/lint/golint
 WORKDIR /go/src/github.com/ehazlett/stellar

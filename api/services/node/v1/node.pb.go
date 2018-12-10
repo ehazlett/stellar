@@ -51,7 +51,7 @@ func (x Protocol) String() string {
 	return proto.EnumName(Protocol_name, int32(x))
 }
 func (Protocol) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{0}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{0}
 }
 
 type InfoRequest struct {
@@ -64,7 +64,7 @@ func (m *InfoRequest) Reset()         { *m = InfoRequest{} }
 func (m *InfoRequest) String() string { return proto.CompactTextString(m) }
 func (*InfoRequest) ProtoMessage()    {}
 func (*InfoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{0}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{0}
 }
 func (m *InfoRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_InfoRequest.Unmarshal(m, b)
@@ -95,7 +95,7 @@ func (m *InfoResponse) Reset()         { *m = InfoResponse{} }
 func (m *InfoResponse) String() string { return proto.CompactTextString(m) }
 func (*InfoResponse) ProtoMessage()    {}
 func (*InfoResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{1}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{1}
 }
 func (m *InfoResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_InfoResponse.Unmarshal(m, b)
@@ -133,7 +133,7 @@ func (m *ContainersRequest) Reset()         { *m = ContainersRequest{} }
 func (m *ContainersRequest) String() string { return proto.CompactTextString(m) }
 func (*ContainersRequest) ProtoMessage()    {}
 func (*ContainersRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{2}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{2}
 }
 func (m *ContainersRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ContainersRequest.Unmarshal(m, b)
@@ -178,7 +178,7 @@ func (m *Container) Reset()         { *m = Container{} }
 func (m *Container) String() string { return proto.CompactTextString(m) }
 func (*Container) ProtoMessage()    {}
 func (*Container) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{3}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{3}
 }
 func (m *Container) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Container.Unmarshal(m, b)
@@ -265,7 +265,7 @@ func (m *Container_Task) Reset()         { *m = Container_Task{} }
 func (m *Container_Task) String() string { return proto.CompactTextString(m) }
 func (*Container_Task) ProtoMessage()    {}
 func (*Container_Task) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{3, 1}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{3, 1}
 }
 func (m *Container_Task) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Container_Task.Unmarshal(m, b)
@@ -303,7 +303,7 @@ func (m *ContainersResponse) Reset()         { *m = ContainersResponse{} }
 func (m *ContainersResponse) String() string { return proto.CompactTextString(m) }
 func (*ContainersResponse) ProtoMessage()    {}
 func (*ContainersResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{4}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{4}
 }
 func (m *ContainersResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ContainersResponse.Unmarshal(m, b)
@@ -341,7 +341,7 @@ func (m *ContainerRequest) Reset()         { *m = ContainerRequest{} }
 func (m *ContainerRequest) String() string { return proto.CompactTextString(m) }
 func (*ContainerRequest) ProtoMessage()    {}
 func (*ContainerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{5}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{5}
 }
 func (m *ContainerRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ContainerRequest.Unmarshal(m, b)
@@ -379,7 +379,7 @@ func (m *ContainerResponse) Reset()         { *m = ContainerResponse{} }
 func (m *ContainerResponse) String() string { return proto.CompactTextString(m) }
 func (*ContainerResponse) ProtoMessage()    {}
 func (*ContainerResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{6}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{6}
 }
 func (m *ContainerResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ContainerResponse.Unmarshal(m, b)
@@ -416,7 +416,7 @@ func (m *ImagesRequest) Reset()         { *m = ImagesRequest{} }
 func (m *ImagesRequest) String() string { return proto.CompactTextString(m) }
 func (*ImagesRequest) ProtoMessage()    {}
 func (*ImagesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{7}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{7}
 }
 func (m *ImagesRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ImagesRequest.Unmarshal(m, b)
@@ -447,7 +447,7 @@ func (m *Image) Reset()         { *m = Image{} }
 func (m *Image) String() string { return proto.CompactTextString(m) }
 func (*Image) ProtoMessage()    {}
 func (*Image) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{8}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{8}
 }
 func (m *Image) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Image.Unmarshal(m, b)
@@ -485,7 +485,7 @@ func (m *ImagesResponse) Reset()         { *m = ImagesResponse{} }
 func (m *ImagesResponse) String() string { return proto.CompactTextString(m) }
 func (*ImagesResponse) ProtoMessage()    {}
 func (*ImagesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{9}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{9}
 }
 func (m *ImagesResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ImagesResponse.Unmarshal(m, b)
@@ -526,7 +526,7 @@ func (m *ContainerNetworkRequest) Reset()         { *m = ContainerNetworkRequest
 func (m *ContainerNetworkRequest) String() string { return proto.CompactTextString(m) }
 func (*ContainerNetworkRequest) ProtoMessage()    {}
 func (*ContainerNetworkRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{10}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{10}
 }
 func (m *ContainerNetworkRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ContainerNetworkRequest.Unmarshal(m, b)
@@ -588,7 +588,7 @@ func (m *Process) Reset()         { *m = Process{} }
 func (m *Process) String() string { return proto.CompactTextString(m) }
 func (*Process) ProtoMessage()    {}
 func (*Process) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{11}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{11}
 }
 func (m *Process) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Process.Unmarshal(m, b)
@@ -650,7 +650,7 @@ func (m *Mount) Reset()         { *m = Mount{} }
 func (m *Mount) String() string { return proto.CompactTextString(m) }
 func (*Mount) ProtoMessage()    {}
 func (*Mount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{12}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{12}
 }
 func (m *Mount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Mount.Unmarshal(m, b)
@@ -716,7 +716,7 @@ func (m *Endpoint) Reset()         { *m = Endpoint{} }
 func (m *Endpoint) String() string { return proto.CompactTextString(m) }
 func (*Endpoint) ProtoMessage()    {}
 func (*Endpoint) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{13}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{13}
 }
 func (m *Endpoint) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Endpoint.Unmarshal(m, b)
@@ -798,7 +798,7 @@ func (m *Service) Reset()         { *m = Service{} }
 func (m *Service) String() string { return proto.CompactTextString(m) }
 func (*Service) ProtoMessage()    {}
 func (*Service) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{14}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{14}
 }
 func (m *Service) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Service.Unmarshal(m, b)
@@ -900,7 +900,7 @@ func (m *CreateContainerRequest) Reset()         { *m = CreateContainerRequest{}
 func (m *CreateContainerRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateContainerRequest) ProtoMessage()    {}
 func (*CreateContainerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{15}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{15}
 }
 func (m *CreateContainerRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CreateContainerRequest.Unmarshal(m, b)
@@ -945,7 +945,7 @@ func (m *DeleteContainerRequest) Reset()         { *m = DeleteContainerRequest{}
 func (m *DeleteContainerRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteContainerRequest) ProtoMessage()    {}
 func (*DeleteContainerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{16}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{16}
 }
 func (m *DeleteContainerRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DeleteContainerRequest.Unmarshal(m, b)
@@ -983,7 +983,7 @@ func (m *RestartContainerRequest) Reset()         { *m = RestartContainerRequest
 func (m *RestartContainerRequest) String() string { return proto.CompactTextString(m) }
 func (*RestartContainerRequest) ProtoMessage()    {}
 func (*RestartContainerRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_node_9a5f6b0bc1eb420f, []int{17}
+	return fileDescriptor_node_9c4dd9cc001cf104, []int{17}
 }
 func (m *RestartContainerRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RestartContainerRequest.Unmarshal(m, b)
@@ -1340,10 +1340,10 @@ var _Node_serviceDesc = grpc.ServiceDesc{
 }
 
 func init() {
-	proto.RegisterFile("github.com/ehazlett/stellar/api/services/node/v1/node.proto", fileDescriptor_node_9a5f6b0bc1eb420f)
+	proto.RegisterFile("github.com/ehazlett/stellar/api/services/node/v1/node.proto", fileDescriptor_node_9c4dd9cc001cf104)
 }
 
-var fileDescriptor_node_9a5f6b0bc1eb420f = []byte{
+var fileDescriptor_node_9c4dd9cc001cf104 = []byte{
 	// 1129 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x57, 0x5f, 0x6f, 0xe3, 0x44,
 	0x10, 0x27, 0x89, 0xeb, 0x24, 0x13, 0x7a, 0x0d, 0xab, 0xd2, 0x33, 0xe1, 0xa1, 0xc1, 0x88, 0x23,

@@ -19,9 +19,9 @@ CWD=$(PWD)
 all: binaries
 
 generate:
-	@echo " -> building protobufs for grpc"
+	@>&2 echo " -> building protobufs for grpc"
 	@echo ${PACKAGES} | xargs protobuild -quiet
-	@echo " -> building protobufs for grpc-gateway"
+	@>&2 echo " -> building protobufs for grpc-gateway"
 	@echo ${PACKAGES} | xargs protobuild -f Protobuild.grpc-gateway.toml -quiet
 
 docker-generate:
@@ -42,15 +42,15 @@ bindir:
 	@mkdir -p bin
 
 cli: bindir
-	@echo " -> building cli ${COMMIT}${BUILD}"
+	@>&2 echo " -> building cli ${COMMIT}${BUILD}"
 	@cd cmd/$(CLI) && CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(CLI) .
 
 daemon: bindir
-	@echo " -> building daemon ${COMMIT}${BUILD}"
+	@>&2 echo " -> building daemon ${COMMIT}${BUILD}"
 	@cd cmd/$(APP) && CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(APP) .
 
 cni-ipam: bindir
-	@echo " -> building cni-ipam ${COMMIT}${BUILD}"
+	@>&2 echo " -> building cni-ipam ${COMMIT}${BUILD}"
 	@cd cmd/$(CNI_IPAM) && CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-w -X github.com/$(REPO)/version.GitCommit=$(COMMIT) -X github.com/$(REPO)/version.Build=$(BUILD)" -o ../../bin/$(CNI_IPAM) .
 
 docs:
