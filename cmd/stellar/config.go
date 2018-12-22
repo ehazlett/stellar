@@ -28,6 +28,12 @@ var configCommand = cli.Command{
 			Value:  &cli.StringSlice{},
 			EnvVar: "STELLAR_CONFIG_PEERS",
 		},
+		cli.StringFlag{
+			Name:   "namespace",
+			Usage:  "containerd namespace",
+			Value:  "default",
+			EnvVar: "CONTAINERD_NAMESPACE",
+		},
 	},
 	Action: func(ctx *cli.Context) error {
 		cfg, err := defaultConfig(ctx)

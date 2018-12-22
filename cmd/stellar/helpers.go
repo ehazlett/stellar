@@ -72,7 +72,7 @@ func defaultConfig(ctx *cli.Context) (*stellar.Config, error) {
 		GRPCAddress:              fmt.Sprintf("%s:%d", ip, 9000),
 		AgentConfig:              agentConfig,
 		ContainerdAddr:           "/run/containerd/containerd.sock",
-		Namespace:                "default",
+		Namespace:                ctx.String("namespace"),
 		Subnet:                   subnet,
 		DataDir:                  "/var/lib/stellar",
 		StateDir:                 "/run/stellar",
