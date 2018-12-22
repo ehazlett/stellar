@@ -23,5 +23,3 @@ ENV REPO ehazlett/$APP
 ARG BUILD
 COPY . /go/src/github.com/$REPO
 WORKDIR /go/src/github.com/$REPO
-ENV GO111MODULE=on
-RUN go mod vendor
