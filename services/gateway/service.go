@@ -38,6 +38,14 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Type() services.Type {
+	return services.GatewayService
+}
+
+func (s *service) Requires() []services.Type {
+	return nil
+}
+
 func (s *service) Info(ctx context.Context, req *cluster.InfoRequest) (*cluster.InfoResponse, error) {
 	return &cluster.InfoResponse{
 		ID: serviceID,

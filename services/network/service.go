@@ -49,6 +49,16 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Type() services.Type {
+	return services.NetworkService
+}
+
+func (s *service) Requires() []services.Type {
+	return []services.Type{
+		services.DatastoreService,
+	}
+}
+
 func (s *service) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResponse, error) {
 	return &api.InfoResponse{
 		ID: serviceID,
