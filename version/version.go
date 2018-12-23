@@ -7,7 +7,7 @@ var (
 	Name = "stellar"
 
 	// Version defines the application version
-	Version = "0.1.0"
+	Version = "0.2.0"
 
 	// Description is the application description
 	Description = "simple container platform"

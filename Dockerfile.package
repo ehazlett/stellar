@@ -21,7 +21,6 @@ RUN go get -v github.com/tebeka/go2xunit
 FROM build as stellar
 ENV APP stellar
 ENV REPO ehazlett/$APP
-ENV GO111MODULE on
 ARG BUILD
 COPY . /go/src/github.com/$REPO
 WORKDIR /go/src/github.com/$REPO
@@ -62,7 +61,7 @@ FROM build as cni
 RUN apt-get update && apt-get install -y build-essential
 RUN git clone https://github.com/containernetworking/plugins /go/src/github.com/containernetworking/plugins
 WORKDIR /go/src/github.com/containernetworking/plugins
-RUN ./build.sh
+RUN ./build_linux.sh
 
 FROM scratch as rootfs
 COPY --from=stellar /release.txt /
