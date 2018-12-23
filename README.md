@@ -69,7 +69,7 @@ To build binaries:
 # Running
 To run Stellar, once you have a working containerd installation follow these steps:
 
-- Install [Containerd](https://github.com/containerd/containerd#getting-started)
+- Install [Containerd](https://github.com/containerd/containerd#getting-started) version >=1.1
 - Build binaries or get a release
 - Copy `/bin/sctl` to `/usr/local/bin/`
 - Copy `/bin/stellar` to `/usr/local/bin/`
