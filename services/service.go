@@ -4,6 +4,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Service is the interface that all stellar services must implement
 type Service interface {
 	// ID returns the id of the service
 	ID() string

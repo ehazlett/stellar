@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/errdefs"
-	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -21,6 +20,12 @@ var (
 )
 
 func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*api.AllocateIPResponse, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	reservedIPs, err := s.getIPs(ctx, req.Node)
 	if err != nil {
 		return nil, err
@@ -55,12 +60,7 @@ func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*
 		}
 		ipKey := fmt.Sprintf(dsIPsKey, req.Node, req.ID)
 		logrus.Debugf("ip key: %s", ipKey)
-		if _, err := s.ds.Set(ctx, &datastoreapi.SetRequest{
-			Bucket: dsNetworkBucketName,
-			Key:    ipKey,
-			Value:  []byte(ip.String()),
-			Sync:   true,
-		}); err != nil {
+		if err := c.Datastore().Set(dsNetworkBucketName, ipKey, []byte(ip.String()), true); err != nil {
 			return nil, err
 		}
 
@@ -75,47 +75,55 @@ func (s *service) AllocateIP(ctx context.Context, req *api.AllocateIPRequest) (*
 }
 
 func (s *service) GetIP(ctx context.Context, req *api.GetIPRequest) (*api.GetIPResponse, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	ipKey := fmt.Sprintf(dsIPsKey, req.Node, req.ID)
-	resp, err := s.ds.Get(ctx, &datastoreapi.GetRequest{
-		Bucket: dsNetworkBucketName,
-		Key:    ipKey,
-	})
+	result, err := c.Datastore().Get(dsNetworkBucketName, ipKey)
 	if err != nil {
 		return nil, err
 	}
 
 	return &api.GetIPResponse{
-		IP: string(resp.Data.Value),
+		IP: string(result),
 	}, nil
 }
 
 func (s *service) ReleaseIP(ctx context.Context, req *api.ReleaseIPRequest) (*ptypes.Empty, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	ipKey := fmt.Sprintf(dsIPsKey, req.Node, req.ID)
-	if _, err := s.ds.Delete(ctx, &datastoreapi.DeleteRequest{
-		Bucket: dsNetworkBucketName,
-		Key:    ipKey,
-		Sync:   true,
-	}); err != nil {
-		return empty, err
+	if err := c.Datastore().Delete(dsNetworkBucketName, ipKey, true); err != nil {
+		return nil, err
 	}
 
 	return empty, nil
 }
 
 func (s *service) getIPs(ctx context.Context, node string) (map[string]net.IP, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	searchKey := fmt.Sprintf(dsIPsKey, node, "")
-	searchResp, err := s.ds.Search(ctx, &datastoreapi.SearchRequest{
-		Bucket: dsNetworkBucketName,
-		Prefix: searchKey,
-	})
+	results, err := c.Datastore().Search(dsNetworkBucketName, searchKey)
 	if err != nil {
 		err = errdefs.FromGRPC(err)
 		if !errdefs.IsNotFound(err) {
 			return nil, err
 		}
 	}
-	ips := make(map[string]net.IP, len(searchResp.Data))
-	for _, kv := range searchResp.Data {
+	ips := make(map[string]net.IP, len(results))
+	for _, kv := range results {
 		p := strings.Split(kv.Key, ".")
 		if len(p) < 3 {
 			logrus.Errorf("unexpected IP key format: %s", kv.Key)

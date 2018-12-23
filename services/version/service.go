@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
+	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/version/v1"
+	"github.com/ehazlett/stellar/services"
 	"github.com/ehazlett/stellar/version"
 	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
@@ -20,10 +22,10 @@ type service struct {
 	namespace      string
 }
 
-func New(containerdAddr, namespace string) (*service, error) {
+func New(cfg *stellar.Config, _ *element.Agent) (services.Service, error) {
 	return &service{
-		containerdAddr: containerdAddr,
-		namespace:      namespace,
+		containerdAddr: cfg.ContainerdAddr,
+		namespace:      cfg.Namespace,
 	}, nil
 }
 

@@ -21,7 +21,6 @@ ENV APP stellar
 ENV REPO ehazlett/$APP
 COPY . /go/src/github.com/$REPO
 WORKDIR /go/src/github.com/$REPO
-ENV GO111MODULE=on
 RUN make test-xunit
 
 FROM scratch
