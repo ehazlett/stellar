@@ -7,7 +7,21 @@ import (
 	"syscall"
 
 	"github.com/codegangsta/cli"
+	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/server"
+	"github.com/ehazlett/stellar/services"
+	applicationservice "github.com/ehazlett/stellar/services/application"
+	clusterservice "github.com/ehazlett/stellar/services/cluster"
+	datastoreservice "github.com/ehazlett/stellar/services/datastore"
+	eventsservice "github.com/ehazlett/stellar/services/events"
+	gatewayservice "github.com/ehazlett/stellar/services/gateway"
+	healthservice "github.com/ehazlett/stellar/services/health"
+	nameserverservice "github.com/ehazlett/stellar/services/nameserver"
+	networkservice "github.com/ehazlett/stellar/services/network"
+	nodeservice "github.com/ehazlett/stellar/services/node"
+	proxyservice "github.com/ehazlett/stellar/services/proxy"
+	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,8 +53,89 @@ func serverAction(ctx *cli.Context) error {
 		return err
 	}
 
+	// services
+	// TODO: implement dependencies for services to alleviate the loading order
+	// TODO: refactor to just pass New and let the Register func in server initialize (i.e. New(cfg, agent))
+	//vs, err := versionservice.New(cfg)
+	//if err != nil {
+	//	return err
+	//}
+
+	//hs, err := healthservice.New(a)
+	//if err != nil {
+	//	return err
+	//}
+
+	//cs, err := clusterservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+
+	//ds, err := datastoreservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+
+	//// TODO: refactor network service to use the client to get the datastore service instead of on New
+	//netSvc, err := networkservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+
+	//gs, err := gatewayservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+
+	//nodeSvc, err := nodeservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+
+	//appSvc, err := applicationservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+
+	//nsSvc, err := nameserverservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+	//proxySvc, err := proxyservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+	//eventsSvc, err := eventsservice.New(cfg, a)
+	//if err != nil {
+	//	return err
+	//}
+	//svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc, eventsSvc}
+	//svcs := []services.Service{
+	//	versionservice.New,
+	//	healthservice.New,
+	//}
+
+	svcs := []func(cfg *stellar.Config, agent *element.Agent) (services.Service, error){
+		versionservice.New,
+		healthservice.New,
+		clusterservice.New,
+		datastoreservice.New,
+		networkservice.New,
+		gatewayservice.New,
+		nodeservice.New,
+		applicationservice.New,
+		nameserverservice.New,
+		proxyservice.New,
+		eventsservice.New,
+	}
+
 	srv, err := server.NewServer(cfg)
 	if err != nil {
+		return err
+	}
+
+	// register services
+	if err := srv.Register(svcs); err != nil {
 		return err
 	}
 

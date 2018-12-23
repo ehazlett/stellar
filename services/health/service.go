@@ -7,7 +7,9 @@ import (
 
 	"github.com/cloudfoundry/gosigar"
 	"github.com/ehazlett/element"
+	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/health/v1"
+	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 )
@@ -21,9 +23,9 @@ type service struct {
 	started time.Time
 }
 
-func New(a *element.Agent) (*service, error) {
+func New(_ *stellar.Config, agent *element.Agent) (services.Service, error) {
 	return &service{
-		agent:   a,
+		agent:   agent,
 		started: time.Now(),
 	}, nil
 }

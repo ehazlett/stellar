@@ -7,6 +7,7 @@ import (
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/client"
+	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 
@@ -31,7 +32,7 @@ type service struct {
 	config          *stellar.Config
 }
 
-func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
 	srv := &service{
 		containerdAddr:  cfg.ContainerdAddr,
 		namespace:       cfg.Namespace,

@@ -11,6 +11,7 @@ import (
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	cluster "github.com/ehazlett/stellar/api/services/cluster/v1"
+	"github.com/ehazlett/stellar/services"
 )
 
 const (
@@ -22,7 +23,7 @@ type service struct {
 	gatewayAddr string
 }
 
-func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, _ *element.Agent) (services.Service, error) {
 	return &service{
 		grpcHost:    cfg.AgentConfig.ClusterAddress,
 		gatewayAddr: cfg.GatewayAddress,

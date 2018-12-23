@@ -12,6 +12,7 @@ import (
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
 	"github.com/ehazlett/stellar/client"
+	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -43,14 +44,14 @@ type tombstone struct {
 	Value     []byte
 }
 
-func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
 	svc := &service{
-		agent:                 a,
+		agent:                 agent,
 		config:                cfg,
 		dir:                   cfg.DataDir,
 		lock:                  &sync.Mutex{},
 		lockChan:              make(chan bool),
-		dsTombstoneBucketName: "stellar." + stellar.APIVersion + "." + a.Self().ID + ".services.datastore.tombstone",
+		dsTombstoneBucketName: "stellar." + stellar.APIVersion + "." + agent.Self().ID + ".services.datastore.tombstone",
 	}
 
 	db, err := svc.openDB()

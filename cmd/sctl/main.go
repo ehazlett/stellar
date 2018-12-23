@@ -24,7 +24,7 @@ func main() {
 			Usage: "Enable debug logging",
 		},
 		cli.StringFlag{
-			Name:   "addr",
+			Name:   "addr, a",
 			Usage:  "stellar daemon address",
 			Value:  "127.0.0.1:9000",
 			EnvVar: "STELLAR_ADDR",

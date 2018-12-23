@@ -11,6 +11,7 @@ import (
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/events/v1"
 	"github.com/ehazlett/stellar/client"
+	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/nats-io/gnatsd/server"
 	nats "github.com/nats-io/go-nats"
@@ -33,9 +34,9 @@ type service struct {
 	config *stellar.Config
 }
 
-func New(cfg *stellar.Config, a *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
 	return &service{
-		agent:  a,
+		agent:  agent,
 		config: cfg,
 	}, nil
 }

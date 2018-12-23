@@ -18,17 +18,6 @@ import (
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
-	applicationservice "github.com/ehazlett/stellar/services/application"
-	clusterservice "github.com/ehazlett/stellar/services/cluster"
-	datastoreservice "github.com/ehazlett/stellar/services/datastore"
-	eventsservice "github.com/ehazlett/stellar/services/events"
-	gatewayservice "github.com/ehazlett/stellar/services/gateway"
-	healthservice "github.com/ehazlett/stellar/services/health"
-	nameserverservice "github.com/ehazlett/stellar/services/nameserver"
-	networkservice "github.com/ehazlett/stellar/services/network"
-	nodeservice "github.com/ehazlett/stellar/services/node"
-	proxyservice "github.com/ehazlett/stellar/services/proxy"
-	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -55,10 +44,10 @@ type Server struct {
 	config              *stellar.Config
 	synced              bool
 	nodeEventCh         chan *element.NodeEvent
-	services            []services.Service
 	db                  *localDB
 	tickerReconcile     *time.Ticker
 	tickerDatastoreSync *time.Ticker
+	services            []services.Service
 	errCh               chan error
 }
 
@@ -90,61 +79,6 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		return nil, err
 	}
 
-	// services
-	// TODO: implement dependencies for services to alleviate the loading order
-	vs, err := versionservice.New(cfg.ContainerdAddr, cfg.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	hs, err := healthservice.New(a)
-	if err != nil {
-		return nil, err
-	}
-
-	cs, err := clusterservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-
-	ds, err := datastoreservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-
-	gs, err := gatewayservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-
-	netSvc, err := networkservice.New(cfg, a, ds)
-	if err != nil {
-		return nil, err
-	}
-
-	nodeSvc, err := nodeservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-
-	appSvc, err := applicationservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-
-	nsSvc, err := nameserverservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-	proxySvc, err := proxyservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-	eventsSvc, err := eventsservice.New(cfg, a)
-	if err != nil {
-		return nil, err
-	}
-
 	grpcOpts := []grpc.ServerOption{}
 	if cfg.TLSServerCertificate != "" && cfg.TLSServerKey != "" {
 		logrus.WithFields(logrus.Fields{
@@ -164,17 +98,6 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	}
 	grpcServer := grpc.NewServer(grpcOpts...)
 
-	// register with agent
-	svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc, eventsSvc}
-	for _, svc := range svcs {
-		if err := svc.Register(grpcServer); err != nil {
-			return nil, err
-		}
-		logrus.WithFields(logrus.Fields{
-			"id": svc.ID(),
-		}).Info("registered service")
-	}
-
 	nodeEventCh := a.Subscribe()
 
 	srv := &Server{
@@ -183,13 +106,31 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		config:      cfg,
 		db:          db,
 		nodeEventCh: nodeEventCh,
-		services:    svcs,
 		errCh:       make(chan error),
 	}
 
 	go srv.eventHandler(nodeEventCh)
 
 	return srv, nil
+}
+
+func (s *Server) Register(svcs []func(*stellar.Config, *element.Agent) (services.Service, error)) error {
+	// TODO: register services from caller
+	for _, svc := range svcs {
+		i, err := svc(s.config, s.agent)
+		if err != nil {
+			return err
+		}
+		if err := i.Register(s.grpcServer); err != nil {
+			return err
+		}
+		logrus.WithFields(logrus.Fields{
+			"id": i.ID(),
+		}).Info("registered service")
+		s.services = append(s.services, i)
+	}
+
+	return nil
 }
 
 func (s *Server) NodeID() string {

@@ -8,6 +8,7 @@ import (
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/node/v1"
 	"github.com/ehazlett/stellar/client"
+	"github.com/ehazlett/stellar/services"
 	"google.golang.org/grpc"
 )
 
@@ -26,7 +27,7 @@ type service struct {
 	config         *stellar.Config
 }
 
-func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
 	return &service{
 		containerdAddr: cfg.ContainerdAddr,
 		namespace:      cfg.Namespace,

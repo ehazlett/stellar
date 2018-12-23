@@ -6,9 +6,9 @@ import (
 
 	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
-	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
 	"github.com/ehazlett/stellar/client"
+	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
 	"google.golang.org/grpc"
 )
@@ -28,16 +28,15 @@ var (
 type service struct {
 	network *net.IPNet
 	agent   *element.Agent
-	ds      datastoreapi.DatastoreServer
-	config  *stellar.Config
+	//ds      datastoreapi.DatastoreServer
+	config *stellar.Config
 }
 
-func New(cfg *stellar.Config, agent *element.Agent, ds datastoreapi.DatastoreServer) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
 	return &service{
 		network: cfg.Subnet,
 		agent:   agent,
 		config:  cfg,
-		ds:      ds,
 	}, nil
 }
 

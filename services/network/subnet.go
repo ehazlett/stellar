@@ -8,7 +8,6 @@ import (
 	"net"
 
 	"github.com/containerd/containerd/errdefs"
-	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -24,6 +23,12 @@ var (
 )
 
 func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetRequest) (*api.AllocateSubnetResponse, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	logrus.Debug("service.network allocating subnet")
 	// check for existing assigned subnet; if not, allocate
 	localSubnetKey := fmt.Sprintf(dsSubnetsKey, req.Node)
@@ -39,33 +44,25 @@ func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetReq
 		return nil, ErrNoAvailableSubnets
 	}
 
-	localSubnetResp, err := s.ds.Get(ctx, &datastoreapi.GetRequest{
-		Bucket: dsNetworkBucketName,
-		Key:    localSubnetKey,
-	})
+	localSubnet, err := c.Datastore().Get(dsNetworkBucketName, localSubnetKey)
 	if err != nil {
 		err = errdefs.FromGRPC(err)
 		if !errdefs.IsNotFound(err) {
 			return nil, err
 		}
 	}
-	bSubnetCIDR := localSubnetResp.Data.Value
 
-	if bytes.Equal(bSubnetCIDR, []byte("")) {
+	if bytes.Equal(localSubnet, []byte("")) {
 		logrus.Debug("local subnet key not found; assigning new subnet")
 
 		searchKey := fmt.Sprintf(dsSubnetsKey, "")
-		searchResp, err := s.ds.Search(ctx, &datastoreapi.SearchRequest{
-			Bucket: dsNetworkBucketName,
-			Prefix: searchKey,
-		})
+		existingSubnets, err := c.Datastore().Search(dsNetworkBucketName, searchKey)
 		if err != nil {
 			err = errdefs.FromGRPC(err)
 			if !errdefs.IsNotFound(err) {
 				return nil, err
 			}
 		}
-		existingSubnets := searchResp.Data
 
 		assigned := len(existingSubnets)
 		if len(subnets) < assigned {
@@ -75,30 +72,28 @@ func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetReq
 		cidr := subnets[assigned].CIDR
 		logrus.Debugf("subnet for node: %s", cidr)
 
-		bSubnetCIDR = []byte(cidr)
-		if _, err := s.ds.Set(ctx, &datastoreapi.SetRequest{
-			Bucket: dsNetworkBucketName,
-			Key:    localSubnetKey,
-			Value:  bSubnetCIDR,
-			Sync:   true,
-		}); err != nil {
+		localSubnet = []byte(cidr)
+		if err := c.Datastore().Set(dsNetworkBucketName, localSubnetKey, localSubnet, true); err != nil {
 			return nil, err
 		}
 	}
 
 	return &api.AllocateSubnetResponse{
-		SubnetCIDR: string(bSubnetCIDR),
+		SubnetCIDR: string(localSubnet),
 		Node:       req.Node,
 	}, nil
 }
 
 func (s *service) GetSubnet(ctx context.Context, req *api.GetSubnetRequest) (*api.GetSubnetResponse, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	localSubnetKey := fmt.Sprintf(dsSubnetsKey, req.Node)
 
-	localSubnetResp, err := s.ds.Get(ctx, &datastoreapi.GetRequest{
-		Bucket: dsNetworkBucketName,
-		Key:    localSubnetKey,
-	})
+	localSubnet, err := c.Datastore().Get(dsNetworkBucketName, localSubnetKey)
 	if err != nil {
 		err = errdefs.FromGRPC(err)
 		if !errdefs.IsNotFound(err) {
@@ -106,7 +101,7 @@ func (s *service) GetSubnet(ctx context.Context, req *api.GetSubnetRequest) (*ap
 		}
 	}
 	return &api.GetSubnetResponse{
-		SubnetCIDR: string(localSubnetResp.Data.Value),
+		SubnetCIDR: string(localSubnet),
 	}, nil
 }
 

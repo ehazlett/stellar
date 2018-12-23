@@ -11,6 +11,7 @@ import (
 	api "github.com/ehazlett/stellar/api/services/proxy/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/events"
+	"github.com/ehazlett/stellar/services"
 	appsvc "github.com/ehazlett/stellar/services/application"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -41,7 +42,7 @@ type service struct {
 	bclient *radiant.Client
 }
 
-func New(cfg *stellar.Config, agent *element.Agent) (*service, error) {
+func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
 	errCh := make(chan error)
 	go func() {
 		for {

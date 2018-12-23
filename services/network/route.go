@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/containerd/containerd/errdefs"
-	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -20,45 +19,51 @@ var (
 )
 
 func (s *service) AddRoute(ctx context.Context, req *api.AddRouteRequest) (*ptypes.Empty, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	routeData := []byte(req.CIDR + ":" + req.Target)
 	routeKey := fmt.Sprintf(dsRoutesKey, req.CIDR)
-	if _, err := s.ds.Set(ctx, &datastoreapi.SetRequest{
-		Bucket: dsNetworkBucketName,
-		Key:    routeKey,
-		Value:  routeData,
-		Sync:   true,
-	}); err != nil {
+	if err := c.Datastore().Set(dsNetworkBucketName, routeKey, routeData, true); err != nil {
 		return nil, err
 	}
 	return &ptypes.Empty{}, nil
 }
 
 func (s *service) DeleteRoute(ctx context.Context, req *api.DeleteRouteRequest) (*ptypes.Empty, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	routeKey := fmt.Sprintf(dsRoutesKey, req.CIDR)
-	if _, err := s.ds.Delete(ctx, &datastoreapi.DeleteRequest{
-		Bucket: dsNetworkBucketName,
-		Key:    routeKey,
-		Sync:   true,
-	}); err != nil {
+	if err := c.Datastore().Delete(dsNetworkBucketName, routeKey, true); err != nil {
 		return nil, err
 	}
 	return &ptypes.Empty{}, nil
 }
 
 func (s *service) Routes(ctx context.Context, _ *ptypes.Empty) (*api.RoutesResponse, error) {
+	c, err := s.client(s.agent.Self().Address)
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+
 	var routes []*api.Route
 	searchKey := fmt.Sprintf(dsRoutesKey, "")
-	searchResp, err := s.ds.Search(ctx, &datastoreapi.SearchRequest{
-		Bucket: dsNetworkBucketName,
-		Prefix: searchKey,
-	})
+	results, err := c.Datastore().Search(dsNetworkBucketName, searchKey)
 	if err != nil {
 		err = errdefs.FromGRPC(err)
 		if !errdefs.IsNotFound(err) {
 			return nil, err
 		}
 	}
-	for _, kv := range searchResp.Data {
+	for _, kv := range results {
 		rt := strings.Split(string(kv.Value), ":")
 		if len(rt) != 2 {
 			logrus.Errorf("invalid route format: %s", string(kv.Value))
