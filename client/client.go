@@ -26,6 +26,7 @@ var (
 	empty = &ptypes.Empty{}
 )
 
+// Client provides access to Stellar cluster services
 type Client struct {
 	conn               *grpc.ClientConn
 	versionService     versionapi.VersionClient
@@ -40,6 +41,7 @@ type Client struct {
 	eventsService      eventsapi.EventsClient
 }
 
+// NewClient returns a new client configured with the specified Stellar GRPC address and dial options
 func NewClient(addr string, opts ...grpc.DialOption) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -76,40 +78,52 @@ func NewClient(addr string, opts ...grpc.DialOption) (*Client, error) {
 	return client, nil
 }
 
+// Conn returns the current configured client connection
+func (c *Client) Conn() *grpc.ClientConn {
+	return c.conn
+}
+
+// Close closes the underlying GRPC client
 func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
+// Application is a helper to return the application service client
 func (c *Client) Application() *application {
 	return &application{
 		client: c.applicationService,
 	}
 }
 
+// Node is a helper to return the node service client
 func (c *Client) Node() *node {
 	return &node{
 		client: c.nodeService,
 	}
 }
 
+// Cluster is a helper to return the cluster service client
 func (c *Client) Cluster() *cluster {
 	return &cluster{
 		client: c.clusterService,
 	}
 }
 
+// Datastore is a helper to return the datastore service client
 func (c *Client) Datastore() *datastore {
 	return &datastore{
 		client: c.datastoreService,
 	}
 }
 
+// Network is a helper to return the network service client
 func (c *Client) Network() *network {
 	return &network{
 		client: c.networkService,
 	}
 }
 
+// Events is a helper to return the events service client
 func (c *Client) Events() *events {
 	return &events{
 		client: c.eventsService,
@@ -122,56 +136,68 @@ func (c *Client) Nameserver() *nameserver {
 	}
 }
 
+// Proxy is a helper to return the proxy service client
 func (c *Client) Proxy() *proxy {
 	return &proxy{
 		client: c.proxyService,
 	}
 }
 
+// Version is a helper to return the version service client
 func (c *Client) Version() *version {
 	return &version{
 		client: c.versionService,
 	}
 }
 
+// Health is a helper to return the health service client
 func (c *Client) Health() *health {
 	return &health{
 		client: c.healthService,
 	}
 }
 
+// VersionService returns the direct version service api client for advanced usage
 func (c *Client) VersionService() versionapi.VersionClient {
 	return c.versionService
 }
 
+// HealthService returns the direct health service api client for advanced usage
 func (c *Client) HealthService() healthapi.HealthClient {
 	return c.healthService
 }
 
+// NodeService returns the direct node service api client for advanced usage
 func (c *Client) NodeService() nodeapi.NodeClient {
 	return c.nodeService
 }
 
+// ClusterService returns the direct cluster service api client for advanced usage
 func (c *Client) ClusterService() clusterapi.ClusterClient {
 	return c.clusterService
 }
 
+// DatastoreService returns the direct datastore service api client for advanced usage
 func (c *Client) DatastoreService() datastoreapi.DatastoreClient {
 	return c.datastoreService
 }
 
+// NetworkService returns the direct network service api client for advanced usage
 func (c *Client) NetworkService() networkapi.NetworkClient {
 	return c.networkService
 }
 
+// NameserverService returns the direct nameserver service api client for advanced usage
 func (c *Client) NameserverService() nameserverapi.NameserverClient {
 	return c.nameserverService
 }
 
+// EventsService returns the direct events service api client for advanced usage
 func (c *Client) EventsService() eventsapi.EventsClient {
 	return c.eventsService
 }
 
+// DialOptionsFromConfig returns dial options configured from a Stellar config
 func DialOptionsFromConfig(cfg *stellar.Config) ([]grpc.DialOption, error) {
 	opts := []grpc.DialOption{}
 	if cfg.TLSClientCertificate != "" {

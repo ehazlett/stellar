@@ -25,13 +25,18 @@ import (
 )
 
 var (
+	// ErrServiceRegistered is returned if an existing service is already registered for the specified type
+	ErrServiceRegistered = errors.New("service is already registered for the specified type")
+	// ErrServiceNotRegistered is returned if a service is not registered that is required by another service
+	ErrServiceNotRegistered = errors.New("service is not registered for the specified type")
+
 	dsServerBucketName = "stellar.server"
 	// TODO: make configurable
-	reconcileInterval = time.Second * 10
-	// TODO: make configurable
+	reconcileInterval     = time.Second * 10
 	datastoreSyncInterval = time.Second * 300
-	serviceStartTimeout   = time.Second * 5
-	serviceStopTimeout    = time.Second * 5
+	// timeouts for services to start and stop
+	serviceStartTimeout = time.Second * 5
+	serviceStopTimeout  = time.Second * 5
 
 	// local server state db
 	localDBFilename       = "local.db"
@@ -44,10 +49,11 @@ type Server struct {
 	config              *stellar.Config
 	synced              bool
 	nodeEventCh         chan *element.NodeEvent
+	mu                  *sync.Mutex
 	db                  *localDB
 	tickerReconcile     *time.Ticker
 	tickerDatastoreSync *time.Ticker
-	services            []services.Service
+	services            map[services.Type]services.Service
 	errCh               chan error
 }
 
@@ -105,6 +111,8 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 		grpcServer:  grpcServer,
 		config:      cfg,
 		db:          db,
+		services:    make(map[services.Type]services.Service),
+		mu:          &sync.Mutex{},
 		nodeEventCh: nodeEventCh,
 		errCh:       make(chan error),
 	}
@@ -115,7 +123,9 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 }
 
 func (s *Server) Register(svcs []func(*stellar.Config, *element.Agent) (services.Service, error)) error {
-	// TODO: register services from caller
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	// register services from caller
 	for _, svc := range svcs {
 		i, err := svc(s.config, s.agent)
 		if err != nil {
@@ -124,10 +134,15 @@ func (s *Server) Register(svcs []func(*stellar.Config, *element.Agent) (services
 		if err := i.Register(s.grpcServer); err != nil {
 			return err
 		}
+		// check for existing service
+		if _, exists := s.services[i.Type()]; exists {
+			return errors.Wrap(ErrServiceRegistered, string(i.Type()))
+		}
 		logrus.WithFields(logrus.Fields{
-			"id": i.ID(),
+			"id":   i.ID(),
+			"type": i.Type(),
 		}).Info("registered service")
-		s.services = append(s.services, i)
+		s.services[i.Type()] = i
 	}
 
 	return nil
@@ -320,6 +335,9 @@ func (s *Server) Run() error {
 	wg := &sync.WaitGroup{}
 	start := time.Now()
 	for _, svc := range s.services {
+		if err := s.validateServiceRequires(svc.Requires()); err != nil {
+			return err
+		}
 		wg.Add(1)
 		go func(svc services.Service) {
 			defer wg.Done()
@@ -347,6 +365,15 @@ func (s *Server) Run() error {
 		"duration": time.Since(start),
 	}).Debug("services started")
 
+	return nil
+}
+
+func (s *Server) validateServiceRequires(reqs []services.Type) error {
+	for _, t := range reqs {
+		if _, ok := s.services[t]; !ok {
+			return errors.Wrap(ErrServiceNotRegistered, string(t))
+		}
+	}
 	return nil
 }
 

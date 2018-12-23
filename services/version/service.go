@@ -38,6 +38,14 @@ func (s *service) ID() string {
 	return serviceID
 }
 
+func (s *service) Type() services.Type {
+	return services.VersionService
+}
+
+func (s *service) Requires() []services.Type {
+	return nil
+}
+
 func (s *service) Start() error {
 	return nil
 }

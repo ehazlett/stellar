@@ -15,7 +15,6 @@ import (
 )
 
 // TODO: support multiple RR per name
-// TODO: add forwarder for nameserver
 
 func (s *service) startDNSServer() error {
 	// TODO: make configurable

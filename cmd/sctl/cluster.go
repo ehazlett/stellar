@@ -15,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var clusterInfoTemplate = `Cores:		{{ .CPU }}
+var clusterInfoTemplate = `CPUs:		{{ .CPU }}
 Memory:		{{ .Memory }}
 Nodes:		{{ len .NodeHealth }}{{ range .NodeHealth }}
   - ID:		{{ .Node.ID }}

@@ -54,67 +54,6 @@ func serverAction(ctx *cli.Context) error {
 	}
 
 	// services
-	// TODO: implement dependencies for services to alleviate the loading order
-	// TODO: refactor to just pass New and let the Register func in server initialize (i.e. New(cfg, agent))
-	//vs, err := versionservice.New(cfg)
-	//if err != nil {
-	//	return err
-	//}
-
-	//hs, err := healthservice.New(a)
-	//if err != nil {
-	//	return err
-	//}
-
-	//cs, err := clusterservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-
-	//ds, err := datastoreservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-
-	//// TODO: refactor network service to use the client to get the datastore service instead of on New
-	//netSvc, err := networkservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-
-	//gs, err := gatewayservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-
-	//nodeSvc, err := nodeservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-
-	//appSvc, err := applicationservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-
-	//nsSvc, err := nameserverservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-	//proxySvc, err := proxyservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-	//eventsSvc, err := eventsservice.New(cfg, a)
-	//if err != nil {
-	//	return err
-	//}
-	//svcs := []services.Service{vs, nodeSvc, hs, cs, ds, gs, netSvc, appSvc, nsSvc, proxySvc, eventsSvc}
-	//svcs := []services.Service{
-	//	versionservice.New,
-	//	healthservice.New,
-	//}
-
 	svcs := []func(cfg *stellar.Config, agent *element.Agent) (services.Service, error){
 		versionservice.New,
 		healthservice.New,
