@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/cluster/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
+	"github.com/stellarproject/element"
 	"google.golang.org/grpc"
 )
 
@@ -68,30 +68,6 @@ func (s *service) Stop() error {
 
 func (s *service) containerd() (*containerd.Client, error) {
 	return stellar.DefaultContainerd(s.containerdAddr, s.namespace)
-}
-
-func (s *service) nodes() ([]*api.Node, error) {
-	peer := s.agent.Self()
-	nodes := []*api.Node{
-		{
-			ID:      peer.ID,
-			Address: peer.Address,
-		},
-	}
-
-	peers, err := s.agent.Peers()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, peer := range peers {
-		nodes = append(nodes, &api.Node{
-			ID:      peer.ID,
-			Address: peer.Address,
-		})
-	}
-
-	return nodes, nil
 }
 
 func (s *service) client(address string) (*client.Client, error) {

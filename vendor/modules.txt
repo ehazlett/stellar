@@ -97,8 +97,6 @@ github.com/coreos/bbolt
 github.com/docker/go-events
 # github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d
 github.com/dustin/go-humanize
-# github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55 => github.com/ehazlett/element v0.0.0-20181026123607-f8763a7a1632
-github.com/ehazlett/element
 # github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568
 github.com/flynn/go-shlex
 # github.com/gogo/googleapis v1.1.0
@@ -239,6 +237,8 @@ github.com/russross/blackfriday
 github.com/sean-/seed
 # github.com/sirupsen/logrus v1.0.6
 github.com/sirupsen/logrus
+# github.com/stellarproject/element v0.0.0-20181130035726-db23484f9fd5
+github.com/stellarproject/element
 # github.com/stellarproject/radiant v0.0.0-20181205032446-55171a938c07
 github.com/stellarproject/radiant/api/v1
 github.com/stellarproject/radiant

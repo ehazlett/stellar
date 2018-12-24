@@ -8,7 +8,7 @@ import (
 	"time"
 
 	bolt "github.com/coreos/bbolt"
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/datastore/v1"
 	"github.com/ehazlett/stellar/client"

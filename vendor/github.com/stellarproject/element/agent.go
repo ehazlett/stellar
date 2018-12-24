@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogo/protobuf/types"
 	"github.com/hashicorp/memberlist"
 )
 
@@ -64,6 +65,11 @@ func NewAgent(info *Peer, cfg *Config) (*Agent, error) {
 // SyncInterval returns the cluster sync interval
 func (a *Agent) SyncInterval() time.Duration {
 	return a.memberConfig.PushPullInterval
+}
+
+// Update updates the agent payload
+func (a *Agent) Update(payload *types.Any) {
+	a.state.Self.Payload = payload
 }
 
 func newSubscribers() *subscribers {

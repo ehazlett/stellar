@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	eventsapi "github.com/ehazlett/stellar/api/services/events/v1"

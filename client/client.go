@@ -15,6 +15,7 @@ import (
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	proxyapi "github.com/ehazlett/stellar/api/services/proxy/v1"
+	schedulerapi "github.com/ehazlett/stellar/api/services/scheduler/v1"
 	versionapi "github.com/ehazlett/stellar/api/services/version/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -39,6 +40,7 @@ type Client struct {
 	nameserverService  nameserverapi.NameserverClient
 	proxyService       proxyapi.ProxyClient
 	eventsService      eventsapi.EventsClient
+	schedulerService   schedulerapi.SchedulerClient
 }
 
 // NewClient returns a new client configured with the specified Stellar GRPC address and dial options
@@ -73,6 +75,7 @@ func NewClient(addr string, opts ...grpc.DialOption) (*Client, error) {
 		nameserverService:  nameserverapi.NewNameserverClient(c),
 		proxyService:       proxyapi.NewProxyClient(c),
 		eventsService:      eventsapi.NewEventsClient(c),
+		schedulerService:   schedulerapi.NewSchedulerClient(c),
 	}
 
 	return client, nil
@@ -140,6 +143,13 @@ func (c *Client) Nameserver() *nameserver {
 func (c *Client) Proxy() *proxy {
 	return &proxy{
 		client: c.proxyService,
+	}
+}
+
+// Scheduler is a helper to return the scheduler service client
+func (c *Client) Scheduler() *scheduler {
+	return &scheduler{
+		client: c.schedulerService,
 	}
 }
 

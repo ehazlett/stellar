@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	"github.com/sirupsen/logrus"
 )

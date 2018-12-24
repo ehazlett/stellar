@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	cluster "github.com/ehazlett/stellar/api/services/cluster/v1"
 	"github.com/ehazlett/stellar/services"

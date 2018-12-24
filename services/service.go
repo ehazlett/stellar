@@ -17,6 +17,7 @@ const (
 	NetworkService     Type = "stellar.services.network.v1"
 	NodeService        Type = "stellar.services.node.v1"
 	ProxyService       Type = "stellar.services.proxy.v1"
+	SchedulerService   Type = "stellar.services.scheduler.v1"
 	VersionService     Type = "stellar.services.version.v1"
 )
 

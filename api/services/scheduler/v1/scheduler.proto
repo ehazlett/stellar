@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package stellar.services.scheduler.v1;
+
+import "gogoproto/gogo.proto";
+import "api/services/cluster/v1/cluster.proto";
+import "api/services/node/v1/node.proto";
+
+option go_package = "github.com/ehazlett/stellar/api/services/scheduler/v1;scheduler";
+
+service Scheduler {
+        rpc Schedule(ScheduleRequest) returns (ScheduleResponse);
+}
+
+message ScheduleRequest {
+        stellar.services.node.v1.Service service = 1;
+        repeated stellar.services.cluster.v1.Node available_nodes = 2;
+}
+
+message ScheduleResponse {
+        repeated stellar.services.cluster.v1.Node nodes = 1;
+}

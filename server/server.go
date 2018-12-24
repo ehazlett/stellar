@@ -13,13 +13,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	datastoreapi "github.com/ehazlett/stellar/api/services/datastore/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/stellarproject/element"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -80,10 +80,17 @@ func NewServer(cfg *stellar.Config) (*Server, error) {
 	a, err := element.NewAgent(&element.Peer{
 		ID:      cfg.NodeID,
 		Address: cfg.GRPCAddress,
+		Labels:  cfg.NodeLabels,
 	}, cfg.AgentConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"id":      cfg.NodeID,
+		"address": cfg.GRPCAddress,
+		"labels":  cfg.NodeLabels,
+	}).Debug("configured element node")
 
 	grpcOpts := []grpc.ServerOption{}
 	if cfg.TLSServerCertificate != "" && cfg.TLSServerKey != "" {

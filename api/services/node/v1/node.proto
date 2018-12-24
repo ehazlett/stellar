@@ -105,6 +105,12 @@ message Endpoint {
 	google.protobuf.Any endpoint_config = 6;
 }
 
+message PlacementPreference {
+        repeated string node_ids = 1 [(gogoproto.customname) = "NodeIDs"];
+        map<string, string> labels = 2;
+        uint64 replicas = 3;
+}
+
 message Service {
         string name = 1;
         string image = 2;
@@ -116,11 +122,14 @@ message Service {
         bool network = 8;
         repeated Mount mounts = 9;
         repeated Endpoint endpoints = 10;
+        uint64 replicas = 11;
+        PlacementPreference placement_preference = 12;
 }
 
 message CreateContainerRequest {
         string application = 1;
         Service service = 2;
+        string container_id = 3 [(gogoproto.customname) = "ContainerID"];
 }
 
 message DeleteContainerRequest {

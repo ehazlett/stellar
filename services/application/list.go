@@ -10,12 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type AppSorter []*api.App
-
-func (a AppSorter) Len() int           { return len(a) }
-func (a AppSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a AppSorter) Less(i, j int) bool { return a[i].Name < a[j].Name }
-
 func (s *service) List(ctx context.Context, req *api.ListRequest) (*api.ListResponse, error) {
 	// filter containers for application label
 	c, err := s.client(s.agent.Self().Address)

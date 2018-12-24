@@ -25,7 +25,6 @@ require (
 	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/dustin/go-humanize v0.0.0-20180713052910-9f541cc9db5d
-	github.com/ehazlett/element v0.0.0-20180706220700-52da33976c55
 	github.com/godbus/dbus v4.1.0+incompatible // indirect
 	github.com/gogo/googleapis v1.1.0
 	github.com/gogo/protobuf v1.1.1
@@ -63,6 +62,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sirupsen/logrus v1.0.6
+	github.com/stellarproject/element v0.0.0-20181130035726-db23484f9fd5
 	github.com/stellarproject/radiant v0.0.0-20181205032446-55171a938c07
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
@@ -86,5 +86,3 @@ require (
 )
 
 replace github.com/mholt/caddy => github.com/ehazlett/caddy v0.0.0
-
-replace github.com/ehazlett/element => github.com/ehazlett/element v0.0.0-20181026123607-f8763a7a1632
