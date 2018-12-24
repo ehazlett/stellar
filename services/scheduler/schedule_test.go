@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 )
 
 func TestScheduleNoPreference(t *testing.T) {
@@ -26,7 +26,7 @@ func TestScheduleNoPreference(t *testing.T) {
 		},
 	}
 
-	appService := &nodeapi.Service{
+	appService := &runtimeapi.Service{
 		Name:                "test-service",
 		PlacementPreference: nil,
 	}
@@ -69,9 +69,9 @@ func TestScheduleNodesByIDEmptyReplica(t *testing.T) {
 
 	nodeIDs := []string{"node-00", "node-01"}
 
-	appService := &nodeapi.Service{
+	appService := &runtimeapi.Service{
 		Name: "test-service",
-		PlacementPreference: &nodeapi.PlacementPreference{
+		PlacementPreference: &runtimeapi.PlacementPreference{
 			NodeIDs: nodeIDs,
 		},
 	}
@@ -114,9 +114,9 @@ func TestScheduleNodesByIDSingleReplica(t *testing.T) {
 
 	nodeIDs := []string{"node-00", "node-01"}
 
-	appService := &nodeapi.Service{
+	appService := &runtimeapi.Service{
 		Name: "test-service",
-		PlacementPreference: &nodeapi.PlacementPreference{
+		PlacementPreference: &runtimeapi.PlacementPreference{
 			NodeIDs: nodeIDs,
 		},
 		Replicas: uint64(1),
@@ -160,9 +160,9 @@ func TestScheduleNodesByIDWithReplicas(t *testing.T) {
 
 	nodeIDs := []string{"node-00", "node-01"}
 
-	appService := &nodeapi.Service{
+	appService := &runtimeapi.Service{
 		Name: "test-service",
-		PlacementPreference: &nodeapi.PlacementPreference{
+		PlacementPreference: &runtimeapi.PlacementPreference{
 			NodeIDs: nodeIDs,
 		},
 		Replicas: uint64(2),
@@ -219,9 +219,9 @@ func TestScheduleNodesByLabelWithReplicas(t *testing.T) {
 		"env": "prod",
 	}
 
-	appService := &nodeapi.Service{
+	appService := &runtimeapi.Service{
 		Name: "test-service",
-		PlacementPreference: &nodeapi.PlacementPreference{
+		PlacementPreference: &runtimeapi.PlacementPreference{
 			Labels: labels,
 		},
 		Replicas: uint64(2),
@@ -279,9 +279,9 @@ func TestScheduleNodesByMultipleLabelsWithReplicas(t *testing.T) {
 		"region": "east",
 	}
 
-	appService := &nodeapi.Service{
+	appService := &runtimeapi.Service{
 		Name: "test-service",
-		PlacementPreference: &nodeapi.PlacementPreference{
+		PlacementPreference: &runtimeapi.PlacementPreference{
 			Labels: labels,
 		},
 		Replicas: uint64(2),
@@ -339,9 +339,9 @@ func TestScheduleNodesByLabelMultiWithEmptyWithReplicas(t *testing.T) {
 		"region": "",
 	}
 
-	appService := &nodeapi.Service{
+	appService := &runtimeapi.Service{
 		Name: "test-service",
-		PlacementPreference: &nodeapi.PlacementPreference{
+		PlacementPreference: &runtimeapi.PlacementPreference{
 			Labels: labels,
 		},
 		Replicas: uint64(2),

@@ -4,7 +4,7 @@ package stellar.services.application.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/empty.proto";
-import "github.com/ehazlett/stellar/api/services/node/v1/node.proto";
+import "github.com/ehazlett/stellar/api/services/runtime/v1/runtime.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/application/v1;application";
 
@@ -25,7 +25,7 @@ message InfoResponse {
 message CreateRequest {
         string name = 1;
         repeated string labels = 2;
-        repeated stellar.services.node.v1.Service services = 3;
+        repeated stellar.services.runtime.v1.Service services = 3;
 }
 
 message DeleteRequest {
@@ -36,7 +36,7 @@ message ListRequest {}
 
 message App {
         string name = 1;
-        repeated stellar.services.node.v1.Service services = 2;
+        repeated stellar.services.runtime.v1.Service services = 2;
 }
 
 message ListResponse {

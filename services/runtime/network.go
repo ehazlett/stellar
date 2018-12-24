@@ -1,4 +1,4 @@
-package node
+package runtime
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"net"
 	"runtime"
 
-	api "github.com/ehazlett/stellar/api/services/node/v1"
+	api "github.com/ehazlett/stellar/api/services/runtime/v1"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

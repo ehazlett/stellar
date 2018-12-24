@@ -47,7 +47,7 @@ func (s *service) Type() services.Type {
 
 func (s *service) Requires() []services.Type {
 	return []services.Type{
-		services.NodeService,
+		services.RuntimeService,
 		services.HealthService,
 	}
 }

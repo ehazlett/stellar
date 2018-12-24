@@ -4,16 +4,16 @@ import (
 	"context"
 	"time"
 
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 )
 
 type node struct {
-	client nodeapi.NodeClient
+	client runtimeapi.NodeClient
 }
 
 func (n *node) ID() (string, error) {
 	ctx := context.Background()
-	resp, err := n.client.Info(ctx, &nodeapi.InfoRequest{})
+	resp, err := n.client.Info(ctx, &runtimeapi.InfoRequest{})
 	if err != nil {
 		return "", err
 	}
@@ -21,9 +21,9 @@ func (n *node) ID() (string, error) {
 	return resp.ID, nil
 }
 
-func (n *node) Containers(filters ...string) ([]*nodeapi.Container, error) {
+func (n *node) Containers(filters ...string) ([]*runtimeapi.Container, error) {
 	ctx := context.Background()
-	resp, err := n.client.Containers(ctx, &nodeapi.ContainersRequest{
+	resp, err := n.client.Containers(ctx, &runtimeapi.ContainersRequest{
 		Filters: filters,
 	})
 	if err != nil {
@@ -33,9 +33,9 @@ func (n *node) Containers(filters ...string) ([]*nodeapi.Container, error) {
 	return resp.Containers, nil
 }
 
-func (n *node) Container(id string) (*nodeapi.Container, error) {
+func (n *node) Container(id string) (*runtimeapi.Container, error) {
 	ctx := context.Background()
-	resp, err := n.client.Container(ctx, &nodeapi.ContainerRequest{
+	resp, err := n.client.Container(ctx, &runtimeapi.ContainerRequest{
 		ID: id,
 	})
 	if err != nil {
@@ -45,9 +45,9 @@ func (n *node) Container(id string) (*nodeapi.Container, error) {
 	return resp.Container, nil
 }
 
-func (n *node) CreateContainer(appName string, service *nodeapi.Service, containerID string) error {
+func (n *node) CreateContainer(appName string, service *runtimeapi.Service, containerID string) error {
 	ctx := context.Background()
-	if _, err := n.client.CreateContainer(ctx, &nodeapi.CreateContainerRequest{
+	if _, err := n.client.CreateContainer(ctx, &runtimeapi.CreateContainerRequest{
 		Application: appName,
 		Service:     service,
 		ContainerID: containerID,
@@ -60,7 +60,7 @@ func (n *node) CreateContainer(appName string, service *nodeapi.Service, contain
 
 func (n *node) RestartContainer(id string) error {
 	ctx := context.Background()
-	if _, err := n.client.RestartContainer(ctx, &nodeapi.RestartContainerRequest{
+	if _, err := n.client.RestartContainer(ctx, &runtimeapi.RestartContainerRequest{
 		ID: id,
 	}); err != nil {
 		return err
@@ -73,7 +73,7 @@ func (n *node) DeleteContainer(id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	if _, err := n.client.DeleteContainer(ctx, &nodeapi.DeleteContainerRequest{
+	if _, err := n.client.DeleteContainer(ctx, &runtimeapi.DeleteContainerRequest{
 		ID: id,
 	}); err != nil {
 		return err
@@ -86,7 +86,7 @@ func (n *node) SetupContainerNetwork(id, ip, network, gateway string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	if _, err := n.client.SetupContainerNetwork(ctx, &nodeapi.ContainerNetworkRequest{
+	if _, err := n.client.SetupContainerNetwork(ctx, &runtimeapi.ContainerNetworkRequest{
 		ID:      id,
 		IP:      ip,
 		Network: network,
@@ -98,9 +98,9 @@ func (n *node) SetupContainerNetwork(id, ip, network, gateway string) error {
 	return nil
 }
 
-func (n *node) Images() ([]*nodeapi.Image, error) {
+func (n *node) Images() ([]*runtimeapi.Image, error) {
 	ctx := context.Background()
-	resp, err := n.client.Images(ctx, &nodeapi.ImagesRequest{})
+	resp, err := n.client.Images(ctx, &runtimeapi.ImagesRequest{})
 	if err != nil {
 		return nil, err
 	}
