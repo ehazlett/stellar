@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/codegangsta/cli"
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/server"
 	"github.com/ehazlett/stellar/services"
@@ -21,6 +21,7 @@ import (
 	networkservice "github.com/ehazlett/stellar/services/network"
 	nodeservice "github.com/ehazlett/stellar/services/node"
 	proxyservice "github.com/ehazlett/stellar/services/proxy"
+	schedulerservice "github.com/ehazlett/stellar/services/scheduler"
 	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/sirupsen/logrus"
 )
@@ -66,6 +67,7 @@ func serverAction(ctx *cli.Context) error {
 		nameserverservice.New,
 		proxyservice.New,
 		eventsservice.New,
+		schedulerservice.New,
 	}
 
 	srv, err := server.NewServer(cfg)

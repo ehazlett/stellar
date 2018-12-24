@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/gosigar"
-	"github.com/ehazlett/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/health/v1"
 	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
+	"github.com/stellarproject/element"
 	"google.golang.org/grpc"
 )
 
@@ -89,6 +89,7 @@ func (s *service) Health(ctx context.Context, _ *ptypes.Empty) (*api.HealthRespo
 		peers = append(peers, &api.Peer{
 			ID:      peer.ID,
 			Address: peer.Address,
+			Labels:  peer.Labels,
 		})
 	}
 

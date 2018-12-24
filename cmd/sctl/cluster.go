@@ -22,7 +22,9 @@ Nodes:		{{ len .NodeHealth }}{{ range .NodeHealth }}
     Addr:	{{ .Node.Address }}
     OS:		{{ .Health.OSName }} ({{ .Health.OSVersion }})
     CPU:	{{ .Health.Cpus }}
-    Memory:	{{ memory .Health.MemoryTotal }}
+    Memory:	{{ memory .Health.MemoryTotal }}{{ if .Node.Labels }}
+    Labels: {{ range $k, $v := .Node.Labels }}
+      - {{ $k }}={{ $v }}{{ end }}{{ end }}
 {{ end }}
 `
 

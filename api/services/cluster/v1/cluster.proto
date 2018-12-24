@@ -43,6 +43,7 @@ message ImagesResponse {
 message Node {
         string id = 1 [(gogoproto.customname) = "ID"];
         string address = 2;
+        map<string, string> labels = 3;
 }
 
 message NodesResponse {

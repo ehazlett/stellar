@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 )
 
 // Config is the configuration used for the stellar server
@@ -15,6 +15,8 @@ import (
 type Config struct {
 	// NodeID is the id of the node
 	NodeID string
+	// NodeLabels are labels for the node
+	NodeLabels map[string]string
 	// GRPCAddress is the address for the grpc server
 	GRPCAddress string
 	// TLSCertificate is the certificate used for grpc communication

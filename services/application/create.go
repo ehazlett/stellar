@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
@@ -36,38 +37,44 @@ func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.E
 	}
 
 	services := []*nodeapi.Service{}
-	for _, service := range req.Services {
-		if _, ok := ids[req.Name+"."+service.Name]; ok {
+	for i, service := range req.Services {
+		id := fmt.Sprintf("%s.%s.%d", req.Name, service.Name, i)
+		if _, ok := ids[id]; ok {
 			continue
 		}
 
 		services = append(services, service)
 	}
 
-	nodeIdx := 0
 	for _, service := range services {
-		// get random peer for deploy
-		node := nodes[nodeIdx]
-		nc, err := s.client(node.Address)
+		// get list of target nodes for the service
+		scheduledNodes, err := c.Scheduler().Schedule(service, nodes)
 		if err != nil {
 			return empty, err
 		}
+		logrus.WithFields(logrus.Fields{
+			"service": service.Name,
+			"nodes":   scheduledNodes,
+		}).Debug("scheduled nodes for service")
+		for i, node := range scheduledNodes {
+			nc, err := s.client(node.Address)
+			if err != nil {
+				return empty, err
+			}
 
-		if err := nc.Node().CreateContainer(req.Name, service); err != nil {
-			return empty, err
-		}
+			// inject replica id into service name
+			id := fmt.Sprintf("%s.%d", service.Name, i)
 
-		// update proxy
-		if err := nc.Proxy().Reload(); err != nil {
-			return empty, err
-		}
+			if err := nc.Node().CreateContainer(req.Name, service, id); err != nil {
+				return empty, err
+			}
 
-		nc.Close()
+			// update proxy
+			if err := nc.Proxy().Reload(); err != nil {
+				return empty, err
+			}
 
-		// update peer index for next deploy
-		nodeIdx++
-		if nodeIdx >= len(nodes) {
-			nodeIdx = 0
+			nc.Close()
 		}
 	}
 

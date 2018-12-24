@@ -152,9 +152,9 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 	ctx = namespaces.WithNamespace(ctx, s.namespace)
 
 	service := req.Service
-	id := req.Service.Name
+	id := req.ContainerID
 	if appName := req.Application; appName != "" {
-		id = fmt.Sprintf("%s.%s", appName, service.Name)
+		id = fmt.Sprintf("%s.%s", appName, req.ContainerID)
 	}
 	snapshotter := defaultSnapshotter
 	if service.Snapshotter != "" {

@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/events/v1"
 	"github.com/ehazlett/stellar/client"

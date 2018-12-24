@@ -45,11 +45,12 @@ func (n *node) Container(id string) (*nodeapi.Container, error) {
 	return resp.Container, nil
 }
 
-func (n *node) CreateContainer(appName string, service *nodeapi.Service) error {
+func (n *node) CreateContainer(appName string, service *nodeapi.Service, containerID string) error {
 	ctx := context.Background()
 	if _, err := n.client.CreateContainer(ctx, &nodeapi.CreateContainerRequest{
 		Application: appName,
 		Service:     service,
+		ContainerID: containerID,
 	}); err != nil {
 		return err
 	}

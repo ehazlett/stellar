@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/ehazlett/element"
+	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	"github.com/ehazlett/stellar/client"
@@ -59,6 +59,7 @@ func (s *service) Requires() []services.Type {
 		services.ProxyService,
 		services.NameserverService,
 		services.ClusterService,
+		services.SchedulerService,
 	}
 }
 
