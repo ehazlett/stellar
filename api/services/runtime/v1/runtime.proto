@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package stellar.services.node.v1;
+package stellar.services.runtime.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 
-option go_package = "github.com/ehazlett/stellar/api/services/node/v1;node";
+option go_package = "github.com/ehazlett/stellar/api/services/runtime/v1;runtime";
 
 service Node {
         rpc Info(InfoRequest) returns (InfoResponse);

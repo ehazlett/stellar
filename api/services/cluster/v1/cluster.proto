@@ -4,7 +4,7 @@ package stellar.services.cluster.v1;
 
 import weak "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
-import "api/services/node/v1/node.proto";
+import "api/services/runtime/v1/runtime.proto";
 import "api/services/health/v1/health.proto";
 
 option go_package = "github.com/ehazlett/stellar/api/services/cluster/v1;cluster";
@@ -37,7 +37,7 @@ message ContainersResponse {
 }
 
 message ImagesResponse {
-        repeated stellar.services.node.v1.Image images = 1;
+        repeated stellar.services.runtime.v1.Image images = 1;
 }
 
 message Node {
@@ -51,7 +51,7 @@ message NodesResponse {
 }
 
 message Container {
-        stellar.services.node.v1.Container container = 1;
+        stellar.services.runtime.v1.Container container = 1;
         Node node = 2;
 }
 

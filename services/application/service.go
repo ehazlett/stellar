@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/application/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
+	"github.com/stellarproject/element"
 	"google.golang.org/grpc"
 )
 
@@ -55,7 +55,7 @@ func (s *service) Type() services.Type {
 
 func (s *service) Requires() []services.Type {
 	return []services.Type{
-		services.NodeService,
+		services.RuntimeService,
 		services.ProxyService,
 		services.NameserverService,
 		services.ClusterService,

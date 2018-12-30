@@ -7,10 +7,10 @@ import (
 	"sort"
 
 	api "github.com/ehazlett/stellar/api/services/application/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 )
 
-type ServiceSorter []*nodeapi.Service
+type ServiceSorter []*runtimeapi.Service
 
 func (s ServiceSorter) Len() int           { return len(s) }
 func (s ServiceSorter) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }

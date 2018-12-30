@@ -13,8 +13,8 @@ import (
 	healthapi "github.com/ehazlett/stellar/api/services/health/v1"
 	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
 	networkapi "github.com/ehazlett/stellar/api/services/network/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
 	proxyapi "github.com/ehazlett/stellar/api/services/proxy/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 	schedulerapi "github.com/ehazlett/stellar/api/services/scheduler/v1"
 	versionapi "github.com/ehazlett/stellar/api/services/version/v1"
 	ptypes "github.com/gogo/protobuf/types"
@@ -32,7 +32,7 @@ type Client struct {
 	conn               *grpc.ClientConn
 	versionService     versionapi.VersionClient
 	healthService      healthapi.HealthClient
-	nodeService        nodeapi.NodeClient
+	nodeService        runtimeapi.NodeClient
 	clusterService     clusterapi.ClusterClient
 	datastoreService   datastoreapi.DatastoreClient
 	networkService     networkapi.NetworkClient
@@ -67,7 +67,7 @@ func NewClient(addr string, opts ...grpc.DialOption) (*Client, error) {
 		conn:               c,
 		versionService:     versionapi.NewVersionClient(c),
 		healthService:      healthapi.NewHealthClient(c),
-		nodeService:        nodeapi.NewNodeClient(c),
+		nodeService:        runtimeapi.NewNodeClient(c),
 		clusterService:     clusterapi.NewClusterClient(c),
 		datastoreService:   datastoreapi.NewDatastoreClient(c),
 		networkService:     networkapi.NewNetworkClient(c),
@@ -178,7 +178,7 @@ func (c *Client) HealthService() healthapi.HealthClient {
 }
 
 // NodeService returns the direct node service api client for advanced usage
-func (c *Client) NodeService() nodeapi.NodeClient {
+func (c *Client) NodeService() runtimeapi.NodeClient {
 	return c.nodeService
 }
 

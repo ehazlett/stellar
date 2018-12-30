@@ -4,7 +4,7 @@ import (
 	"context"
 
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 	api "github.com/ehazlett/stellar/api/services/scheduler/v1"
 	"github.com/sirupsen/logrus"
 )
@@ -19,7 +19,7 @@ func (s *service) Schedule(ctx context.Context, req *api.ScheduleRequest) (*api.
 	}, nil
 }
 
-func (s *service) schedule(svc *nodeapi.Service, nodes []*clusterapi.Node) ([]*clusterapi.Node, error) {
+func (s *service) schedule(svc *runtimeapi.Service, nodes []*clusterapi.Node) ([]*clusterapi.Node, error) {
 	// short-circuit to skip filtering if no preference is specified
 	pref := svc.PlacementPreference
 	replicas := svc.Replicas

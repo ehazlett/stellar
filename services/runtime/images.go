@@ -1,11 +1,11 @@
-package node
+package runtime
 
 import (
 	"context"
 	"time"
 
 	"github.com/containerd/containerd"
-	api "github.com/ehazlett/stellar/api/services/node/v1"
+	api "github.com/ehazlett/stellar/api/services/runtime/v1"
 )
 
 func (s *service) Images(ctx context.Context, req *api.ImagesRequest) (*api.ImagesResponse, error) {

@@ -7,7 +7,6 @@ import (
 	"syscall"
 
 	"github.com/codegangsta/cli"
-	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	"github.com/ehazlett/stellar/server"
 	"github.com/ehazlett/stellar/services"
@@ -19,11 +18,12 @@ import (
 	healthservice "github.com/ehazlett/stellar/services/health"
 	nameserverservice "github.com/ehazlett/stellar/services/nameserver"
 	networkservice "github.com/ehazlett/stellar/services/network"
-	nodeservice "github.com/ehazlett/stellar/services/node"
 	proxyservice "github.com/ehazlett/stellar/services/proxy"
+	runtimeservice "github.com/ehazlett/stellar/services/runtime"
 	schedulerservice "github.com/ehazlett/stellar/services/scheduler"
 	versionservice "github.com/ehazlett/stellar/services/version"
 	"github.com/sirupsen/logrus"
+	"github.com/stellarproject/element"
 )
 
 const (
@@ -62,7 +62,7 @@ func serverAction(ctx *cli.Context) error {
 		datastoreservice.New,
 		networkservice.New,
 		gatewayservice.New,
-		nodeservice.New,
+		runtimeservice.New,
 		applicationservice.New,
 		nameserverservice.New,
 		proxyservice.New,

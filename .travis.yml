@@ -1,0 +1,17 @@
+sudo: false
+language: go
+go:
+  - 1.11.x
+git:
+  depth: 1
+
+install: true
+notifications:
+  email: false
+
+branches:
+  only:
+    - master
+
+script:
+  - go test -short -v -cover $(go list ./... | grep -v -e /vendor/)

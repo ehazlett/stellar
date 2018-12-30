@@ -15,7 +15,7 @@ const (
 	HealthService      Type = "stellar.services.health.v1"
 	NameserverService  Type = "stellar.services.nameserver.v1"
 	NetworkService     Type = "stellar.services.network.v1"
-	NodeService        Type = "stellar.services.node.v1"
+	RuntimeService     Type = "stellar.services.runtime.v1"
 	ProxyService       Type = "stellar.services.proxy.v1"
 	SchedulerService   Type = "stellar.services.scheduler.v1"
 	VersionService     Type = "stellar.services.version.v1"

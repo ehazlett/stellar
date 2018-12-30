@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/ehazlett/stellar"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
@@ -312,7 +312,7 @@ func routeExists(link netlink.Link, network *net.IPNet, gateway net.IP) (bool, e
 	return false, nil
 }
 
-func networkEnabled(container *nodeapi.Container) bool {
+func networkEnabled(container *runtimeapi.Container) bool {
 	_, exists := container.Labels[stellar.StellarNetworkLabel]
 	return exists
 }

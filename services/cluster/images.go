@@ -4,11 +4,11 @@ import (
 	"context"
 
 	api "github.com/ehazlett/stellar/api/services/cluster/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 )
 
 func (s *service) Images(ctx context.Context, req *api.ImagesRequest) (*api.ImagesResponse, error) {
-	var images []*nodeapi.Image
+	var images []*runtimeapi.Image
 
 	return &api.ImagesResponse{
 		Images: images,

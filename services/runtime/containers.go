@@ -1,4 +1,4 @@
-package node
+package runtime
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ import (
 	"github.com/containerd/typeurl"
 	"github.com/ehazlett/stellar"
 	nameserverapi "github.com/ehazlett/stellar/api/services/nameserver/v1"
-	api "github.com/ehazlett/stellar/api/services/node/v1"
+	api "github.com/ehazlett/stellar/api/services/runtime/v1"
 	"github.com/ehazlett/stellar/api/types"
 	ptypes "github.com/gogo/protobuf/types"
 	specs "github.com/opencontainers/runtime-spec/specs-go"

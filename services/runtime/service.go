@@ -1,19 +1,19 @@
-package node
+package runtime
 
 import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
-	api "github.com/ehazlett/stellar/api/services/node/v1"
+	api "github.com/ehazlett/stellar/api/services/runtime/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
+	"github.com/stellarproject/element"
 	"google.golang.org/grpc"
 )
 
 const (
-	serviceID = "stellar.services.node.v1"
+	serviceID = "stellar.services.runtime.v1"
 )
 
 type service struct {
@@ -50,7 +50,7 @@ func (s *service) ID() string {
 }
 
 func (s *service) Type() services.Type {
-	return services.NodeService
+	return services.RuntimeService
 }
 
 func (s *service) Requires() []services.Type {

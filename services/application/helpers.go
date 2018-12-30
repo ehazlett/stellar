@@ -8,16 +8,16 @@ import (
 	"github.com/containerd/typeurl"
 	"github.com/ehazlett/stellar"
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
-	nodeapi "github.com/ehazlett/stellar/api/services/node/v1"
+	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 )
 
-func (s *service) containerToService(ctx context.Context, c *clusterapi.Container) (*nodeapi.Service, error) {
+func (s *service) containerToService(ctx context.Context, c *clusterapi.Container) (*runtimeapi.Service, error) {
 	labels := []string{}
 	for k, v := range c.Container.Labels {
 		labels = append(labels, k+"="+v)
 	}
 
-	svc := &nodeapi.Service{
+	svc := &runtimeapi.Service{
 		Name:        c.Container.ID,
 		Image:       c.Container.Image,
 		Runtime:     c.Container.Runtime,
@@ -32,7 +32,7 @@ func (s *service) containerToService(ctx context.Context, c *clusterapi.Containe
 		if err != nil {
 			return nil, err
 		}
-		s, ok := v.(*nodeapi.Service)
+		s, ok := v.(*runtimeapi.Service)
 		if ok {
 			svc.Endpoints = s.Endpoints
 		}
