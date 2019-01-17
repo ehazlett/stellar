@@ -10,6 +10,7 @@ import (
 
 	"github.com/ehazlett/stellar"
 	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 )
@@ -35,7 +36,7 @@ func (s *Server) initNetworking() error {
 	}
 	ip, ipnet, err := net.ParseCIDR(subnetCIDR)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "error parsing subnet %q (%s)", subnetCIDR, ip)
 	}
 	logrus.Debugf("setting up subnet %s", subnetCIDR)
 

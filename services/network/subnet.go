@@ -52,6 +52,10 @@ func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetReq
 		}
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"subnet": localSubnet,
+	}).Debug("local subnet from datastore")
+
 	if bytes.Equal(localSubnet, []byte("")) {
 		logrus.Debug("local subnet key not found; assigning new subnet")
 
