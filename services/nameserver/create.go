@@ -24,5 +24,12 @@ func (s *service) Create(ctx context.Context, req *api.CreateRequest) (*ptypes.E
 		return empty, err
 	}
 
+	if err := s.publish(&CreateEvent{
+		Name:    req.Name,
+		Records: req.Records,
+	}); err != nil {
+		return empty, err
+	}
+
 	return empty, nil
 }

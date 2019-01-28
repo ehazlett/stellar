@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/stellar"
@@ -12,6 +13,7 @@ import (
 	"github.com/ehazlett/stellar/events"
 	"github.com/ehazlett/stellar/services"
 	appsvc "github.com/ehazlett/stellar/services/application"
+	nssvc "github.com/ehazlett/stellar/services/nameserver"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 	"github.com/stellarproject/element"
@@ -130,13 +132,8 @@ func (s *service) Start() error {
 	go func() {
 		defer c.Close()
 
-		subject, err := c.Application().ID()
-		if err != nil {
-			logrus.WithError(err).Error("error getting application subject for events")
-			return
-		}
 		stream, err := c.EventsService().Subscribe(context.Background(), &eventsapi.SubscribeRequest{
-			Subject: subject,
+			Subject: "stellar.services.>",
 		})
 		if err != nil {
 			logrus.WithError(err).Error("error subscribing to application events")
@@ -150,12 +147,23 @@ func (s *service) Start() error {
 				return
 			}
 
-			if events.IsEvent(evt, &appsvc.UpdateEvent{}) {
-				logrus.Debug("reloading proxy")
+			msg, err := events.UnmarshalEvent(evt)
+			if err != nil {
+				logrus.WithError(err).Error("error unmarshalling event")
+				return
+			}
+
+			switch e := msg.(type) {
+			case *appsvc.UpdateEvent, *nssvc.CreateEvent, *nssvc.DeleteEvent:
+				logrus.WithFields(logrus.Fields{
+					"event": fmt.Sprintf("%T", e),
+				}).Debug("reloading proxy")
 				if err := s.reload(); err != nil {
 					logrus.Error(err)
 					continue
 				}
+			default:
+				logrus.Errorf("unknown event type: %+v", e)
 			}
 		}
 	}()

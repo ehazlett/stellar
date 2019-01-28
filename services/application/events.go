@@ -22,7 +22,7 @@ func (s *service) publish(v interface{}) error {
 	}
 	defer c.Close()
 
-	if err := events.PublishEvent(c, serviceID, v); err != nil {
+	if err := events.PublishEvent(c, s.ID(), v); err != nil {
 		return err
 	}
 
