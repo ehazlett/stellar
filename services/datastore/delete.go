@@ -42,7 +42,7 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 			if err != nil {
 				return err
 			}
-			key := fmt.Sprintf("%s.%s", s.agent.Self().ID, time.Now().Format(time.RFC3339Nano))
+			key := s.tombstoneKeyName(req.Bucket, req.Key)
 			if err := tb.Put([]byte(key), data); err != nil {
 				return err
 			}
@@ -64,4 +64,8 @@ func (s *service) Delete(ctx context.Context, req *api.DeleteRequest) (*ptypes.E
 	}
 
 	return empty, err
+}
+
+func (s *service) tombstoneKeyName(bucket, key string) string {
+	return fmt.Sprintf("%s:%s:%s", s.agent.Self().ID, bucket, key)
 }

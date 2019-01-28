@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/containerd/containerd"
-	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	applicationapi "github.com/ehazlett/stellar/api/services/application/v1"
 	eventsapi "github.com/ehazlett/stellar/api/services/events/v1"
@@ -15,6 +14,7 @@ import (
 	appsvc "github.com/ehazlett/stellar/services/application"
 	ptypes "github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
+	"github.com/stellarproject/element"
 	"github.com/stellarproject/radiant"
 	radiantserver "github.com/stellarproject/radiant/server"
 	"google.golang.org/grpc"

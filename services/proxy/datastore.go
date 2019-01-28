@@ -65,6 +65,15 @@ func (d *datastore) Servers() ([]*radiantapi.Server, error) {
 					logrus.Warnf("proxy: unable to lookup service address: %s", err)
 					continue
 				}
+				// check for empty records
+				if len(records) == 0 {
+					logrus.WithFields(logrus.Fields{
+						"app":      app.Name,
+						"service":  svc.Name,
+						"endpoint": ep.Host,
+					}).Warn("skipping reload for service: no records found for service")
+					continue
+				}
 				v, exists := hostServers[ep.Host]
 				if !exists {
 					// TODO: refactor to be generic and handle different types (i.e. radiant, tcp/udp)
