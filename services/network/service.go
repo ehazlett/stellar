@@ -4,12 +4,12 @@ import (
 	"context"
 	"net"
 
-	"github.com/stellarproject/element"
 	"github.com/ehazlett/stellar"
 	api "github.com/ehazlett/stellar/api/services/network/v1"
 	"github.com/ehazlett/stellar/client"
 	"github.com/ehazlett/stellar/services"
 	ptypes "github.com/gogo/protobuf/types"
+	"github.com/stellarproject/element"
 	"google.golang.org/grpc"
 )
 
@@ -18,6 +18,7 @@ const (
 	// TODO: make configurable
 	// default max subnets (max nodes)
 	maxSubnets          = 1024
+	subnetMaskBits      = 10
 	dsNetworkBucketName = "stellar." + stellar.APIVersion + ".services.network"
 )
 

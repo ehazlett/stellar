@@ -1,7 +1,6 @@
 package network
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -44,19 +43,46 @@ func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetReq
 		return nil, ErrNoAvailableSubnets
 	}
 
-	localSubnet, err := c.Datastore().Get(dsNetworkBucketName, localSubnetKey)
+	localSubnetBytes, err := c.Datastore().Get(dsNetworkBucketName, localSubnetKey)
 	if err != nil {
 		err = errdefs.FromGRPC(err)
 		if !errdefs.IsNotFound(err) {
 			return nil, err
 		}
 	}
+	localSubnet := string(localSubnetBytes)
 
 	logrus.WithFields(logrus.Fields{
 		"subnet": string(localSubnet),
 	}).Debug("local subnet from datastore")
 
-	if bytes.Equal(localSubnet, []byte("")) {
+	// check for subnet change in config
+	// we convert it back to the original cluster subnet
+	if localSubnet != "" {
+		_, localSub, err := net.ParseCIDR(localSubnet)
+		if err != nil {
+			return nil, err
+		}
+		localSize, localBits := localSub.Mask.Size()
+		clusterMask := net.CIDRMask(localSize-subnetMaskBits, localBits)
+		m, _ := clusterMask.Size()
+		clusterCIDR := fmt.Sprintf("%s/%d", localSub.IP.String(), m)
+		_, clusterSubnet, err := net.ParseCIDR(clusterCIDR)
+		if err != nil {
+			return nil, err
+		}
+		configSubnetCIDR := s.config.Subnet.String()
+		// local subnet from ds does not match config
+		if clusterSubnet.String() != configSubnetCIDR {
+			logrus.WithFields(logrus.Fields{
+				"cluster_subnet": clusterSubnet.String(),
+				"config_subnet":  configSubnetCIDR,
+			}).Warn("config subnet updated")
+			localSubnet = ""
+		}
+	}
+
+	if localSubnet == "" {
 		logrus.Debug("local subnet key not found; assigning new subnet")
 
 		searchKey := fmt.Sprintf(dsSubnetsKey, "")
@@ -76,8 +102,8 @@ func (s *service) AllocateSubnet(ctx context.Context, req *api.AllocateSubnetReq
 		cidr := subnets[assigned].CIDR
 		logrus.Debugf("subnet for node: %s", cidr)
 
-		localSubnet = []byte(cidr)
-		if err := c.Datastore().Set(dsNetworkBucketName, localSubnetKey, localSubnet, true); err != nil {
+		localSubnet = cidr
+		if err := c.Datastore().Set(dsNetworkBucketName, localSubnetKey, []byte(localSubnet), true); err != nil {
 			return nil, err
 		}
 	}
