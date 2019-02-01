@@ -8,8 +8,13 @@ import (
 
 // adapted from https://github.com/kubernetes/kops/blob/master/upup/pkg/fi/cloudup/subnets.go
 func divideSubnet(sub *net.IPNet, maxSubnets int) ([]*net.IPNet, error) {
-	length, _ := sub.Mask.Size()
-	length += 10
+	subnetSize, _ := sub.Mask.Size()
+	length := subnetSize + subnetMaskBits
+
+	// check for network smaller than /24
+	if subnetSize > 21 {
+		return nil, fmt.Errorf("subnet must be larger than /22")
+	}
 
 	var subnets []*net.IPNet
 	for i := 0; i < maxSubnets; i++ {

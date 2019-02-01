@@ -197,7 +197,22 @@ func (s *Server) setupGateway(ip net.IP, mask int) error {
 			return err
 		}
 	}
-	if err := netlink.AddrReplace(brLink, brAddr); err != nil {
+	// clear any existing addrs
+	addrs, err := netlink.AddrList(brLink, netlink.FAMILY_ALL)
+	if err != nil {
+		return err
+	}
+
+	for _, addr := range addrs {
+		if err := netlink.AddrDel(brLink, &addr); err != nil {
+			logrus.WithFields(logrus.Fields{
+				"addr":   addr,
+				"device": s.config.Bridge,
+			}).WithError(err).Warn("unable to remove address from network device")
+		}
+	}
+
+	if err := netlink.AddrAdd(brLink, brAddr); err != nil {
 		return err
 	}
 
