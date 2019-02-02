@@ -184,6 +184,7 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 	opts = append(opts,
 		oci.WithImageConfig(image),
 		oci.WithHostname(id),
+		oci.WithUIDGID(uint32(service.Process.Uid), uint32(service.Process.Gid)),
 		s.withStellarHosts,
 		s.withStellarResolvConf,
 		withMounts(service.Mounts),
