@@ -22,5 +22,5 @@ WORKDIR /go/src/github.com/ehazlett/stellar
 COPY . /go/src/github.com/ehazlett/stellar
 RUN make
 
-FROM scratch
+FROM alpine:latest
 COPY --from=build /go/src/github.com/ehazlett/stellar/bin/* /bin/

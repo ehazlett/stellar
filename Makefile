@@ -1,6 +1,7 @@
 GOOS?=linux
 GOARCH?=amd64
 COMMIT=`git rev-parse --short HEAD`
+REGISTRY?=docker.io
 NAMESPACE?=ehazlett
 IMAGE_NAMESPACE?=$(NAMESPACE)
 APP=stellar
@@ -66,8 +67,8 @@ docs-serve: docs
 	@docker run -ti -p 9000:80 --rm $(APP)-docs nginx -g "daemon off;" -c /etc/nginx/nginx.conf
 
 image:
-	@docker build $(BUILD_ARGS) --build-arg GOOS=$(GOOS) --build-arg GOARCH=$(GOARCH) --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(IMAGE_NAMESPACE)/$(APP):$(TAG) -f Dockerfile .
-	@echo "Image created: $(REPO):$(TAG)"
+	@docker build $(BUILD_ARGS) --build-arg GOOS=$(GOOS) --build-arg GOARCH=$(GOARCH) --build-arg TAG=$(TAG) --build-arg BUILD=$(BUILD) -t $(REGISTRY)/$(IMAGE_NAMESPACE)/$(APP):$(TAG) -f Dockerfile .
+	@echo "Image created: $(REGISTRY)/$(REPO):$(TAG)"
 
 vet:
 	@echo " -> $@"
