@@ -2,12 +2,19 @@ package scheduler
 
 import (
 	"context"
+	"sort"
 
 	clusterapi "github.com/ehazlett/stellar/api/services/cluster/v1"
 	runtimeapi "github.com/ehazlett/stellar/api/services/runtime/v1"
 	api "github.com/ehazlett/stellar/api/services/scheduler/v1"
 	"github.com/sirupsen/logrus"
 )
+
+type NodeSorter []*clusterapi.Node
+
+func (n NodeSorter) Len() int           { return len(n) }
+func (n NodeSorter) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
+func (n NodeSorter) Less(i, j int) bool { return n[i].ID < n[j].ID }
 
 func (s *service) Schedule(ctx context.Context, req *api.ScheduleRequest) (*api.ScheduleResponse, error) {
 	nodes, err := s.schedule(req.Service, req.AvailableNodes)
@@ -116,5 +123,6 @@ func resolveNodesForReplicas(nodes []*clusterapi.Node, replicas uint64) []*clust
 		scheduledNodes = append(scheduledNodes, nodes[i])
 	}
 
+	sort.Sort(NodeSorter(scheduledNodes))
 	return scheduledNodes
 }

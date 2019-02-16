@@ -1,5 +1,5 @@
-GOOS?=linux
-GOARCH?=amd64
+GOOS?=
+GOARCH?=
 COMMIT=`git rev-parse --short HEAD`
 REGISTRY?=docker.io
 NAMESPACE?=ehazlett
@@ -34,10 +34,8 @@ docker-build: bindir
 	@echo "** This uses a separate Dockerfile (Dockerfile.dev) **"
 	@docker build -t $(APP)-dev -f Dockerfile.dev .
 	@docker run --rm -e GOOS=${GOOS} -e GOARCH=${GOARCH} -w /go/src/github.com/$(NAMESPACE)/$(APP) $(APP)-dev sh -c "make cli daemon cni-ipam; tar -C ./bin -cf - ." | tar -C ./bin -xf -
-	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
 binaries: daemon cli cni-ipam
-	@echo " -> Built $(TAG) version ${COMMIT} (${GOOS}/${GOARCH})"
 
 bindir:
 	@mkdir -p bin

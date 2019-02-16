@@ -124,6 +124,7 @@ message Service {
         repeated Endpoint endpoints = 10;
         uint64 replicas = 11;
         PlacementPreference placement_preference = 12;
+        bool restart = 13;
 }
 
 message CreateContainerRequest {
