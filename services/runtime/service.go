@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"time"
 
 	"github.com/containerd/containerd"
 	"github.com/ehazlett/stellar"
@@ -17,14 +18,15 @@ const (
 )
 
 type service struct {
-	containerdAddr string
-	namespace      string
-	bridge         string
-	dataDir        string
-	stateDir       string
-	cniBinPaths    []string
-	agent          *element.Agent
-	config         *stellar.Config
+	containerdAddr  string
+	namespace       string
+	bridge          string
+	dataDir         string
+	stateDir        string
+	cniBinPaths     []string
+	agent           *element.Agent
+	config          *stellar.Config
+	restartInterval time.Duration
 }
 
 func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
@@ -37,6 +39,8 @@ func New(cfg *stellar.Config, agent *element.Agent) (services.Service, error) {
 		cniBinPaths:    cfg.CNIBinPaths,
 		agent:          agent,
 		config:         cfg,
+		// TODO: make configurable
+		restartInterval: time.Second * 15,
 	}, nil
 }
 
@@ -64,6 +68,7 @@ func (s *service) Info(ctx context.Context, req *api.InfoRequest) (*api.InfoResp
 }
 
 func (s *service) Start() error {
+	go s.restartMonitor()
 	return nil
 }
 

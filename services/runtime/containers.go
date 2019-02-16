@@ -21,7 +21,6 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
-	"github.com/containerd/containerd/runtime/restart"
 	gocni "github.com/containerd/go-cni"
 	"github.com/containerd/typeurl"
 	"github.com/ehazlett/stellar"
@@ -238,8 +237,9 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 	}
 
 	logrus.Debugf("node.createcontainer: cni result %+v", netResult)
-
-	// TODO check result for length
+	if len(netResult.Interfaces[defaultIfName].IPConfigs) == 0 {
+		return empty, fmt.Errorf("no ips returned from cni")
+	}
 	ip := netResult.Interfaces[defaultIfName].IPConfigs[0].IP.String()
 
 	cOpts = append(cOpts,
@@ -249,16 +249,19 @@ func (s *service) CreateContainer(ctx context.Context, req *api.CreateContainerR
 	if service.Runtime != "" {
 		cOpts = append(cOpts, containerd.WithRuntime(service.Runtime, nil))
 	}
+	labels := map[string]string{
+		stellar.StellarApplicationLabel: req.Application,
+		stellar.StellarNetworkLabel:     "true",
+	}
+	if service.Restart {
+		labels[stellar.StellarRestartLabel] = "true"
+	}
 	cOpts = append(cOpts,
 		containerd.WithImage(image),
 		containerd.WithSnapshotter(snapshotter),
 		containerd.WithNewSnapshot(id, image),
 		containerd.WithNewSpec(opts...),
-		containerd.WithContainerLabels(map[string]string{
-			stellar.StellarApplicationLabel: req.Application,
-			stellar.StellarNetworkLabel:     "true",
-		}),
-		restart.WithStatus(containerd.Running),
+		containerd.WithContainerLabels(labels),
 	)
 
 	container, err := client.NewContainer(ctx, id, cOpts...)
@@ -340,13 +343,7 @@ func (s *service) RestartContainer(ctx context.Context, req *api.RestartContaine
 	}
 
 	logrus.Debugf("restart: task: %+v", task)
-
 	if err == nil {
-		logrus.Debugf("updating container %s", req.ID)
-		if err := container.Update(ctx, restart.WithStatus(containerd.Stopped)); err != nil {
-			return empty, err
-		}
-
 		logrus.Debugf("killing task for container %s", req.ID)
 		if err := s.killTask(ctx, task); err != nil {
 			return empty, err
@@ -355,10 +352,6 @@ func (s *service) RestartContainer(ctx context.Context, req *api.RestartContaine
 
 	logrus.Debugf("starting task for container %s", req.ID)
 	if err := s.startTask(ctx, container); err != nil {
-		return empty, err
-	}
-
-	if err := container.Update(ctx, restart.WithStatus(containerd.Running)); err != nil {
 		return empty, err
 	}
 
@@ -439,9 +432,38 @@ func (s *service) DeleteContainer(ctx context.Context, req *api.DeleteContainerR
 }
 
 func (s *service) startTask(ctx context.Context, container containerd.Container) error {
-	logPath, err := s.logPath(container.ID())
+	id := container.ID()
+	logPath, err := s.logPath(id)
 	if err != nil {
 		return err
+	}
+
+	// create hosts
+	hostsPath, err := s.getContainerHostsPath(id)
+	if err != nil {
+		return err
+	}
+	if _, err := os.Stat(hostsPath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		if err := s.createContainerHosts(id); err != nil {
+			return err
+		}
+
+	}
+	// create netns
+	netPath, err := s.getNetPath(id)
+	if err != nil {
+		return err
+	}
+	if _, err := os.Stat(netPath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		if err := createNetNS(netPath); err != nil {
+			return err
+		}
 	}
 
 	task, err := container.NewTask(ctx, cio.LogFile(logPath))
@@ -674,27 +696,10 @@ func withMounts(mounts []*api.Mount) oci.SpecOpts {
 }
 
 func (s *service) withStellarHosts(ctx context.Context, _ oci.Client, c *containers.Container, spec *oci.Spec) error {
-	cpath, err := s.getContainerDataDir(c.ID)
+	hostsPath, err := s.getContainerHostsPath(c.ID)
 	if err != nil {
 		return err
 	}
-	t := template.New("hosts")
-	tmpl, err := t.Parse(hostsTemplate)
-	if err != nil {
-		return err
-	}
-	var b bytes.Buffer
-	if err := tmpl.Execute(&b, struct{ ID string }{ID: c.ID}); err != nil {
-		return err
-	}
-	hostsPath := filepath.Join(cpath, "hosts")
-	f, err := os.Create(hostsPath)
-	if err != nil {
-		return err
-	}
-	f.Write(b.Bytes())
-	f.Close()
-
 	spec.Mounts = append(spec.Mounts, specs.Mount{
 		Type:        "bind",
 		Source:      hostsPath,
@@ -712,6 +717,38 @@ func (s *service) withStellarResolvConf(ctx context.Context, _ oci.Client, c *co
 		Options:     []string{"rbind", "ro"},
 	})
 	return nil
+}
+
+func (s *service) createContainerHosts(id string) error {
+	t := template.New("hosts")
+	tmpl, err := t.Parse(hostsTemplate)
+	if err != nil {
+		return err
+	}
+	var b bytes.Buffer
+	if err := tmpl.Execute(&b, struct{ ID string }{ID: id}); err != nil {
+		return err
+	}
+	hostsPath, err := s.getContainerHostsPath(id)
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(hostsPath)
+	if err != nil {
+		return err
+	}
+	f.Write(b.Bytes())
+	f.Close()
+	return nil
+}
+
+func (s *service) getContainerHostsPath(id string) (string, error) {
+	cpath, err := s.getContainerDataDir(id)
+	if err != nil {
+		return "", err
+	}
+	hostsPath := filepath.Join(cpath, "hosts")
+	return hostsPath, nil
 }
 
 func gateway(subnetCIDR string) (string, error) {
